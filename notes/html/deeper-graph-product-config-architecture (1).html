@@ -1,0 +1,3787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Graph-Based Product Configuration Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #5a5a5a;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --accent-dark: #1e3a5f;
+    --border: #e5e5e0;
+    --code-bg: #f4f4f0;
+    --callout-bg: #f0f5ff;
+    --callout-border: #2563eb;
+    --heading: #111827;
+    --toc-bg: #f8f9fc;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111111;
+      --surface: #1a1a1a;
+      --text: #e0e0e0;
+      --text-muted: #999;
+      --accent: #6b9eff;
+      --accent-light: #1a2435;
+      --accent-dark: #a0c4ff;
+      --border: #2a2a2a;
+      --code-bg: #1e1e1e;
+      --callout-bg: #141e2e;
+      --callout-border: #4a7fff;
+      --heading: #f0f0f0;
+      --toc-bg: #161616;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-size: 17px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 4rem;
+  }
+
+  /* ─── Cover ─── */
+  .cover {
+    text-align: center;
+    padding: 3rem 1rem 2.5rem;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 2rem;
+  }
+  .cover h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--heading);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+  .cover .subtitle {
+    font-size: 1.05rem;
+    color: var(--accent);
+    font-weight: 400;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+  }
+  .cover .meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ─── TOC ─── */
+  .toc {
+    background: var(--toc-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .toc h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    border: none;
+    padding: 0;
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    counter-reset: toc-counter;
+  }
+  .toc li {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc li:last-child { border-bottom: none; }
+  .toc a {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    transition: color 0.2s;
+  }
+  .toc a:hover, .toc a:active {
+    color: var(--accent);
+  }
+
+  /* ─── Headings ─── */
+  h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--heading);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border);
+  }
+
+  h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent-dark);
+    line-height: 1.3;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--heading);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ─── Body text ─── */
+  p {
+    margin-bottom: 1rem;
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  /* ─── Lists ─── */
+  ul, ol {
+    padding-left: 1.4rem;
+    margin-bottom: 1rem;
+  }
+  li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+
+  /* ─── Code ─── */
+  code, .code-block {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    background: var(--code-bg);
+    border-radius: 3px;
+    padding: 0.15rem 0.35rem;
+  }
+
+  pre {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 1rem 0;
+    white-space: pre;
+    word-wrap: normal;
+  }
+
+  /* Code-like paragraphs (monospace content from docx) */
+  p:has(> span[style*="monospace"]),
+  p:has(> span[style*="Courier"]) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    background: var(--code-bg);
+    padding: 0.25rem 0.75rem;
+    margin: 0;
+    line-height: 1.5;
+    border-left: 3px solid var(--border);
+  }
+
+  /* ─── Tables ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.25rem 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  thead { background: var(--accent-dark); }
+  thead th {
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) {
+    background: var(--toc-bg);
+  }
+
+  /* Callout tables (single-cell tables with colored borders) */
+  table:has(td:only-child) {
+    border-left: 4px solid var(--callout-border);
+    background: var(--callout-bg);
+    border-radius: 0 6px 6px 0;
+    display: table;
+  }
+  table:has(td:only-child) td {
+    padding: 1rem 1.25rem;
+    border: none;
+  }
+
+  /* ─── Back to top ─── */
+  .back-top {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 42px;
+    height: 42px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 100;
+  }
+  .back-top.visible { opacity: 1; }
+
+  /* ─── Progress bar ─── */
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 200;
+    transition: width 0.1s;
+  }
+
+  /* ─── TOC toggle for mobile ─── */
+  .toc-toggle {
+    display: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    html { font-size: 16px; }
+    .container { padding: 1rem 1rem 3rem; }
+    .cover { padding: 2rem 0.5rem 1.5rem; }
+    .cover h1 { font-size: 1.4rem; }
+    h1 { font-size: 1.3rem; }
+    h2 { font-size: 1.1rem; }
+    table { font-size: 0.82rem; }
+    thead th { font-size: 0.78rem; }
+    pre { font-size: 0.72rem; padding: 0.75rem; }
+
+    .toc-toggle { display: block; }
+    .toc ol { display: none; }
+    .toc.open ol { display: block; }
+  }
+
+  /* ─── Smooth anchoring offset ─── */
+  h1[id], h2[id], h3[id] {
+    scroll-margin-top: 0.5rem;
+  }
+
+  /* Remove border-top from first h1 */
+  .content > h1:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="container">
+
+  <div class="cover">
+    <h1 style="border:none;margin-top:0;padding-top:0;">Graph-Based Product Configuration</h1>
+    <div class="subtitle">A Technical Architecture for Composable Quoting, Pricing, and Production Tracking at Scale</div>
+    <div class="meta">Moving Beyond Relational Table-Driven MIS Systems &middot; February 2026</div>
+  </div>
+
+  <nav id="toc" class="toc">
+<h2>Contents</h2>
+<ol>
+  <li><a href="#ch-1-the-problem-why-relational-mis-systems-fail-at-c">1. The Problem: Why Relational MIS Systems Fail at Complexity</a></li>
+  <li><a href="#ch-2-core-concept-products-as-directed-acyclic-graphs">2. Core Concept: Products as Directed Acyclic Graphs (DAGs)</a></li>
+  <li><a href="#ch-3-data-modeling-the-product-configuration-graph">3. Data Modeling: The Product Configuration Graph</a></li>
+  <li><a href="#ch-4-the-node-type-system-extensibility-without-schem">4. The Node Type System: Extensibility Without Schema Changes</a></li>
+  <li><a href="#ch-5-pricing-architecture-function-pipelines-over-tab">5. Pricing Architecture: Function Pipelines Over Table Lookups</a></li>
+  <li><a href="#ch-6-the-quote-engine-tree-traversal-and-memoization">6. The Quote Engine: Tree Traversal and Memoization</a></li>
+  <li><a href="#ch-7-storage-strategy-document-vs-relational-hybrid">7. Storage Strategy: Document vs. Relational Hybrid</a></li>
+  <li><a href="#ch-8-event-sourcing-granular-production-tracking">8. Event Sourcing: Granular Production Tracking</a></li>
+  <li><a href="#ch-9-cqrs-separating-reads-from-writes">9. CQRS: Separating Reads from Writes</a></li>
+  <li><a href="#ch-10-caching-performance-and-scale">10. Caching, Performance, and Scale</a></li>
+  <li><a href="#ch-11-migration-strategy-from-legacy-to-graph">11. Migration Strategy: From Legacy to Graph</a></li>
+  <li><a href="#ch-12-implementation-reference-data-structures-and-ps">12. Implementation Reference: Data Structures and Pseudocode</a></li>
+  <li><a href="#ch-13-architecture-decision-records">13. Architecture Decision Records</a></li>
+  <li><a href="#ch-14-graphs-vs-relational-a-deep-side-by-side-compar">14. Graphs vs. Relational: A Deep Side-by-Side Comparison</a></li>
+  <li><a href="#ch-15-why-this-architecture-isn-t-universal-honest-bo">15. Why This Architecture Isn’t Universal: Honest Bottlenecks</a></li>
+  <li><a href="#ch-16-incremental-adoption-what-to-build-first-and-wh">16. Incremental Adoption: What to Build First and Why</a></li>
+  <li><a href="#ch-17-graph-theory-academic-foundations-and-cross-dom">17. Graph Theory, Academic Foundations, and Cross-Domain Insights</a></li>
+  <li><a href="#ch-18-bottom-up-pricing-complete-step-by-step-walkthr">18. Bottom-Up Pricing: Complete Step-by-Step Walkthrough</a></li>
+  <li><a href="#ch-19-quantity-propagation-waste-cascading-and-cross-">19. Quantity Propagation, Waste Cascading, and Cross-Node Dependencies</a></li>
+  <li><a href="#ch-20-pitfalls-edge-cases-and-failure-modes">20. Pitfalls, Edge Cases, and Failure Modes</a></li>
+  <li><a href="#ch-21-glossary">21. Glossary</a></li>
+</ol>
+</nav>
+
+
+  <div class="content">
+    <h3 id="ch-graph-based-product-configuration">GRAPH-BASED PRODUCT CONFIGURATION</h3>
+<p>A Technical Architecture for Composable Quoting,</p>
+<p>Pricing, and Production Tracking at Scale</p>
+<p><em>Moving Beyond Relational Table-Driven MIS Systems</em></p>
+<p>Technical Reference Document</p>
+<p>February 2026</p>
+<h3 id="ch-table-of-contents">TABLE OF CONTENTS</h3>
+<p>1. The Problem: Why Relational MIS Systems Fail at Complexity</p>
+<p>2. Core Concept: Products as Directed Acyclic Graphs (DAGs)</p>
+<p>3. Data Modeling: The Product Configuration Graph</p>
+<p>4. The Node Type System: Extensibility Without Schema Changes</p>
+<p>5. Pricing Architecture: Function Pipelines Over Table Lookups</p>
+<p>6. The Quote Engine: Tree Traversal and Memoization</p>
+<p>7. Storage Strategy: Document vs. Relational Hybrid</p>
+<p>8. Event Sourcing: Granular Production Tracking</p>
+<p>9. CQRS: Separating Reads from Writes</p>
+<p>10. Caching, Performance, and Scale</p>
+<p>11. Migration Strategy: From Legacy to Graph</p>
+<p>12. Implementation Reference: Data Structures and Pseudocode</p>
+<p>13. Architecture Decision Records</p>
+<p>14. Graphs vs. Relational: A Deep Side-by-Side Comparison</p>
+<p>15. Why This Architecture Isn’t Universal: Honest Bottlenecks</p>
+<p>16. Incremental Adoption: What to Build First and Why</p>
+<p>17. Graph Theory, Academic Foundations, and Cross-Domain Insights</p>
+<p>18. Bottom-Up Pricing: Complete Step-by-Step Walkthrough</p>
+<p>19. Quantity Propagation, Waste Cascading, and Cross-Node
+Dependencies</p>
+<p>20. Pitfalls, Edge Cases, and Failure Modes</p>
+<p>21. Glossary</p>
+<h1 id="ch-1-the-problem-why-relational-mis-systems-fail-at-c">1. The Problem: Why Relational MIS Systems Fail at Complexity</h1>
+<p>Traditional print Management Information Systems (MIS) were designed
+in an era when print products were relatively uniform: business cards,
+letterheads, brochures, and simple packaging. The data model reflected
+this simplicity. A job had a substrate, a press, a run length, and a
+handful of finishing operations. Pricing was a series of table
+lookups.</p>
+<p>This architecture fails catastrophically when products become
+composable. Consider a modern specialty card product: a rigid card with
+a PET overlay, spot UV on select areas, foil stamping in two colors, a
+die-cut shape, edge painting, and a custom insert. Each layer can have
+its own substrate, its own set of processes, and its own quantity
+breaks. Processes can be conditional on other processes. The die cut
+affects the foil area which affects the foil cost.</p>
+<h2 id="ch-1-1-the-table-lookup-bottleneck">1.1 The Table Lookup Bottleneck</h2>
+<p>In a relational MIS, each variable in the product specification
+triggers a database query. The system architecture typically follows
+this pattern:</p>
+<ol type="1">
+<li><p>User selects a base product. System queries the products
+table.</p></li>
+<li><p>User selects a substrate. System queries the substrates table,
+joins with product-substrate compatibility table.</p></li>
+<li><p>User selects a process (e.g., spot UV). System queries the
+process table, the process-rates table, the press-capability
+table.</p></li>
+<li><p>System calculates pricing by joining rate tables with quantity
+break tables with markup tables.</p></li>
+</ol>
+<p>For a simple product with 3 variables, this might be 8-12 queries.
+For your card with multiple layers and processes, this becomes 50-200+
+sequential database round trips. Each round trip has network latency
+(typically 1-5ms even on a local database), query parsing overhead, and
+lock contention. At 200 queries averaging 3ms each, you are waiting
+600ms just for database I/O before any business logic executes.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-key-insight">Key Insight</h3>
+<p>The fundamental problem is not that relational databases are slow. It
+is that the architecture requires one query per variable, and composable
+products have an unbounded number of variables. The solution is not
+faster queries. It is fewer queries.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-1-2-the-schema-rigidity-problem">1.2 The Schema Rigidity Problem</h2>
+<p>Relational MIS systems encode product structure in the schema itself.
+There is a layers table, a processes table, a layer_processes junction
+table, and so on. Each table has a fixed set of columns representing the
+known attributes of that entity type.</p>
+<p>When you need to add a new process type that has attributes no
+existing process has (say, edge painting, which has a color attribute
+and a coverage percentage that no other finishing process uses), you
+face three bad options:</p>
+<ol type="1">
+<li><p>Add nullable columns to the processes table. This leads to
+increasingly sparse tables with dozens of unused columns, makes queries
+slower, and makes the schema incomprehensible.</p></li>
+<li><p>Create a new table for the new process type with its own schema.
+This fractures your data model and forces the quoting engine to know
+about every table.</p></li>
+<li><p>Use an Entity-Attribute-Value (EAV) pattern where attributes are
+stored as key-value rows. This solves the schema problem but destroys
+query performance and makes the data nearly impossible to reason
+about.</p></li>
+</ol>
+<p>None of these options scale. The core issue is that relational
+schemas are designed for data that has a known, fixed structure.
+Composable products have a structure that is defined by the user at
+configuration time, not by the developer at design time.</p>
+<h2 id="ch-1-3-the-coupling-problem">1.3 The Coupling Problem</h2>
+<p>In most legacy MIS platforms, three concerns that should be
+independent are deeply entangled:</p>
+<ul>
+<li><p>Product Definition: what is this product, what are its
+components, what are the valid configurations?</p></li>
+<li><p>Pricing Logic: given a fully defined product, what does it
+cost?</p></li>
+<li><p>Production Tracking: as this product moves through the shop, what
+is the status of each operation?</p></li>
+</ul>
+<p>When these are mixed together in the same tables and stored
+procedures, any change to one concern risks breaking the others. Adding
+a new process type means modifying the product definition schema, the
+pricing stored procedures, the UI forms, and the production tracking
+workflow. This is why the system is hard to improve: every change is a
+cross-cutting concern.</p>
+<h1 id="ch-2-core-concept-products-as-directed-acyclic-graphs">2. Core Concept: Products as Directed Acyclic Graphs (DAGs)</h1>
+<p>The central architectural insight of this document is that a
+composable product is not a row in a table. It is a graph. Specifically,
+it is a Directed Acyclic Graph (DAG) where:</p>
+<ul>
+<li><p>Each node represents a component, layer, process, or assembly
+step.</p></li>
+<li><p>Each directed edge represents a 'composed of' or 'depends on'
+relationship.</p></li>
+<li><p>The graph is acyclic because a component cannot contain itself
+(no circular dependencies).</p></li>
+</ul>
+<h2 id="ch-2-1-what-is-a-dag-and-why-not-a-tree">2.1 What Is a DAG and Why Not a Tree?</h2>
+<p>A tree is a special case of a DAG where each node has exactly one
+parent. In a product configuration, a process can apply to multiple
+layers (e.g., a single lamination step that bonds layer 1 and layer 2
+together). This means a process node can have multiple parent nodes,
+which makes it a DAG, not a tree.</p>
+<p>In practice, most product configurations look tree-like, with
+occasional shared nodes. The important thing is that the data model
+supports both without requiring structural changes.</p>
+<p>Here is a concrete example of a multi-layer specialty card modeled as
+a DAG:</p>
+<blockquote>
+<p>Card (root node)</p>
+<p>├── Layer 1: "Base Card"</p>
+<p>│ type: substrate_layer</p>
+<p>│ material: 350gsm Silk Art Board</p>
+<p>│ dimensions: 88mm x 55mm</p>
+<p>│ ├── Process: CMYK Offset Print (front)</p>
+<p>│ │ type: print_process</p>
+<p>│ │ colors: 4</p>
+<p>│ │ sides: 1</p>
+<p>│ │ coverage: 85%</p>
+<p>│ ├── Process: CMYK Offset Print (back)</p>
+<p>│ │ type: print_process</p>
+<p>│ │ colors: 4</p>
+<p>│ │ sides: 1</p>
+<p>│ │ coverage: 60%</p>
+<p>│ ├── Process: Spot UV</p>
+<p>│ │ type: coating_process</p>
+<p>│ │ area_percentage: 30%</p>
+<p>│ │ mask_file: "logo-uv-mask.pdf"</p>
+<p>│ └── Process: Die Cut</p>
+<p>│ type: cutting_process</p>
+<p>│ die_reference: "DC-4421"</p>
+<p>│ complexity: "medium"</p>
+<p>├── Layer 2: "Clear Overlay"</p>
+<p>│ type: substrate_layer</p>
+<p>│ material: 200μm Clear PET</p>
+<p>│ dimensions: 88mm x 55mm</p>
+<p>│ └── Process: Screen Print (white)</p>
+<p>│ type: print_process</p>
+<p>│ ink: "opaque white"</p>
+<p>│ passes: 2</p>
+<p>│ coverage: 40%</p>
+<p>└── Assembly: Laminate</p>
+<p>type: assembly_process</p>
+<p>method: "pressure-sensitive adhesive"</p>
+<p>inputs: [Layer 1, Layer 2] ← DAG: two parents</p>
+</blockquote>
+<p>Every single node in this graph has a unique identifier, a type, a
+set of attributes specific to that type, and references to its children.
+This is the product definition. It is complete, self-describing, and
+arbitrarily deep.</p>
+<h2 id="ch-2-2-why-this-model-is-fundamentally-different">2.2 Why This Model Is Fundamentally Different</h2>
+<p>In the relational model, the schema defines the structure. You must
+know in advance how many layers are possible, what process types exist,
+and what attributes each has. In the graph model, the schema defines
+only the rules for what types of nodes exist and how they can connect.
+The actual structure of any given product is data, not schema.</p>
+<p>This means:</p>
+<ul>
+<li><p>Adding a new layer to a card does not require a schema migration.
+You create a new node and attach it to the root.</p></li>
+<li><p>Adding a new process type (e.g., embossing) does not require new
+tables. You define a new node type with its attributes and register it
+in the type system.</p></li>
+<li><p>A product with 2 layers and one with 20 layers use the same code
+paths. The only difference is the depth and breadth of the
+graph.</p></li>
+</ul>
+<h1 id="ch-3-data-modeling-the-product-configuration-graph">3. Data Modeling: The Product Configuration Graph</h1>
+<p>This chapter specifies the exact data structures that underpin the
+product configuration graph. These structures are designed to be stored
+in a document database or in a JSONB column within PostgreSQL.</p>
+<h2 id="ch-3-1-the-universal-node-schema">3.1 The Universal Node Schema</h2>
+<p>Every node in the product configuration graph conforms to a universal
+schema. This is critical: the system never needs to ask 'what kind of
+thing is this?' to know how to traverse, store, or serialize it. The
+schema:</p>
+<blockquote>
+<p>interface ConfigNode {</p>
+<p>id: string; // UUID, globally unique</p>
+<p>type: string; // e.g., 'substrate_layer', 'print_process'</p>
+<p>version: number; // incremented on each mutation</p>
+<p>created_at: ISO8601;</p>
+<p>updated_at: ISO8601;</p>
+<p>// The type-specific attributes (open schema)</p>
+<p>attributes: Record&lt;string, any&gt;;</p>
+<p>// Ordered list of child node IDs</p>
+<p>children: string[];</p>
+<p>// Parent node IDs (supports DAG, not just tree)</p>
+<p>parents: string[];</p>
+<p>// Pricing function reference (resolved at quote time)</p>
+<p>pricing_function_id: string | null;</p>
+<p>// Production tracking metadata</p>
+<p>tracking: {</p>
+<p>status: 'pending' | 'in_progress' | 'complete' | 'on_hold';</p>
+<p>assigned_to: string | null;</p>
+<p>station: string | null;</p>
+<p>started_at: ISO8601 | null;</p>
+<p>completed_at: ISO8601 | null;</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<p>The attributes field is the key to extensibility. It is a free-form
+JSON object whose expected shape is defined by the node's type. A
+substrate_layer node has material, dimensions, and gsm attributes. A
+print_process node has colors, coverage, and sides attributes. But the
+storage layer does not care about this distinction: it stores and
+retrieves the same shape regardless of content.</p>
+<h2 id="ch-3-2-the-configuration-document">3.2 The Configuration Document</h2>
+<p>A complete product configuration is stored as a single document (not
+spread across tables). The document contains the root node and a flat
+map of all nodes in the graph:</p>
+<blockquote>
+<p>interface ProductConfiguration {</p>
+<p>id: string; // Config UUID</p>
+<p>name: string; // Human-readable name</p>
+<p>version: number;</p>
+<p>root_node_id: string; // Entry point for traversal</p>
+<p>nodes: Record&lt;string, ConfigNode&gt;; // Flat map: node_id -&gt;
+node</p>
+<p>metadata: {</p>
+<p>created_by: string;</p>
+<p>created_at: ISO8601;</p>
+<p>updated_at: ISO8601;</p>
+<p>template_id: string | null; // If cloned from a template</p>
+<p>tags: string[];</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-why-a-flat-map-instead-of-nested-objects">Why a Flat Map Instead of Nested Objects?</h3>
+<p>Storing nodes in a flat map with ID references (rather than nesting
+children directly) is essential for DAG support. If node A and node B
+both reference node C as a child, a nested structure would duplicate C.
+A flat map stores C once and lets A and B reference its ID. It also
+enables O(1) node lookup by ID, which is critical for the pricing
+engine.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-3-3-concrete-example-the-card-as-a-document">3.3 Concrete Example: The Card as a Document</h2>
+<p>Here is the specialty card from Chapter 2 stored as an actual JSON
+configuration document. Study this carefully; it is the canonical
+reference for the data model:</p>
+<blockquote>
+<p>{</p>
+<p>"id": "config-001",</p>
+<p>"name": "Premium Layered Business Card",</p>
+<p>"version": 1,</p>
+<p>"root_node_id": "node-root",</p>
+<p>"nodes": {</p>
+<p>"node-root": {</p>
+<p>"id": "node-root",</p>
+<p>"type": "product",</p>
+<p>"attributes": {</p>
+<p>"product_family": "business_card",</p>
+<p>"quantity": 5000</p>
+<p>},</p>
+<p>"children": ["node-layer1", "node-layer2", "node-asm"],</p>
+<p>"parents": [],</p>
+<p>"pricing_function_id": "pf-product-aggregator"</p>
+<p>},</p>
+<p>"node-layer1": {</p>
+<p>"id": "node-layer1",</p>
+<p>"type": "substrate_layer",</p>
+<p>"attributes": {</p>
+<p>"material": "350gsm Silk Art Board",</p>
+<p>"width_mm": 88,</p>
+<p>"height_mm": 55,</p>
+<p>"grain_direction": "long"</p>
+<p>},</p>
+<p>"children": ["node-cmyk-f", "node-cmyk-b", "node-uv",</p>
+<p>"node-die"],</p>
+<p>"parents": ["node-root"],</p>
+<p>"pricing_function_id": "pf-substrate-cost"</p>
+<p>},</p>
+<p>"node-cmyk-f": {</p>
+<p>"id": "node-cmyk-f",</p>
+<p>"type": "print_process",</p>
+<p>"attributes": {</p>
+<p>"method": "offset",</p>
+<p>"colors": 4,</p>
+<p>"side": "front",</p>
+<p>"coverage_pct": 85</p>
+<p>},</p>
+<p>"children": [],</p>
+<p>"parents": ["node-layer1"],</p>
+<p>"pricing_function_id": "pf-offset-print"</p>
+<p>},</p>
+<p>"node-uv": {</p>
+<p>"id": "node-uv",</p>
+<p>"type": "coating_process",</p>
+<p>"attributes": {</p>
+<p>"coating_type": "spot_uv",</p>
+<p>"area_pct": 30,</p>
+<p>"thickness_microns": 25,</p>
+<p>"mask_file": "logo-uv-mask.pdf"</p>
+<p>},</p>
+<p>"children": [],</p>
+<p>"parents": ["node-layer1"],</p>
+<p>"pricing_function_id": "pf-spot-uv"</p>
+<p>},</p>
+<p>"node-asm": {</p>
+<p>"id": "node-asm",</p>
+<p>"type": "assembly_process",</p>
+<p>"attributes": {</p>
+<p>"method": "pressure_sensitive_adhesive",</p>
+<p>"registration_tolerance_mm": 0.5</p>
+<p>},</p>
+<p>"children": [],</p>
+<p>"parents": ["node-root"],</p>
+<p>"pricing_function_id": "pf-lamination"</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+</blockquote>
+<p>Notice that the entire product, with all its layers, processes, and
+assembly steps, is one document. Loading it requires exactly one
+database read, not fifty.</p>
+<h1 id="ch-4-the-node-type-system-extensibility-without-schem">4. The Node Type System: Extensibility Without Schema Changes</h1>
+<p>The node type system is what makes the architecture extensible
+without code deployments or database migrations. It is a registry of
+type definitions that describe what attributes a node of each type can
+have, what children it can have, and what pricing function it defaults
+to.</p>
+<h2 id="ch-4-1-type-definition-schema">4.1 Type Definition Schema</h2>
+<blockquote>
+<p>interface NodeTypeDefinition {</p>
+<p>type_id: string; // e.g., 'coating_process'</p>
+<p>display_name: string; // e.g., 'Coating / Varnish'</p>
+<p>category: 'product' | 'layer' | 'process' | 'assembly';</p>
+<p>// JSON Schema for the attributes field</p>
+<p>attribute_schema: JSONSchema;</p>
+<p>// What node types can be children of this type</p>
+<p>allowed_child_types: string[];</p>
+<p>// Default pricing function (can be overridden per node)</p>
+<p>default_pricing_function_id: string;</p>
+<p>// Validation rules beyond schema</p>
+<p>constraints: Constraint[];</p>
+<p>// UI rendering hints</p>
+<p>ui_config: {</p>
+<p>icon: string;</p>
+<p>color: string;</p>
+<p>form_layout: FormField[];</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<p>The attribute_schema field uses JSON Schema, a widely-supported
+standard for describing the shape of JSON data. This means validation
+happens at the application layer, not the database layer. When a user
+configures a product, the UI reads the type definition to render the
+correct form fields, and the backend validates the submitted attributes
+against the schema.</p>
+<h2 id="ch-4-2-example-type-definitions">4.2 Example Type Definitions</h2>
+<p>Here are two example type definitions that illustrate how different
+process types can coexist without schema changes:</p>
+<h3 id="ch-spot-uv-coating-type">Spot UV Coating Type</h3>
+<blockquote>
+<p>{</p>
+<p>"type_id": "coating_spot_uv",</p>
+<p>"display_name": "Spot UV Coating",</p>
+<p>"category": "process",</p>
+<p>"attribute_schema": {</p>
+<p>"type": "object",</p>
+<p>"properties": {</p>
+<p>"area_pct": { "type": "number", "min": 1, "max": 100 },</p>
+<p>"thickness_microns": { "type": "number", "default": 25 },</p>
+<p>"mask_file": { "type": "string", "format": "uri" },</p>
+<p>"finish": { "type": "string", "enum": ["gloss", "matte"] }</p>
+<p>},</p>
+<p>"required": ["area_pct"]</p>
+<p>},</p>
+<p>"allowed_child_types": [],</p>
+<p>"default_pricing_function_id": "pf-spot-uv"</p>
+<p>}</p>
+</blockquote>
+<h3 id="ch-edge-painting-type">Edge Painting Type</h3>
+<blockquote>
+<p>{</p>
+<p>"type_id": "finishing_edge_paint",</p>
+<p>"display_name": "Edge Painting",</p>
+<p>"category": "process",</p>
+<p>"attribute_schema": {</p>
+<p>"type": "object",</p>
+<p>"properties": {</p>
+<p>"color": { "type": "string" },</p>
+<p>"color_code": { "type": "string", "pattern": "^PMS" },</p>
+<p>"edges": {</p>
+<p>"type": "array",</p>
+<p>"items": { "enum": ["top","bottom","left","right"] }</p>
+<p>},</p>
+<p>"total_thickness_mm": { "type": "number" }</p>
+<p>},</p>
+<p>"required": ["color", "edges", "total_thickness_mm"]</p>
+<p>},</p>
+<p>"allowed_child_types": [],</p>
+<p>"default_pricing_function_id": "pf-edge-paint"</p>
+<p>}</p>
+</blockquote>
+<p>The key point: these two process types have completely different
+attributes (area percentage vs. edge selection, mask files vs. color
+codes), yet they coexist in the same nodes collection without any schema
+changes. The type system tells the UI what form to render and tells the
+validator what shape to expect. The storage layer is oblivious to the
+difference.</p>
+<h2 id="ch-4-3-adding-a-new-type-at-runtime">4.3 Adding a New Type at Runtime</h2>
+<p>When your business needs to support a new process (say, holographic
+foil stamping), the workflow is:</p>
+<ol type="1">
+<li><p>Define the new type with its attribute schema, allowed child
+types, and default pricing function.</p></li>
+<li><p>Register the type definition in the type registry (a simple
+database table or document).</p></li>
+<li><p>Implement and register the pricing function for the new
+type.</p></li>
+<li><p>The UI automatically renders the correct form based on the type
+definition. No frontend deployment needed if the UI is driven by the
+type schema.</p></li>
+</ol>
+<p>There are zero database migrations. Zero schema changes. Zero changes
+to the quoting engine core code. The engine already knows how to
+traverse nodes and invoke pricing functions. It simply encounters a new
+type with a new function, and it works.</p>
+<h1 id="ch-5-pricing-architecture-function-pipelines-over-tab">5. Pricing Architecture: Function Pipelines Over Table Lookups</h1>
+<p>This is the chapter that directly addresses the performance problem.
+The pricing architecture replaces sequential database lookups with
+in-memory function evaluation. The result is quoting that runs in
+milliseconds instead of seconds, regardless of product complexity.</p>
+<h2 id="ch-5-1-the-pricing-function-contract">5.1 The Pricing Function Contract</h2>
+<p>Every pricing function in the system conforms to a single
+interface:</p>
+<blockquote>
+<p>interface PricingFunction {</p>
+<p>id: string;</p>
+<p>name: string;</p>
+<p>evaluate(</p>
+<p>node: ConfigNode,</p>
+<p>context: PricingContext,</p>
+<p>children_results: PricingResult[]</p>
+<p>): PricingResult;</p>
+<p>}</p>
+<p>interface PricingContext {</p>
+<p>quantity: number;</p>
+<p>rate_tables: Record&lt;string, RateTable&gt;; // Pre-loaded</p>
+<p>quantity_curves: Record&lt;string, QuantityCurve&gt;;</p>
+<p>markup_rules: MarkupRule[];</p>
+<p>global_params: Record&lt;string, any&gt;; // waste factors etc.</p>
+<p>}</p>
+<p>interface PricingResult {</p>
+<p>node_id: string;</p>
+<p>setup_cost: number;</p>
+<p>unit_cost: number;</p>
+<p>total_cost: number;</p>
+<p>waste_cost: number;</p>
+<p>breakdown: LineItem[]; // Human-readable breakdown</p>
+<p>cached: boolean;</p>
+<p>}</p>
+</blockquote>
+<p>The critical design decision: the PricingContext contains all rate
+data, pre-loaded into memory. When the quoting engine starts, it loads
+all relevant rate tables in a single batch query (or from a cache). From
+that point on, no database queries are made during pricing computation.
+This is why the engine is fast.</p>
+<h2 id="ch-5-2-example-the-spot-uv-pricing-function">5.2 Example: The Spot UV Pricing Function</h2>
+<p>Here is a concrete pricing function implementation for spot UV
+coating. Notice that it reads from the pre-loaded context, not from the
+database:</p>
+<blockquote>
+<p>function evaluateSpotUV(node, context, children_results) {</p>
+<p>const { area_pct, thickness_microns } = node.attributes;</p>
+<p>const qty = context.quantity;</p>
+<p>// Read from pre-loaded rate table (already in memory)</p>
+<p>const rates = context.rate_tables['spot_uv'];</p>
+<p>// Setup cost: fixed per run</p>
+<p>const setup = rates.setup_base;</p>
+<p>// Material cost: based on area and thickness</p>
+<p>const area_factor = area_pct / 100;</p>
+<p>const thickness_factor = thickness_microns /
+rates.base_thickness;</p>
+<p>const material_per_unit = rates.material_rate</p>
+<p>* area_factor</p>
+<p>* thickness_factor;</p>
+<p>// Apply quantity curve (pre-loaded)</p>
+<p>const qty_curve = context.quantity_curves['coating'];</p>
+<p>const qty_multiplier = qty_curve.evaluate(qty);</p>
+<p>// Waste factor from global params</p>
+<p>const waste_factor = context.global_params.coating_waste_pct;</p>
+<p>const effective_qty = qty * (1 + waste_factor / 100);</p>
+<p>const unit_cost = material_per_unit * qty_multiplier;</p>
+<p>const total = setup + (unit_cost * effective_qty);</p>
+<p>return {</p>
+<p>node_id: node.id,</p>
+<p>setup_cost: setup,</p>
+<p>unit_cost: unit_cost,</p>
+<p>total_cost: total,</p>
+<p>waste_cost: unit_cost * (effective_qty - qty),</p>
+<p>breakdown: [</p>
+<p>{ label: 'UV Setup', amount: setup },</p>
+<p>{ label: `UV Material (${area_pct}% area)`,</p>
+<p>amount: unit_cost * qty },</p>
+<p>{ label: `UV Waste (${waste_factor}%)`,</p>
+<p>amount: unit_cost * (effective_qty - qty) },</p>
+<p>],</p>
+<p>cached: false</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<p>This function executes in microseconds. There are no database calls,
+no network round trips, no query parsing. It is pure arithmetic on
+pre-loaded data. Even if you have 50 such functions in a complex
+product, the total pricing computation takes less than a
+millisecond.</p>
+<h2 id="ch-5-3-the-aggregator-pattern">5.3 The Aggregator Pattern</h2>
+<p>Parent nodes in the graph use aggregator pricing functions that roll
+up their children's results. The root product node, for example, sums
+all children and applies markup:</p>
+<blockquote>
+<p>function evaluateProductAggregator(node, context, children_results)
+{</p>
+<p>const subtotal = children_results.reduce(</p>
+<p>(sum, r) =&gt; sum + r.total_cost, 0</p>
+<p>);</p>
+<p>// Apply markup rules (also pre-loaded)</p>
+<p>const markup = context.markup_rules</p>
+<p>.filter(r =&gt; r.applies_to(node, context))</p>
+<p>.reduce((price, rule) =&gt; rule.apply(price), subtotal);</p>
+<p>return {</p>
+<p>node_id: node.id,</p>
+<p>setup_cost: children_results.reduce((s,r) =&gt; s + r.setup_cost,
+0),</p>
+<p>unit_cost: markup / context.quantity,</p>
+<p>total_cost: markup,</p>
+<p>waste_cost: children_results.reduce((s,r) =&gt; s + r.waste_cost,
+0),</p>
+<p>breakdown: [</p>
+<p>...children_results.flatMap(r =&gt; r.breakdown),</p>
+<p>{ label: 'Markup', amount: markup - subtotal },</p>
+<p>],</p>
+<p>cached: false</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-5-4-dependency-aware-pricing">5.4 Dependency-Aware Pricing</h2>
+<p>Some processes depend on the results of other processes. For example,
+die cutting cost depends on the substrate thickness, which is an
+attribute of the parent layer, not the die cut node itself. The pricing
+context solves this:</p>
+<blockquote>
+<p>function evaluateDieCut(node, context, children_results) {</p>
+<p>// Walk up to the parent layer to get material thickness</p>
+<p>const parent_layer = context.resolve_node(node.parents[0]);</p>
+<p>const thickness = parent_layer.attributes.gsm;</p>
+<p>// Thicker stock = more die pressure = higher cost</p>
+<p>const thickness_multiplier = thickness &gt; 300 ? 1.25 : 1.0;</p>
+<p>// ... rest of pricing logic</p>
+<p>}</p>
+</blockquote>
+<p>Because the entire configuration graph is loaded into memory as a
+single document, resolving parent or sibling nodes is an O(1) hash map
+lookup, not a database join.</p>
+<h1 id="ch-6-the-quote-engine-tree-traversal-and-memoization">6. The Quote Engine: Tree Traversal and Memoization</h1>
+<p>The quote engine is the orchestrator that ties together the product
+graph and the pricing functions. It is surprisingly simple because the
+complexity has been pushed into the data model and the pricing
+functions.</p>
+<h2 id="ch-6-1-the-core-algorithm">6.1 The Core Algorithm</h2>
+<p>The engine uses a bottom-up (post-order) traversal of the product
+graph. It evaluates leaf nodes first (processes with no children), then
+their parents, then their parents' parents, up to the root:</p>
+<blockquote>
+<p>function generateQuote(config: ProductConfiguration): Quote {</p>
+<p>// STEP 1: Load all rate data in a single batch</p>
+<p>const context = loadPricingContext(config);</p>
+<p>// STEP 2: Build memoization cache</p>
+<p>const cache = new Map&lt;string, PricingResult&gt;();</p>
+<p>// STEP 3: Recursive post-order traversal</p>
+<p>function evaluateNode(nodeId: string): PricingResult {</p>
+<p>// Check cache first (critical for DAG shared nodes)</p>
+<p>if (cache.has(nodeId)) return cache.get(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>// Evaluate all children first (post-order)</p>
+<p>const childResults = node.children.map(</p>
+<p>childId =&gt; evaluateNode(childId)</p>
+<p>);</p>
+<p>// Resolve and execute this node's pricing function</p>
+<p>const pricingFn = resolvePricingFunction(</p>
+<p>node.pricing_function_id</p>
+<p>);</p>
+<p>const result = pricingFn.evaluate(</p>
+<p>node, context, childResults</p>
+<p>);</p>
+<p>// Cache the result</p>
+<p>cache.set(nodeId, result);</p>
+<p>return result;</p>
+<p>}</p>
+<p>// STEP 4: Start from root</p>
+<p>const rootResult = evaluateNode(config.root_node_id);</p>
+<p>// STEP 5: Assemble the quote</p>
+<p>return {</p>
+<p>config_id: config.id,</p>
+<p>total: rootResult.total_cost,</p>
+<p>unit_price: rootResult.unit_cost,</p>
+<p>breakdown: rootResult.breakdown,</p>
+<p>all_node_results: Object.fromEntries(cache),</p>
+<p>generated_at: new Date().toISOString()</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-6-2-memoization-and-dag-handling">6.2 Memoization and DAG Handling</h2>
+<p>The memoization cache is essential for correctness and performance in
+a DAG. If the lamination assembly node is a child of both the root
+product and is referenced by another assembly step, without memoization
+it would be priced twice. With memoization, the second reference hits
+the cache and returns instantly.</p>
+<p>This also enables efficient 'what-if' quoting. If the user changes
+one attribute of one node (say, increasing the spot UV area from 30% to
+50%), the engine can invalidate only the cache entries for that node and
+its ancestors. All other nodes retain their cached results. In practice,
+re-quoting after a single change evaluates only 2-5 nodes instead of the
+entire graph.</p>
+<h2 id="ch-6-3-performance-analysis">6.3 Performance Analysis</h2>
+<table>
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 32%" />
+<col style="width: 32%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Metric</strong></td>
+<td><strong>Legacy Table-Driven MIS</strong></td>
+<td><strong>Graph-Based Engine</strong></td>
+</tr>
+<tr class="even">
+<td>DB queries per quote</td>
+<td>50–200+ (sequential)</td>
+<td>1–3 (batch load)</td>
+</tr>
+<tr class="odd">
+<td>Compute time (simple product)</td>
+<td>200–500ms</td>
+<td>&lt; 5ms</td>
+</tr>
+<tr class="even">
+<td>Compute time (complex product)</td>
+<td>2–8 seconds</td>
+<td>10–50ms</td>
+</tr>
+<tr class="odd">
+<td>Re-quote after single change</td>
+<td>Full recalculation</td>
+<td>2–5 node re-evaluation</td>
+</tr>
+<tr class="even">
+<td>Memory usage</td>
+<td>Low (all on DB)</td>
+<td>Moderate (rate tables in RAM)</td>
+</tr>
+<tr class="odd">
+<td>Adding new process type</td>
+<td>Schema migration + code</td>
+<td>Type registration only</td>
+</tr>
+</tbody>
+</table>
+<p>The speed difference is not incremental. It is architectural. The
+legacy system is I/O-bound (waiting for database). The graph engine is
+CPU-bound (doing arithmetic), and modern CPUs do arithmetic in
+nanoseconds.</p>
+<h1 id="ch-7-storage-strategy-document-vs-relational-hybrid">7. Storage Strategy: Document vs. Relational Hybrid</h1>
+<p>A common misconception is that adopting a graph-based product model
+means abandoning relational databases entirely. It does not. The optimal
+architecture uses a hybrid approach that leverages the strengths of each
+paradigm.</p>
+<h2 id="ch-7-1-what-goes-where">7.1 What Goes Where</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 29%" />
+<col style="width: 44%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Data Type</strong></td>
+<td><strong>Storage</strong></td>
+<td><strong>Rationale</strong></td>
+</tr>
+<tr class="even">
+<td>Product configurations</td>
+<td>Document store (JSONB or MongoDB)</td>
+<td>Hierarchical, schema-variable, loaded as unit</td>
+</tr>
+<tr class="odd">
+<td>Node type definitions</td>
+<td>Relational table</td>
+<td>Fixed schema, queried by type_id, rarely changes</td>
+</tr>
+<tr class="even">
+<td>Rate tables</td>
+<td>Relational tables</td>
+<td>Tabular data, queried by ranges, updated independently</td>
+</tr>
+<tr class="odd">
+<td>Pricing functions</td>
+<td>Code registry (in-app)</td>
+<td>Executable logic, version-controlled in source</td>
+</tr>
+<tr class="even">
+<td>Quotes (generated)</td>
+<td>Document store</td>
+<td>Snapshot of config + pricing results, immutable</td>
+</tr>
+<tr class="odd">
+<td>Events / audit trail</td>
+<td>Append-only event store</td>
+<td>Time-series, never updated, high write throughput</td>
+</tr>
+<tr class="even">
+<td>Users, customers, orders</td>
+<td>Relational tables</td>
+<td>Standard CRUD data with referential integrity</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-7-2-postgresql-jsonb-the-practical-sweet-spot">7.2 PostgreSQL JSONB: The Practical Sweet Spot</h2>
+<p>For most teams, PostgreSQL with JSONB columns offers the best of both
+worlds. You get document storage semantics for configurations and
+quotes, relational storage for everything else, ACID transactions across
+both, and the operational simplicity of a single database engine.</p>
+<p>The product configurations table would look like this:</p>
+<blockquote>
+<p>CREATE TABLE product_configurations (</p>
+<p>id UUID PRIMARY KEY DEFAULT gen_random_uuid(),</p>
+<p>name TEXT NOT NULL,</p>
+<p>version INTEGER NOT NULL DEFAULT 1,</p>
+<p>root_node_id TEXT NOT NULL,</p>
+<p>config JSONB NOT NULL, -- The entire node graph</p>
+<p>metadata JSONB DEFAULT '{}',</p>
+<p>created_at TIMESTAMPTZ DEFAULT NOW(),</p>
+<p>updated_at TIMESTAMPTZ DEFAULT NOW(),</p>
+<p>-- GIN index for querying into the JSON</p>
+<p>CONSTRAINT valid_config CHECK (</p>
+<p>config ? 'nodes' AND config-&gt;'nodes' ? root_node_id</p>
+<p>)</p>
+<p>);</p>
+<p>-- Index for finding configs by node type</p>
+<p>CREATE INDEX idx_config_node_types ON product_configurations</p>
+<p>USING GIN ((config-&gt;'nodes'));</p>
+<p>-- Index for finding configs by product family</p>
+<p>CREATE INDEX idx_config_family ON product_configurations</p>
+<p>((config-&gt;'nodes'-&gt;root_node_id-&gt;'attributes'-&gt;&gt;'product_family'));</p>
+</blockquote>
+<p>The key insight is that the JSON document is the product definition,
+but you can still create indexes into it for search and filtering. You
+get the flexibility of a document model with the query power of a
+relational database.</p>
+<h2 id="ch-7-3-loading-strategy-one-read-full-graph">7.3 Loading Strategy: One Read, Full Graph</h2>
+<p>When the quoting engine needs to price a configuration, it performs
+exactly one database read:</p>
+<blockquote>
+<p>SELECT config FROM product_configurations WHERE id = $1;</p>
+</blockquote>
+<p>This returns the entire product graph as a single JSON document. The
+engine deserializes it into the in-memory ConfigNode structures and
+proceeds with evaluation. Compare this to the legacy approach of 50-200
+sequential queries, and the performance advantage becomes obvious.</p>
+<p>Rate tables are loaded similarly in batch:</p>
+<blockquote>
+<p>SELECT table_name, rates FROM rate_tables</p>
+<p>WHERE table_name = ANY($1); -- Array of needed table names</p>
+</blockquote>
+<p>This is typically 1-3 queries total regardless of product complexity.
+The rate table names needed can be determined by scanning the node types
+in the configuration graph.</p>
+<h1 id="ch-8-event-sourcing-granular-production-tracking">8. Event Sourcing: Granular Production Tracking</h1>
+<p>Event sourcing is the architectural pattern that enables the granular
+tracking you need. Instead of updating a status field on a database row
+(which overwrites history), every state change is recorded as an
+immutable event. The current state of any object is computed by
+replaying its events.</p>
+<h2 id="ch-8-1-the-event-schema">8.1 The Event Schema</h2>
+<blockquote>
+<p>interface ProductionEvent {</p>
+<p>event_id: string; // UUID</p>
+<p>event_type: string; // e.g., 'process_started'</p>
+<p>timestamp: ISO8601;</p>
+<p>// What this event is about</p>
+<p>config_id: string; // Which product configuration</p>
+<p>node_id: string; // Which specific node in the graph</p>
+<p>// Who / what triggered this event</p>
+<p>actor: {</p>
+<p>type: 'operator' | 'machine' | 'system';</p>
+<p>id: string;</p>
+<p>name: string;</p>
+<p>};</p>
+<p>// Event-specific data</p>
+<p>payload: Record&lt;string, any&gt;;</p>
+<p>// Sequence number for ordering</p>
+<p>sequence: number;</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-8-2-example-event-stream-for-a-single-node">8.2 Example Event Stream for a Single Node</h2>
+<p>Here is the event stream for the spot UV process on layer 1 of the
+card, from job creation through completion:</p>
+<blockquote>
+<p>{ event_type: 'node_created',</p>
+<p>node_id: 'node-uv',</p>
+<p>payload: { initial_status: 'pending' } }</p>
+<p>{ event_type: 'process_scheduled',</p>
+<p>node_id: 'node-uv',</p>
+<p>payload: { station: 'UV-Coater-3', scheduled: '2026-03-15T09:00' }
+}</p>
+<p>{ event_type: 'process_started',</p>
+<p>node_id: 'node-uv',</p>
+<p>actor: { type: 'operator', id: 'emp-42', name: 'John' },</p>
+<p>payload: { station: 'UV-Coater-3', sheets_planned: 5200 } }</p>
+<p>{ event_type: 'waste_recorded',</p>
+<p>node_id: 'node-uv',</p>
+<p>payload: { sheets_wasted: 85, reason: 'coating_defect' } }</p>
+<p>{ event_type: 'process_completed',</p>
+<p>node_id: 'node-uv',</p>
+<p>actor: { type: 'operator', id: 'emp-42', name: 'John' },</p>
+<p>payload: { sheets_good: 5115, duration_minutes: 45 } }</p>
+</blockquote>
+<p>Because every event is immutable and timestamped, you can answer
+questions that traditional status-field tracking cannot:</p>
+<ul>
+<li><p>How long did the UV coating actually take? (difference between
+started and completed timestamps)</p></li>
+<li><p>What was the waste rate? (waste_recorded events /
+sheets_planned)</p></li>
+<li><p>Who ran the job and on which machine? (actor and station
+fields)</p></li>
+<li><p>Was the job rescheduled? (multiple process_scheduled
+events)</p></li>
+<li><p>What was the status of this node at 2:30 PM yesterday? (replay
+events up to that timestamp)</p></li>
+</ul>
+<h2 id="ch-8-3-current-state-projection">8.3 Current State Projection</h2>
+<p>While event sourcing stores the full history, you still need fast
+access to current state for dashboards and queries. This is achieved
+through projections, which are materialized views that are updated as
+events arrive:</p>
+<blockquote>
+<p>-- Materialized current state, updated by event processor</p>
+<p>CREATE TABLE node_current_state (</p>
+<p>config_id UUID NOT NULL,</p>
+<p>node_id TEXT NOT NULL,</p>
+<p>status TEXT NOT NULL,</p>
+<p>station TEXT,</p>
+<p>operator_id TEXT,</p>
+<p>started_at TIMESTAMPTZ,</p>
+<p>completed_at TIMESTAMPTZ,</p>
+<p>sheets_good INTEGER,</p>
+<p>sheets_wasted INTEGER,</p>
+<p>last_event_sequence BIGINT,</p>
+<p>updated_at TIMESTAMPTZ,</p>
+<p>PRIMARY KEY (config_id, node_id)</p>
+<p>);</p>
+</blockquote>
+<p>This projection gives you O(1) lookup for current status while
+preserving full history in the event store. The projection is derived
+data that can be rebuilt from events at any time. If you need a new
+projection (say, a per-station workload view), you can create it by
+replaying the existing events without changing any existing code.</p>
+<h1 id="ch-9-cqrs-separating-reads-from-writes">9. CQRS: Separating Reads from Writes</h1>
+<p>Command Query Responsibility Segregation (CQRS) is a pattern that
+naturally complements event sourcing and the graph-based product model.
+The core idea is that the data model optimized for writes (creating and
+modifying configurations, recording events) is different from the data
+model optimized for reads (listing jobs, showing dashboards, generating
+reports).</p>
+<h2 id="ch-9-1-the-write-side-commands">9.1 The Write Side: Commands</h2>
+<p>The write side handles commands: create a configuration, update a
+node attribute, record a production event, generate a quote. Each
+command validates, mutates state, and emits events:</p>
+<blockquote>
+<p>// Command: Update a node attribute</p>
+<p>async function updateNodeAttribute(cmd) {</p>
+<p>const { config_id, node_id, attribute_key, new_value } = cmd;</p>
+<p>// Load the configuration document</p>
+<p>const config = await db.getConfig(config_id);</p>
+<p>const node = config.nodes[node_id];</p>
+<p>// Validate against the type schema</p>
+<p>const typeDef = typeRegistry.get(node.type);</p>
+<p>typeDef.validateAttribute(attribute_key, new_value);</p>
+<p>// Apply the mutation</p>
+<p>node.attributes[attribute_key] = new_value;</p>
+<p>node.version++;</p>
+<p>node.updated_at = new Date().toISOString();</p>
+<p>config.version++;</p>
+<p>// Persist (single document write)</p>
+<p>await db.saveConfig(config);</p>
+<p>// Emit event for downstream consumers</p>
+<p>await eventBus.emit({</p>
+<p>event_type: 'node_attribute_updated',</p>
+<p>config_id, node_id,</p>
+<p>payload: { attribute_key, old_value, new_value }</p>
+<p>});</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-9-2-the-read-side-query-optimized-projections">9.2 The Read Side: Query-Optimized Projections</h2>
+<p>The read side maintains denormalized views optimized for specific
+queries. These are updated asynchronously by consuming events from the
+write side:</p>
+<blockquote>
+<p>// Read model: Job Board View (for shop floor dashboard)</p>
+<p>CREATE TABLE read_job_board (</p>
+<p>config_id UUID,</p>
+<p>product_name TEXT,</p>
+<p>customer_name TEXT,</p>
+<p>total_nodes INTEGER,</p>
+<p>nodes_complete INTEGER,</p>
+<p>progress_pct NUMERIC,</p>
+<p>current_bottleneck TEXT, -- which node is blocking?</p>
+<p>estimated_completion TIMESTAMPTZ,</p>
+<p>priority INTEGER,</p>
+<p>updated_at TIMESTAMPTZ</p>
+<p>);</p>
+<p>// Read model: Station Queue (for machine operators)</p>
+<p>CREATE TABLE read_station_queue (</p>
+<p>station_id TEXT,</p>
+<p>config_id UUID,</p>
+<p>node_id TEXT,</p>
+<p>process_type TEXT,</p>
+<p>process_name TEXT,</p>
+<p>scheduled_time TIMESTAMPTZ,</p>
+<p>estimated_duration INTERVAL,</p>
+<p>dependencies_met BOOLEAN,</p>
+<p>priority INTEGER</p>
+<p>);</p>
+</blockquote>
+<p>Each read model is a projection that serves a specific use case. The
+job board projection aggregates node status for a high-level overview.
+The station queue projection denormalizes for operator-facing
+scheduling. Neither requires joining across tables at query time because
+the data is already shaped for the query.</p>
+<h2 id="ch-9-3-the-benefits-for-your-use-case">9.3 The Benefits for Your Use Case</h2>
+<p>CQRS solves several problems you are likely facing:</p>
+<ul>
+<li><p>The quoting UI can read from a fast, denormalized product catalog
+while the write side handles complex configuration mutations
+atomically.</p></li>
+<li><p>The shop floor dashboard can read from a pre-computed job
+progress view without querying the event store in real time.</p></li>
+<li><p>Reports (cost vs. estimate, waste analysis, throughput) can be
+built as dedicated projections without affecting the performance of the
+transactional system.</p></li>
+<li><p>Each projection can be on its own update schedule: the job board
+might update every 5 seconds, while the monthly cost report projection
+updates nightly.</p></li>
+</ul>
+<h1 id="ch-10-caching-performance-and-scale">10. Caching, Performance, and Scale</h1>
+<h2 id="ch-10-1-three-layer-caching-strategy">10.1 Three-Layer Caching Strategy</h2>
+<p>The system uses three levels of caching to achieve consistent
+sub-100ms quoting performance:</p>
+<h3 id="ch-layer-1-rate-table-cache">Layer 1: Rate Table Cache</h3>
+<p>Rate tables change infrequently (typically when you renegotiate
+supplier prices). They are loaded into an in-memory cache (Redis or
+application-level) with a TTL of 1 hour, and invalidated explicitly when
+rates change. This eliminates the most common database reads.</p>
+<h3 id="ch-layer-2-subtree-price-cache">Layer 2: Subtree Price Cache</h3>
+<p>When a product configuration has not changed, its pricing result is
+cached as a whole. The cache key is a hash of the configuration document
+content. Any mutation to any node changes the hash and invalidates the
+cache. This gives instant re-quoting for unchanged configurations.</p>
+<h3 id="ch-layer-3-node-level-memoization">Layer 3: Node-Level Memoization</h3>
+<p>During a single quote computation, the memoization map described in
+Chapter 6 prevents redundant computation of shared DAG nodes. This is
+per-request and lives only in the quote engine's working memory.</p>
+<h2 id="ch-10-2-scaling-patterns">10.2 Scaling Patterns</h2>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 29%" />
+<col style="width: 46%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Challenge</strong></td>
+<td><strong>Solution</strong></td>
+<td><strong>Implementation</strong></td>
+</tr>
+<tr class="even">
+<td>High quote volume</td>
+<td>Horizontal scaling of quote engine</td>
+<td>Stateless quote service behind load balancer; all state in
+DB/cache</td>
+</tr>
+<tr class="odd">
+<td>Large configurations (100+ nodes)</td>
+<td>Parallel branch evaluation</td>
+<td>Promise.all() on independent subtrees; merge at aggregator</td>
+</tr>
+<tr class="even">
+<td>Many concurrent users editing configs</td>
+<td>Optimistic concurrency</td>
+<td>Version field on configs; reject writes with stale version</td>
+</tr>
+<tr class="odd">
+<td>High event throughput</td>
+<td>Partitioned event store</td>
+<td>Partition by config_id; each partition is append-only
+sequential</td>
+</tr>
+<tr class="even">
+<td>Read model latency</td>
+<td>Async projection updates</td>
+<td>Event consumers update read models; tolerate 1-5s staleness</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-10-3-parallel-subtree-evaluation">10.3 Parallel Subtree Evaluation</h2>
+<p>One of the most powerful performance optimizations in the graph
+engine is parallel evaluation of independent subtrees. In the card
+example, Layer 1 and Layer 2 have no dependencies on each other. Their
+pricing subtrees can be evaluated in parallel:</p>
+<blockquote>
+<p>async function evaluateNodeParallel(nodeId, config, context, cache)
+{</p>
+<p>if (cache.has(nodeId)) return cache.get(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>// Evaluate independent children in parallel</p>
+<p>const childResults = await Promise.all(</p>
+<p>node.children.map(childId =&gt;</p>
+<p>evaluateNodeParallel(childId, config, context, cache)</p>
+<p>)</p>
+<p>);</p>
+<p>const pricingFn =
+resolvePricingFunction(node.pricing_function_id);</p>
+<p>const result = pricingFn.evaluate(node, context, childResults);</p>
+<p>cache.set(nodeId, result);</p>
+<p>return result;</p>
+<p>}</p>
+</blockquote>
+<p>For a product with 10 independent layers, each with 5 processes, this
+evaluates all 50 process nodes in parallel rather than sequentially. On
+a modern multi-core machine, this can be 5-10x faster than serial
+evaluation for deeply branched products.</p>
+<h1 id="ch-11-migration-strategy-from-legacy-to-graph">11. Migration Strategy: From Legacy to Graph</h1>
+<p>Migration from a table-driven MIS to a graph-based architecture is a
+multi-phase effort. The recommended approach uses the Strangler Fig
+pattern: build the new system alongside the old one, progressively
+routing traffic to the new system until the old system can be
+retired.</p>
+<h2 id="ch-11-1-phase-1-shadow-mode-weeks-1-4">11.1 Phase 1: Shadow Mode (Weeks 1-4)</h2>
+<p>Build the graph engine as a standalone service. Write adapters that
+convert existing product definitions from the legacy tables into graph
+configurations. Run both engines in parallel: the legacy system
+generates the actual quote, and the graph engine generates a shadow
+quote. Compare results to validate accuracy.</p>
+<h2 id="ch-11-2-phase-2-read-path-migration-weeks-5-8">11.2 Phase 2: Read Path Migration (Weeks 5-8)</h2>
+<p>Switch the quoting UI to read from the graph engine while the legacy
+system remains the source of truth for writes. All product configuration
+changes still happen in the legacy system and are synced to the graph
+engine via an adapter. This is low-risk: if the graph engine returns an
+incorrect quote, the legacy system is still available.</p>
+<h2 id="ch-11-3-phase-3-write-path-migration-weeks-9-16">11.3 Phase 3: Write Path Migration (Weeks 9-16)</h2>
+<p>Build the new product configuration UI that writes directly to the
+graph engine. Maintain a reverse sync that writes back to the legacy
+system for any downstream processes that still depend on it (invoicing,
+shipping, etc.). This phase requires the most careful coordination.</p>
+<h2 id="ch-11-4-phase-4-legacy-retirement-weeks-17">11.4 Phase 4: Legacy Retirement (Weeks 17+)</h2>
+<p>Once all read and write paths go through the graph engine, the legacy
+system becomes a historical archive. It can be maintained in read-only
+mode for auditing purposes and eventually decommissioned.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-migration-rule-of-thumb">Migration Rule of Thumb</h3>
+<p>Never attempt a big-bang migration. The Strangler Fig approach lets
+you validate the new system against the old one at every stage, reducing
+risk dramatically. If the graph engine produces a quote that differs
+from the legacy system by more than 1%, that is a bug in the graph
+engine that needs to be fixed before proceeding.</p></td>
+</tr>
+</tbody>
+</table>
+<h1 id="ch-12-implementation-reference-data-structures-and-ps">12. Implementation Reference: Data Structures and Pseudocode</h1>
+<p>This chapter provides the complete pseudocode for all core
+operations. These are designed to be directly translatable to
+TypeScript, Python, or any language an LLM or developer will use for
+implementation.</p>
+<h2 id="ch-12-1-configuration-crud-operations">12.1 Configuration CRUD Operations</h2>
+<blockquote>
+<p>// CREATE a new configuration from a template</p>
+<p>function createConfiguration(templateId, customizations) {</p>
+<p>const template = db.getTemplate(templateId);</p>
+<p>const config = deepClone(template);</p>
+<p>config.id = generateUUID();</p>
+<p>config.version = 1;</p>
+<p>config.metadata.template_id = templateId;</p>
+<p>// Apply customizations (e.g., quantity, material choices)</p>
+<p>for (const [nodeId, attrs] of Object.entries(customizations)) {</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>const typeDef = typeRegistry.get(node.type);</p>
+<p>for (const [key, value] of Object.entries(attrs)) {</p>
+<p>typeDef.validateAttribute(key, value);</p>
+<p>node.attributes[key] = value;</p>
+<p>}</p>
+<p>}</p>
+<p>db.saveConfig(config);</p>
+<p>return config;</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-12-2-adding-a-node-to-an-existing-configuration">12.2 Adding a Node to an Existing Configuration</h2>
+<blockquote>
+<p>function addNode(configId, parentNodeId, nodeType, attributes) {</p>
+<p>const config = db.getConfig(configId);</p>
+<p>const parentNode = config.nodes[parentNodeId];</p>
+<p>const typeDef = typeRegistry.get(nodeType);</p>
+<p>// Validate: can this type be a child of the parent?</p>
+<p>const parentTypeDef = typeRegistry.get(parentNode.type);</p>
+<p>if (!parentTypeDef.allowed_child_types.includes(nodeType)) {</p>
+<p>throw new Error(</p>
+<p>`${nodeType} cannot be a child of ${parentNode.type}`</p>
+<p>);</p>
+<p>}</p>
+<p>// Validate attributes against type schema</p>
+<p>typeDef.validateAttributes(attributes);</p>
+<p>// Create the new node</p>
+<p>const newNode = {</p>
+<p>id: generateUUID(),</p>
+<p>type: nodeType,</p>
+<p>version: 1,</p>
+<p>created_at: now(),</p>
+<p>updated_at: now(),</p>
+<p>attributes: attributes,</p>
+<p>children: [],</p>
+<p>parents: [parentNodeId],</p>
+<p>pricing_function_id: typeDef.default_pricing_function_id,</p>
+<p>tracking: { status: 'pending' }</p>
+<p>};</p>
+<p>// Wire it into the graph</p>
+<p>config.nodes[newNode.id] = newNode;</p>
+<p>parentNode.children.push(newNode.id);</p>
+<p>config.version++;</p>
+<p>db.saveConfig(config);</p>
+<p>eventBus.emit({</p>
+<p>event_type: 'node_added',</p>
+<p>config_id: configId,</p>
+<p>node_id: newNode.id,</p>
+<p>payload: { parent_id: parentNodeId, type: nodeType }</p>
+<p>});</p>
+<p>return newNode;</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-12-3-complete-quote-generation-with-caching">12.3 Complete Quote Generation with Caching</h2>
+<blockquote>
+<p>async function generateQuoteWithCache(configId, quantity) {</p>
+<p>// Check for cached quote</p>
+<p>const config = await db.getConfig(configId);</p>
+<p>const cacheKey = hashConfig(config, quantity);</p>
+<p>const cached = await cache.get(cacheKey);</p>
+<p>if (cached) return cached;</p>
+<p>// Determine which rate tables are needed</p>
+<p>const nodeTypes = new Set(</p>
+<p>Object.values(config.nodes).map(n =&gt; n.type)</p>
+<p>);</p>
+<p>const neededTables = typeRegistry</p>
+<p>.getRequiredRateTables(nodeTypes);</p>
+<p>// Batch-load all rate data (1-2 queries)</p>
+<p>const rateTables = await db.getRateTables(neededTables);</p>
+<p>const qtyCurves = await db.getQuantityCurves(neededTables);</p>
+<p>// Build the pricing context</p>
+<p>const context = {</p>
+<p>quantity,</p>
+<p>rate_tables: rateTables,</p>
+<p>quantity_curves: qtyCurves,</p>
+<p>markup_rules: await db.getMarkupRules(),</p>
+<p>global_params: await db.getGlobalParams(),</p>
+<p>resolve_node: (id) =&gt; config.nodes[id]</p>
+<p>};</p>
+<p>// Execute the pricing traversal</p>
+<p>const memo = new Map();</p>
+<p>const rootResult = await evaluateNodeParallel(</p>
+<p>config.root_node_id, config, context, memo</p>
+<p>);</p>
+<p>const quote = {</p>
+<p>config_id: config.id,</p>
+<p>config_version: config.version,</p>
+<p>quantity,</p>
+<p>total: rootResult.total_cost,</p>
+<p>unit_price: rootResult.unit_cost,</p>
+<p>setup_total: rootResult.setup_cost,</p>
+<p>waste_total: rootResult.waste_cost,</p>
+<p>breakdown: rootResult.breakdown,</p>
+<p>node_results: Object.fromEntries(memo),</p>
+<p>generated_at: new Date().toISOString()</p>
+<p>};</p>
+<p>// Cache for future requests</p>
+<p>await cache.set(cacheKey, quote, { ttl: 3600 });</p>
+<p>return quote;</p>
+<p>}</p>
+</blockquote>
+<h1 id="ch-13-architecture-decision-records">13. Architecture Decision Records</h1>
+<p>This chapter documents the key architectural decisions and their
+rationales. These are invaluable for future maintainers and for
+providing context to any LLM assisting with implementation.</p>
+<h2 id="ch-adr-001-document-storage-for-product-configuration">ADR-001: Document Storage for Product Configurations</h2>
+<p><strong>Decision:</strong> Store product configurations as JSON
+documents (PostgreSQL JSONB) rather than normalized relational
+tables.</p>
+<p><strong>Context:</strong> Product configurations are hierarchical,
+schema-variable, and always loaded as a complete unit. Relational
+normalization fragments the data across many tables, requiring expensive
+joins to reconstitute.</p>
+<p><strong>Consequences:</strong> Single-read loading, flexible schema,
+no migrations for new product types. Trade-off: cannot use SQL joins to
+query across node attributes without extracting to GIN-indexed JSONB
+paths.</p>
+<h2 id="ch-adr-002-pricing-functions-as-code-not-database-rul">ADR-002: Pricing Functions as Code, Not Database Rules</h2>
+<p><strong>Decision:</strong> Implement pricing logic as registered code
+functions rather than database-stored rules or stored procedures.</p>
+<p><strong>Context:</strong> Pricing logic requires conditional
+branching, mathematical operations, and access to multiple data points
+simultaneously. Database-stored rules (EAV patterns or stored
+procedures) are hard to test, hard to version control, and hard to
+debug.</p>
+<p><strong>Consequences:</strong> Pricing logic is testable with unit
+tests, version-controlled in Git, and executes at CPU speed in memory.
+Trade-off: adding a new pricing function requires a code deployment
+(mitigated by the type registration system which handles attribute
+changes without deployment).</p>
+<h2 id="ch-adr-003-event-sourcing-for-production-tracking">ADR-003: Event Sourcing for Production Tracking</h2>
+<p><strong>Decision:</strong> Use event sourcing (immutable event log)
+instead of mutable status fields for production tracking.</p>
+<p><strong>Context:</strong> Production tracking requires not just
+current status but full history: when did each step start, who did it,
+what was the waste, was it rescheduled? Mutable status fields destroy
+this history.</p>
+<p><strong>Consequences:</strong> Complete audit trail, ability to
+reconstruct state at any point in time, ability to build new projections
+from existing events. Trade-off: slightly more complex implementation,
+requires event consumers to maintain read-side projections.</p>
+<h2 id="ch-adr-004-cqrs-for-read-write-separation">ADR-004: CQRS for Read/Write Separation</h2>
+<p><strong>Decision:</strong> Separate read and write data models.
+Writes go to the configuration store and event store. Reads come from
+purpose-built projections.</p>
+<p><strong>Context:</strong> The shop floor dashboard, quoting UI, and
+reporting system all need different views of the same data. Trying to
+serve all these from a single normalized database leads to either slow
+queries or complex denormalization that is hard to maintain.</p>
+<p><strong>Consequences:</strong> Each read use case gets an optimized
+data model. Trade-off: eventual consistency between write and read sides
+(typically 1-5 seconds), more infrastructure to operate.</p>
+<h1 id="ch-14-graphs-vs-relational-a-deep-side-by-side-compar">14. Graphs vs. Relational: A Deep Side-by-Side Comparison</h1>
+<p>This chapter exists to bridge the conceptual gap for anyone coming
+from a relational database background. The graph model does not replace
+relational databases. It replaces the practice of using relational
+databases for data that is fundamentally hierarchical and
+schema-variable. Understanding exactly where each paradigm wins and
+loses is essential for making good implementation decisions.</p>
+<h2 id="ch-14-1-the-core-difference-fixed-schema-vs-data-defi">14.1 The Core Difference: Fixed Schema vs. Data-Defined Structure</h2>
+<p>In a relational database, the schema (tables, columns, data types,
+foreign keys) is defined by a developer and enforced by the database
+engine. The structure of the data is determined before any data exists.
+This works brilliantly for data that is uniform: every customer has a
+name, an email, and an address. Every invoice has a date, a total, and a
+customer reference. The shape is known and stable.</p>
+<p>In the graph/document model used in this architecture, the schema
+defines only the rules for what types of nodes can exist and how they
+connect. The actual structure of any specific product is determined by
+the user at configuration time. A two-layer card and a twelve-layer card
+use the same code, the same storage, and the same pricing engine. The
+difference between them is the shape of the data, not the shape of the
+schema.</p>
+<p>To make this concrete, consider what happens in each paradigm when
+you need to model a new card that has 6 layers instead of the usual
+2.</p>
+<h3 id="ch-the-relational-approach">The Relational Approach</h3>
+<p>If the original schema was designed for 2 layers (common in MIS
+systems that have a front and back concept), you face a structural
+problem. The layers table might have a job_id, a side (front/back), and
+attributes for that side. To support 6 layers, you need to either
+redesign the table to support arbitrary layers (breaking all existing
+queries and reports that assumed 2), add layer_3 through layer_6 columns
+(the wide-table antipattern that leads to sparse, incomprehensible
+schemas), or create a separate generic_layers table that exists
+alongside the original layers table (fragmenting the model and forcing
+the application to check both).</p>
+<p>Each approach requires a database migration, changes to every query
+that touches layers, changes to the UI, changes to the pricing logic,
+and regression testing of all existing products. This is typically weeks
+of development work and carries significant risk of breaking existing
+quotes.</p>
+<h3 id="ch-the-graph-approach">The Graph Approach</h3>
+<p>In the graph model, a 6-layer card is simply a root node with 6 child
+nodes of type substrate_layer, each with their own children (processes).
+No schema change. No migration. No code change. The traversal engine
+already handles N children. The pricing engine already evaluates
+children recursively. The UI already renders children dynamically from
+the type definitions. You create the configuration, and it works.</p>
+<p>This is not a theoretical advantage. It is the difference between
+weeks of development (relational) and minutes of configuration
+(graph).</p>
+<h2 id="ch-14-2-query-pattern-comparison">14.2 Query Pattern Comparison</h2>
+<p>A fair comparison must acknowledge that relational databases are
+superior for certain query patterns. Here is an honest side-by-side:</p>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 36%" />
+<col style="width: 36%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Query Pattern</strong></td>
+<td><strong>Relational Advantage</strong></td>
+<td><strong>Graph/Document Advantage</strong></td>
+</tr>
+<tr class="even">
+<td>Load a complete product config</td>
+<td>Requires 5-15 JOINs across tables. Slow, complex query.</td>
+<td>Single document read. O(1). Massively faster.</td>
+</tr>
+<tr class="odd">
+<td>Price a complex product</td>
+<td>50-200 sequential queries for rate lookups.</td>
+<td>1-3 batch loads, then in-memory computation. 100x faster.</td>
+</tr>
+<tr class="even">
+<td>Find all jobs using material X</td>
+<td>Simple WHERE clause on indexed column. Fast and natural.</td>
+<td>Requires JSONB path query or GIN index. Works but less
+ergonomic.</td>
+</tr>
+<tr class="odd">
+<td>Aggregate monthly revenue by process type</td>
+<td>GROUP BY on relational columns. SQL shines here.</td>
+<td>Requires extracting data from documents into a reporting
+projection.</td>
+</tr>
+<tr class="even">
+<td>Add a new process type to the system</td>
+<td>ALTER TABLE or new table. Migration required.</td>
+<td>Register a new type definition. Zero migration.</td>
+</tr>
+<tr class="odd">
+<td>Change one attribute on one process</td>
+<td>UPDATE one row. Simple.</td>
+<td>Load document, modify in memory, save document. Slightly more
+work.</td>
+</tr>
+<tr class="even">
+<td>Generate a detailed cost breakdown</td>
+<td>Complex multi-table JOIN with subqueries.</td>
+<td>Tree traversal of pre-computed node results. Cleaner.</td>
+</tr>
+<tr class="odd">
+<td>Historical audit: who changed what when</td>
+<td>Requires trigger-based audit tables or CDC.</td>
+<td>Native with event sourcing. Every change is already an event.</td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is clear: the graph model wins decisively for operations
+that involve loading, pricing, and manipulating product configurations
+(the hot path of your quoting system). The relational model wins for
+ad-hoc analytical queries across large datasets. This is precisely why
+the architecture recommends a hybrid: configurations in JSONB documents,
+analytics in relational projections.</p>
+<h2 id="ch-14-3-the-real-comparison-it-is-about-data-loading-">14.3 The Real Comparison: It Is About Data Loading, Not Storage</h2>
+<p>The most common misunderstanding is that this is about replacing
+PostgreSQL with MongoDB or some other document database. It is not. You
+can implement this entire architecture in PostgreSQL using JSONB
+columns. The database engine is the same. What changes is the data
+access pattern.</p>
+<p>In the relational MIS, fetching a product for quoting looks like
+this:</p>
+<blockquote>
+<p>-- Legacy: 12+ queries to load one product for quoting</p>
+<p>SELECT * FROM jobs WHERE id = $1;</p>
+<p>SELECT * FROM job_layers WHERE job_id = $1;</p>
+<p>SELECT * FROM layer_substrates WHERE layer_id IN (...);</p>
+<p>SELECT * FROM layer_processes WHERE layer_id IN (...);</p>
+<p>SELECT * FROM process_rates WHERE process_id IN (...);</p>
+<p>SELECT * FROM process_params WHERE process_id IN (...);</p>
+<p>SELECT * FROM quantity_breaks WHERE rate_id IN (...);</p>
+<p>SELECT * FROM press_configs WHERE process_id IN (...);</p>
+<p>SELECT * FROM finishing_options WHERE job_id = $1;</p>
+<p>SELECT * FROM assembly_steps WHERE job_id = $1;</p>
+<p>SELECT * FROM markup_rules WHERE customer_id = $2;</p>
+<p>SELECT * FROM waste_factors WHERE process_type IN (...);</p>
+<p>-- ... application code stitches all of this together</p>
+</blockquote>
+<p>In the graph architecture, loading the same product looks like
+this:</p>
+<blockquote>
+<p>-- Graph: 1 query to load the complete product</p>
+<p>SELECT config FROM product_configurations WHERE id = $1;</p>
+<p>-- Done. The entire product graph is in memory.</p>
+</blockquote>
+<p>Both use PostgreSQL. Both use SQL. The difference is architectural:
+one fragments data across tables and reconstructs it with queries; the
+other stores it as a complete unit and loads it in one read. The graph
+approach treats the database as a storage engine for documents, not as a
+computation engine for joins.</p>
+<h2 id="ch-14-4-the-myth-of-normalization-for-everything">14.4 The Myth of Normalization for Everything</h2>
+<p>Database normalization (1NF, 2NF, 3NF, BCNF) is one of the most
+important concepts in computer science, and it is correct for the data
+it was designed for: data where the structure is fixed, where individual
+fields are frequently queried in isolation, and where update anomalies
+must be prevented.</p>
+<p>Product configurations violate all three assumptions. Their structure
+is variable (different products have different shapes). Individual
+fields are almost never queried in isolation (you never need just the UV
+coating area percentage without the rest of the product context). And
+update anomalies are managed through versioning, not normalization (you
+do not want a rate table change to retroactively alter a historical
+quote).</p>
+<p>The graph model is not anti-normalization. It is normalization
+applied correctly: the data that is uniform and stable (rate tables,
+customers, users) stays normalized in relational tables. The data that
+is hierarchical and variable (product configurations) is stored in the
+format that matches its nature.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-the-litmus-test">The Litmus Test</h3>
+<p>Ask yourself: when I load this data, do I always need the complete
+unit, or do I frequently need individual pieces? If you always load the
+complete product configuration as a whole to price it, display it, or
+track it, that is a document. If you frequently need to query one field
+across thousands of records (e.g., find all customers in California),
+that is a relational table. Use each tool for what it is good
+at.</p></td>
+</tr>
+</tbody>
+</table>
+<h1 id="ch-15-why-this-architecture-isn-t-universal-honest-bo">15. Why This Architecture Isn’t Universal: Honest Bottlenecks</h1>
+<p>If graph-based product configuration is so clearly superior for
+composable products, why is the entire print industry not using it? The
+answer involves technical trade-offs, organizational realities, and
+market dynamics. This chapter is deliberately candid because
+understanding the risks is as important as understanding the
+benefits.</p>
+<h2 id="ch-15-1-the-talent-gap">15.1 The Talent Gap</h2>
+<p>This is the single biggest obstacle. The relational model is taught
+in every computer science program. Every junior developer knows SQL. The
+concepts in this paper, including graph data modeling, event sourcing,
+CQRS, function-pipeline pricing, and document storage, come from the
+domain-driven design (DDD) community, and they are well-established in
+fintech, logistics, and large-scale e-commerce. But they have barely
+penetrated the print MIS market.</p>
+<p>The practical consequence: hiring developers who can build and
+maintain this system is harder and more expensive than hiring developers
+who can maintain a traditional relational MIS. If you lose a key
+developer, finding a replacement who understands event sourcing and
+graph traversal is not a job-board-and-wait-a-week situation. This is a
+real operational risk that must be mitigated through documentation, pair
+programming, and the use of LLM-assisted development (which is
+specifically why this paper exists in this level of detail).</p>
+<h2 id="ch-15-2-event-sourcing-operational-complexity">15.2 Event Sourcing Operational Complexity</h2>
+<p>Event sourcing is powerful, but it introduces failure modes that
+traditional CRUD systems do not have:</p>
+<ul>
+<li><p>Projection desynchronization. If the event consumer that updates
+the shop floor dashboard crashes or falls behind, the dashboard shows
+stale data. In a CRUD system, the data is always current because reads
+and writes hit the same table. With event sourcing, you need monitoring,
+alerting, and replay mechanisms to handle consumer failures.</p></li>
+<li><p>Event schema evolution. Over time, the shape of your events will
+change. A process_started event in version 1 might have different fields
+than in version 2. You need an event versioning and upcasting strategy
+so that old events can still be processed by new code. This is solvable
+(there are well-established patterns), but it is additional complexity
+that a simple UPDATE statement does not have.</p></li>
+<li><p>Storage growth. Events are append-only. They accumulate forever.
+A busy shop generating thousands of events per day will have millions of
+events within a year. You need archiving, compaction, or snapshotting
+strategies to keep the event store performant. In a CRUD system, the
+database stays roughly the same size because you are updating in
+place.</p></li>
+<li><p>Debugging difficulty. When a projection shows wrong data, the
+debugging process is: examine the event stream, find which event was
+incorrect or missing, determine whether the bug is in the event producer
+or the event consumer, and replay events to verify. This is more complex
+than looking at a row in a table and checking the UPDATE query.</p></li>
+</ul>
+<h2 id="ch-15-3-cqrs-and-eventual-consistency">15.3 CQRS and Eventual Consistency</h2>
+<p>CQRS separates reads from writes, which means the read side can be
+stale. When an operator marks a process complete on the shop floor, the
+event is written to the event store immediately. But the dashboard
+projection might not be updated for 1-5 seconds (or longer under load).
+During that window, anyone looking at the dashboard sees the old
+status.</p>
+<p>For most use cases, this delay is irrelevant. Nobody cares if the
+dashboard updates in 1 second or 3 seconds. But there are edge
+cases:</p>
+<ul>
+<li><p>An operator marks a process complete, then immediately checks the
+dashboard to verify. It still shows in progress. They mark it complete
+again. Now you have duplicate events. You need idempotency
+handling.</p></li>
+<li><p>A manager pulls a report while a batch of events is being
+processed. The report shows partial data. You need to communicate
+clearly that projections are eventually consistent, or implement
+read-after-write consistency for critical paths.</p></li>
+<li><p>Two operators update the same node simultaneously. With CQRS, the
+write side handles this through optimistic concurrency (version
+checking). But the read side might show one operator's change before the
+other's, causing confusion.</p></li>
+</ul>
+<p>These are all solvable problems with known patterns. But they add
+complexity that a simple relational system reading from a single source
+of truth does not have. You are trading simplicity for power, and you
+need to be honest about that trade.</p>
+<h2 id="ch-15-4-document-storage-query-limitations">15.4 Document Storage Query Limitations</h2>
+<p>When your product configuration lives in a JSON document, certain
+queries become harder. In a relational system, 'find all jobs that used
+foil stamping on paper heavier than 300gsm in the last quarter' is a
+straightforward SQL query with a few JOINs and WHERE clauses on indexed
+columns.</p>
+<p>In the document model, this query requires reaching into the JSON
+structure of every configuration document to find nodes where type
+equals foil_process and the parent layer's gsm attribute exceeds 300.
+PostgreSQL can do this with JSONB path queries and GIN indexes, but the
+syntax is less intuitive, the query plans can be unpredictable, and
+performance depends heavily on how the GIN index is structured.</p>
+<p>The mitigation (and the recommendation in this architecture) is to
+maintain relational projections for analytical queries. The event stream
+feeds a projection that extracts the relevant attributes into flat
+relational tables optimized for reporting. But this means maintaining
+two representations of the same data, which is the fundamental trade-off
+of CQRS.</p>
+<h2 id="ch-15-5-the-debugging-surface-area">15.5 The Debugging Surface Area</h2>
+<p>In a relational MIS, a wrong quote can be debugged by opening the
+database, examining the rate table, and tracing the SQL query. The path
+from input to output is linear and visible.</p>
+<p>In the graph pricing engine, a wrong quote means:</p>
+<ol type="1">
+<li><p>Load the configuration document and inspect the node
+graph.</p></li>
+<li><p>Identify which node's pricing result is incorrect.</p></li>
+<li><p>Examine that node's pricing function, its input attributes, and
+the pricing context.</p></li>
+<li><p>Check whether the rate tables were loaded correctly into the
+context.</p></li>
+<li><p>Check whether memoization returned a stale cached
+result.</p></li>
+<li><p>If the node depends on parent or sibling attributes, check the
+graph traversal order.</p></li>
+</ol>
+<p>This is more steps and more abstraction layers than the relational
+approach. The pricing function pipeline is more powerful, but the
+debugging surface area is larger. This is mitigated through
+comprehensive logging at each evaluation step, unit tests for each
+pricing function, and integration tests that compare graph engine quotes
+against known-correct values.</p>
+<h2 id="ch-15-6-organizational-inertia-the-real-blocker">15.6 Organizational Inertia: The Real Blocker</h2>
+<p>The biggest reason print MIS vendors do not adopt this architecture
+is not technical. It is organizational. Consider the position of an
+established MIS vendor:</p>
+<ul>
+<li><p>They have a codebase of 500,000+ lines built over 15-20 years on
+a relational model. Rewriting is a multi-year, multi-million-dollar
+effort with high failure risk.</p></li>
+<li><p>Their development team has 10-20 years of expertise in the
+relational model. Retraining them on event sourcing and graph modeling
+is a 6-12 month investment with uncertain outcomes.</p></li>
+<li><p>Their customers have workflows, reports, and integrations built
+around the current schema. Migrating them is a customer-facing
+disruption.</p></li>
+<li><p>Their sales pipeline does not pause during a rewrite. Competitors
+are shipping features while they are rebuilding infrastructure.</p></li>
+<li><p>The ROI is hard to prove in advance. The performance and
+flexibility improvements are real, but they do not map neatly to a sales
+pitch. Customers do not buy 'graph-based product modeling.' They buy
+'faster quoting' and 'easier product setup,' and the vendor has to trust
+that the architectural investment will eventually deliver those
+outcomes.</p></li>
+</ul>
+<p>This is why most MIS vendors incrementally patch their existing
+systems rather than rearchitect. Patching is lower risk, ships faster,
+and keeps the team in their comfort zone. The result is the system you
+are currently experiencing: functional but slow, rigid, and increasingly
+painful as products become more complex.</p>
+<p>Your position is different. You are not carrying 20 years of legacy.
+You are building new (or willing to rebuild), and you are experiencing
+the pain that motivates the investment. That changes the calculus
+entirely.</p>
+<h2 id="ch-15-7-when-not-to-use-this-architecture">15.7 When NOT to Use This Architecture</h2>
+<p>For intellectual honesty, here are cases where the graph model is
+overkill and a simple relational schema is the better choice:</p>
+<ul>
+<li><p>Products are flat and uniform. If every product is a single
+substrate with CMYK print and maybe one finishing process, the
+relational model handles this perfectly. The graph model adds complexity
+without meaningful benefit.</p></li>
+<li><p>Quote volume is low. If you generate 10 quotes per day, the
+performance difference between 200ms (relational) and 5ms (graph) is
+irrelevant. The graph model pays off at scale, when users are
+configuring products interactively and expect instant feedback.</p></li>
+<li><p>The team cannot maintain it. If you do not have (or cannot
+develop) the engineering capability to operate event sourcing and CQRS,
+the operational complexity will outweigh the architectural benefits. A
+well-maintained relational system is better than a poorly maintained
+graph system.</p></li>
+<li><p>You need ad-hoc reporting as the primary use case. If your system
+is 80% reporting and 20% quoting, the relational model's query
+flexibility is more valuable than the graph model's loading
+performance.</p></li>
+</ul>
+<h1 id="ch-16-incremental-adoption-what-to-build-first-and-wh">16. Incremental Adoption: What to Build First and Why</h1>
+<p>The architecture described in this paper has many moving parts: a
+graph data model, a type system, a function-pipeline pricing engine,
+event sourcing, CQRS projections, and a multi-layer caching strategy.
+Attempting to build all of these simultaneously is a recipe for failure.
+This chapter provides a concrete, phased adoption plan that delivers
+value at each stage.</p>
+<h2 id="ch-16-1-phase-1-the-product-configuration-graph-weeks">16.1 Phase 1: The Product Configuration Graph (Weeks 1-6)</h2>
+<p>Build this first because it is the foundation everything else depends
+on, and it delivers immediate value independent of the other
+components.</p>
+<p><strong>What you build:</strong> The ConfigNode schema, the flat-map
+ProductConfiguration document structure, the NodeTypeDefinition
+registry, and a basic CRUD API for creating, reading, and modifying
+configurations. Store configurations in PostgreSQL JSONB.</p>
+<p><strong>What you skip for now:</strong> Event sourcing, CQRS,
+caching. Use simple CRUD operations (load document, modify, save) with
+no event log.</p>
+<p><strong>What you validate:</strong> Can you model your most complex
+existing product as a configuration graph? Does it capture all the
+information currently spread across your legacy tables? Can your team
+add a new process type by registering a type definition without code
+changes?</p>
+<p><strong>Value delivered:</strong> You now have a flexible product
+model that can represent any product complexity. Even without the
+pricing engine, this is useful as a configuration tool and product
+catalog.</p>
+<h2 id="ch-16-2-phase-2-the-pricing-engine-weeks-7-12">16.2 Phase 2: The Pricing Engine (Weeks 7-12)</h2>
+<p>Build this second because it delivers the most visible performance
+improvement and directly addresses the pain of slow quoting.</p>
+<p><strong>What you build:</strong> The PricingFunction interface, the
+PricingContext with pre-loaded rate tables, the post-order traversal
+engine with memoization, and concrete pricing functions for your most
+common process types (start with 5-8 functions covering 80% of your
+products).</p>
+<p><strong>What you skip for now:</strong> Parallel subtree evaluation
+(use sequential traversal first, optimize later). Advanced caching (the
+per-request memoization map is sufficient for now).</p>
+<p><strong>What you validate:</strong> Run shadow quotes. For every
+quote generated by the legacy system, also generate a quote from the
+graph engine. Compare results. Any difference greater than 1% is a bug.
+Track accuracy across 100+ quotes before trusting the engine for
+production use.</p>
+<p><strong>Value delivered:</strong> Quoting drops from seconds to
+milliseconds. Interactive product configuration with live pricing
+becomes possible. Users can tweak options and see price changes
+instantly.</p>
+<h2 id="ch-16-3-phase-3-event-sourcing-for-production-trackin">16.3 Phase 3: Event Sourcing for Production Tracking (Weeks 13-20)</h2>
+<p>Build this third because it requires the product graph to exist
+(events reference nodes), and it adds the granular tracking
+capability.</p>
+<p><strong>What you build:</strong> The ProductionEvent schema, an
+append-only event store (can be a simple PostgreSQL table initially),
+event producers that emit events when node status changes, and a single
+projection: node_current_state.</p>
+<p><strong>What you skip for now:</strong> Multiple projections,
+real-time event streaming (use polling initially), complex event replay
+tooling.</p>
+<p><strong>What you validate:</strong> Can you track the status of every
+node in a product configuration independently? Can you answer 'when did
+this process start, who ran it, and how much waste was there?' from the
+event log?</p>
+<p><strong>Value delivered:</strong> Complete audit trail for
+production. Per-process, per-layer tracking. The ability to analyze
+actual vs. estimated costs at any granularity.</p>
+<h2 id="ch-16-4-phase-4-cqrs-projections-and-advanced-feature">16.4 Phase 4: CQRS Projections and Advanced Features (Weeks 21+)</h2>
+<p>Build this last because it optimizes read patterns that only matter
+once you have meaningful data flowing through the system.</p>
+<p><strong>What you build:</strong> Purpose-built read projections (shop
+floor dashboard, station queue, cost analysis report). Async event
+consumers that maintain projections. Rate table caching in Redis.
+Subtree price caching.</p>
+<p><strong>What you validate:</strong> Dashboard latency under load.
+Projection consistency. Cache hit rates. Event consumer resilience (what
+happens when a consumer goes down and comes back up?).</p>
+<p><strong>Value delivered:</strong> Fast, purpose-built views for every
+user persona (estimators, operators, managers). Scalable read
+performance independent of write load.</p>
+<h2 id="ch-16-5-the-golden-rule-of-incremental-adoption">16.5 The Golden Rule of Incremental Adoption</h2>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-build-only-what-hurts-today">Build Only What Hurts Today</h3>
+<p>At each phase, you should be solving a pain you are actively feeling.
+If quoting is slow, Phase 2 addresses that. If you cannot track
+processes granularly, Phase 3 addresses that. If your dashboards are
+slow under load, Phase 4 addresses that. Never build infrastructure in
+anticipation of pain you have not yet experienced. YAGNI (You Aren’t
+Gonna Need It) applies to architecture patterns just as much as to code
+features. Event sourcing is powerful, but if your current tracking needs
+are simple and low-volume, a well-designed CRUD system with good logging
+may serve you well for a year while you focus on the configuration graph
+and pricing engine.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-16-6-using-an-llm-for-implementation">16.6 Using an LLM for Implementation</h2>
+<p>This document is deliberately written to serve as context for
+LLM-assisted development. When working with an LLM to implement this
+architecture, the most effective approach is:</p>
+<ol type="1">
+<li><p>Share the relevant chapter with the LLM before asking it to write
+code. For example, if you are implementing the pricing engine, provide
+Chapters 5 and 6 as context. The data structures and function signatures
+give the LLM a concrete target.</p></li>
+<li><p>Start with the interfaces and type definitions. Have the LLM
+generate the TypeScript or Python interfaces from the pseudocode in this
+paper. These become the contract that all implementation code conforms
+to.</p></li>
+<li><p>Implement one pricing function at a time. Give the LLM the
+PricingFunction interface and the specific rate table structure for one
+process type. Validate the output against a known-correct quote from
+your legacy system before moving to the next function.</p></li>
+<li><p>Use the Architecture Decision Records (Chapter 13) as guardrails.
+When the LLM proposes an approach that contradicts an ADR, push back
+with the rationale from the ADR. This keeps the implementation aligned
+with the architecture.</p></li>
+<li><p>Test exhaustively at each phase boundary. Before starting Phase
+2, the product configuration graph should be fully validated. Before
+starting Phase 3, shadow quoting should show consistent accuracy. Do not
+build forward on an unvalidated foundation.</p></li>
+</ol>
+<h1 id="ch-17-graph-theory-academic-foundations-and-cross-dom">17. Graph Theory, Academic Foundations, and Cross-Domain Insights</h1>
+<p>This chapter takes the theoretical concept of a Directed Acyclic
+Graph and shows exactly how it manifests in product configuration, with
+every detail you need to implement it correctly. If you have never
+worked with graph data structures, this chapter will take you from zero
+to fluent. If you have, it will show you the specific properties that
+matter for print product modeling and the non-obvious traps that
+arise.</p>
+<h2 id="ch-17-1-graph-fundamentals-nodes-edges-direction-and-">17.1 Graph Fundamentals: Nodes, Edges, Direction, and Cycles</h2>
+<p>A graph is a data structure consisting of nodes (also called
+vertices) and edges (connections between nodes). In our product model, a
+node is any discrete component: a product, a layer, a process, an
+assembly step. An edge is a parent-child relationship: 'this layer
+belongs to this product' or 'this process is applied to this layer.'</p>
+<p>The edges are directed, meaning they have a start and an end. The
+direction matters: 'product contains layer' is different from 'layer
+contains product.' We typically model edges as parent-to-child, where
+the parent 'owns' or 'contains' the child.</p>
+<p>The graph is acyclic, meaning there are no loops. You cannot follow
+edges from any node and arrive back at the same node. This is a
+fundamental constraint because a card cannot contain itself, a process
+cannot be applied to itself, and a layer cannot be a sub-layer of its
+own sub-layer. Cycles would cause the pricing engine to loop
+infinitely.</p>
+<h2 id="ch-17-2-why-a-dag-and-not-a-tree-the-shared-node-prob">17.2 Why a DAG and Not a Tree: The Shared Node Problem</h2>
+<p>A tree is a restricted graph where every node has exactly one parent
+(except the root, which has none). Trees are simpler to work with, but
+they cannot model one important real-world scenario: shared
+operations.</p>
+<p>Consider a lamination process that bonds Layer 1 and Layer 2
+together. In a tree, this lamination would need to be a child of one
+layer or the other, which misrepresents the reality that it operates on
+both. Or it would need to be duplicated as two separate nodes, which
+misrepresents the reality that it is a single physical operation with a
+single cost.</p>
+<p>In a DAG, the lamination node can have two parents: Layer 1 and Layer
+2. It is stored once, priced once, and tracked once, but it belongs to
+both layers. This is called a shared node or a multi-parent node.</p>
+<p>Here is the distinction visualized:</p>
+<blockquote>
+<p>TREE MODEL (wrong for shared operations):</p>
+<p>Product</p>
+<p>├── Layer 1</p>
+<p>│ ├── CMYK Print</p>
+<p>│ └── Lamination (DUPLICATE – costed twice!)</p>
+<p>└── Layer 2</p>
+<p>├── Screen Print</p>
+<p>└── Lamination (DUPLICATE – costed twice!)</p>
+<p>DAG MODEL (correct):</p>
+<p>Product</p>
+<p>├── Layer 1</p>
+<p>│ └── CMYK Print</p>
+<p>├── Layer 2</p>
+<p>│ └── Screen Print</p>
+<p>└── Lamination (shared node, parents: [Layer 1, Layer 2])</p>
+<p>└── costed ONCE, tracked ONCE</p>
+</blockquote>
+<p>The flat-map storage format from Chapter 3 handles this naturally.
+The lamination node is stored once in the nodes map. Layer 1, Layer 2,
+and the root Product all reference it by ID. There is no
+duplication.</p>
+<h2 id="ch-17-3-adjacency-representations-how-to-store-a-grap">17.3 Adjacency Representations: How to Store a Graph</h2>
+<p>There are several ways to represent a graph in memory and on disk.
+For product configurations, we use an adjacency list stored as a flat
+map. Here is why, and how it compares to alternatives:</p>
+<h3 id="ch-adjacency-matrix">Adjacency Matrix</h3>
+<p>An adjacency matrix is a 2D array where matrix[i][j] is 1 if node i
+connects to node j, and 0 otherwise. For a product with 50 nodes, this
+is a 50x50 = 2,500 cell matrix, of which maybe 80 cells are non-zero.
+This is extremely wasteful for sparse graphs (which product
+configurations always are). It also does not naturally store node
+attributes. Never use this for product graphs.</p>
+<h3 id="ch-nested-object-tree-embedding">Nested Object (Tree Embedding)</h3>
+<p>A nested object stores children directly inside their parent: { id:
+'product', children: [{ id: 'layer1', children: [...] }] }. This is
+intuitive but fails for DAGs because shared nodes must be duplicated. It
+also makes O(1) lookup by ID impossible without building a secondary
+index. Avoid this.</p>
+<h3 id="ch-flat-map-with-id-references-our-approach">Flat Map with ID References (Our Approach)</h3>
+<p>A flat map (dictionary/hash map) keyed by node ID, where each node
+stores arrays of child IDs and parent IDs. This supports DAGs natively
+(shared nodes are stored once, referenced by ID from multiple parents),
+enables O(1) node lookup by ID, serializes cleanly to JSON, and supports
+efficient graph traversal by following ID references.</p>
+<blockquote>
+<p>// Flat map: the canonical representation</p>
+<p>const nodes = {</p>
+<p>'product': {</p>
+<p>id: 'product',</p>
+<p>children: ['layer1', 'layer2', 'lamination'],</p>
+<p>parents: []</p>
+<p>},</p>
+<p>'layer1': {</p>
+<p>id: 'layer1',</p>
+<p>children: ['cmyk-print'],</p>
+<p>parents: ['product']</p>
+<p>},</p>
+<p>'layer2': {</p>
+<p>id: 'layer2',</p>
+<p>children: ['screen-print'],</p>
+<p>parents: ['product']</p>
+<p>},</p>
+<p>'lamination': {</p>
+<p>id: 'lamination',</p>
+<p>children: [],</p>
+<p>parents: ['product'], // referenced by product as assembly</p>
+<p>attributes: { inputs: ['layer1', 'layer2'] } // knows its inputs</p>
+<p>},</p>
+<p>'cmyk-print': {</p>
+<p>id: 'cmyk-print',</p>
+<p>children: [],</p>
+<p>parents: ['layer1']</p>
+<p>},</p>
+<p>'screen-print': {</p>
+<p>id: 'screen-print',</p>
+<p>children: [],</p>
+<p>parents: ['layer2']</p>
+<p>}</p>
+<p>};</p>
+</blockquote>
+<h2 id="ch-17-4-topological-sorting-the-foundation-of-bottom-">17.4 Topological Sorting: The Foundation of Bottom-Up Pricing</h2>
+<p>A topological sort is an ordering of all nodes in a DAG such that for
+every directed edge from node A to node B, A appears before B in the
+ordering. In simpler terms: every parent appears before its
+children.</p>
+<p>For bottom-up pricing, we need the reverse: every child appears
+before its parent. This is called a reverse topological sort, and it
+guarantees that when we evaluate a node, all of its children have
+already been evaluated and their results are available.</p>
+<p>Here is the algorithm:</p>
+<blockquote>
+<p>function reverseTopologicalSort(config) {</p>
+<p>const visited = new Set();</p>
+<p>const order = []; // will hold nodes in reverse-topo order</p>
+<p>function dfs(nodeId) {</p>
+<p>if (visited.has(nodeId)) return; // already processed</p>
+<p>visited.add(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>// Visit all children first (go deeper before recording)</p>
+<p>for (const childId of node.children) {</p>
+<p>dfs(childId);</p>
+<p>}</p>
+<p>// After all children are recorded, record this node</p>
+<p>order.push(nodeId);</p>
+<p>}</p>
+<p>dfs(config.root_node_id);</p>
+<p>return order; // Leaf nodes first, root last</p>
+<p>}</p>
+<p>// For the card example, this returns:</p>
+<p>// ['cmyk-f', 'cmyk-b', 'spot-uv', 'die-cut', ← leaf processes</p>
+<p>// 'screen-print', ← leaf process</p>
+<p>// 'layer1', 'layer2', ← layers (agg.)</p>
+<p>// 'lamination', ← assembly</p>
+<p>// 'product'] ← root (last)</p>
+</blockquote>
+<p>This ordering is critical. It means we can iterate through the array
+from index 0 to the end, evaluate each node in sequence, and be
+guaranteed that every node's children have already been evaluated. This
+eliminates the need for recursion in the pricing loop and makes the
+execution predictable and debuggable.</p>
+<h2 id="ch-17-5-cycle-detection-preventing-infinite-loops">17.5 Cycle Detection: Preventing Infinite Loops</h2>
+<p>If someone accidentally creates a cycle in the configuration graph
+(node A is a child of B, B is a child of C, C is a child of A), the
+topological sort and the pricing traversal will loop forever. Cycle
+detection must be built into the graph mutation operations (addNode,
+reparentNode) so that cycles are rejected before they enter the
+system.</p>
+<p>The standard algorithm uses a three-color marking scheme during
+depth-first search:</p>
+<blockquote>
+<p>function hasCycle(config) {</p>
+<p>const WHITE = 0; // Not yet visited</p>
+<p>const GRAY = 1; // Currently being visited (in the DFS stack)</p>
+<p>const BLACK = 2; // Fully processed</p>
+<p>const color = {};</p>
+<p>for (const id of Object.keys(config.nodes)) {</p>
+<p>color[id] = WHITE;</p>
+<p>}</p>
+<p>function dfs(nodeId) {</p>
+<p>color[nodeId] = GRAY; // Mark as 'currently visiting'</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>for (const childId of node.children) {</p>
+<p>if (color[childId] === GRAY) {</p>
+<p>// We found a node that is already in our current</p>
+<p>// traversal path. This IS a cycle.</p>
+<p>return true; // CYCLE DETECTED</p>
+<p>}</p>
+<p>if (color[childId] === WHITE) {</p>
+<p>if (dfs(childId)) return true; // Cycle found deeper</p>
+<p>}</p>
+<p>// BLACK nodes are safe – already fully explored</p>
+<p>}</p>
+<p>color[nodeId] = BLACK; // Fully explored, no cycle here</p>
+<p>return false;</p>
+<p>}</p>
+<p>// Check from every unvisited node (handles disconnected graphs)</p>
+<p>for (const id of Object.keys(config.nodes)) {</p>
+<p>if (color[id] === WHITE) {</p>
+<p>if (dfs(id)) return true;</p>
+<p>}</p>
+<p>}</p>
+<p>return false;</p>
+<p>}</p>
+</blockquote>
+<p>The key insight is the GRAY state. A WHITE node has not been seen. A
+BLACK node has been fully explored and is safe. A GRAY node is one we
+are currently in the middle of exploring. If we encounter a GRAY node
+while traversing, it means we have looped back to a node that is an
+ancestor of the current node in the DFS path. That is a cycle.</p>
+<p>This check should run every time a node is added, moved, or has its
+children modified. It runs in O(V + E) time where V is the number of
+nodes and E is the number of edges. For a product with 100 nodes and 120
+edges, this is sub-millisecond. There is no excuse for not running it on
+every mutation.</p>
+<h2 id="ch-17-6-the-diamond-dependency-problem">17.6 The Diamond Dependency Problem</h2>
+<p>The diamond dependency is a pattern where two children of a node
+share a common descendant. It is the most common cause of
+double-counting in pricing and the most subtle bug in graph-based
+quoting systems.</p>
+<blockquote>
+<p>THE DIAMOND:</p>
+<p>Product</p>
+<p>/ \</p>
+<p>Layer1 Layer2</p>
+<p>\ /</p>
+<p>Lamination ← shared descendant</p>
+<p>Without memoization:</p>
+<p>evaluate(Product)</p>
+<p>├─ evaluate(Layer1)</p>
+<p>│ └─ evaluate(Lamination) → returns $50</p>
+<p>└─ evaluate(Layer2)</p>
+<p>└─ evaluate(Lamination) → computes AGAIN, returns $50</p>
+<p>Total: Layer1($X + $50) + Layer2($Y + $50) = DOUBLE-COUNTED!</p>
+<p>With memoization:</p>
+<p>evaluate(Product)</p>
+<p>├─ evaluate(Layer1)</p>
+<p>│ └─ evaluate(Lamination) → returns $50, CACHED</p>
+<p>└─ evaluate(Layer2)</p>
+<p>└─ evaluate(Lamination) → cache HIT, returns $50</p>
+<p>But now: do we add $50 to Layer1 OR Layer2 OR neither?</p>
+</blockquote>
+<p>Memoization prevents the lamination from being computed twice, but it
+introduces a subtler question: which parent's subtotal should include
+the lamination cost? If both Layer1 and Layer2 include it (because it is
+in both their children arrays), the product aggregator will double-count
+it when summing Layer1 + Layer2.</p>
+<p>There are three strategies to handle this:</p>
+<h3 id="ch-strategy-a-root-level-assembly-collection">Strategy A: Root-Level Assembly Collection</h3>
+<p>Move shared operations out of the layer children and into the
+product's children directly. Lamination is not a child of Layer1 or
+Layer2; it is a child of Product with an 'inputs' attribute referencing
+both layers. This is the approach used in the data model from Chapter 3
+and is the recommended default. It eliminates the diamond entirely
+because the shared node has only one parent.</p>
+<h3 id="ch-strategy-b-first-encountered-pays">Strategy B: First-Encountered-Pays</h3>
+<p>The first parent to evaluate the shared node includes its cost.
+Subsequent parents receive a cached result with total_cost = 0. This
+works but makes the cost breakdown confusing: why does Layer1 show a
+lamination cost but Layer2 does not? The answer depends on traversal
+order, which is not intuitive to estimators.</p>
+<h3 id="ch-strategy-c-cost-splitting">Strategy C: Cost Splitting</h3>
+<p>Divide the shared node's cost equally (or proportionally) among its
+parents. Lamination costs $50, so Layer1 includes $25 and Layer2
+includes $25. This is semantically accurate but adds complexity to the
+aggregator logic and makes individual line items harder to
+interpret.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-recommendation">Recommendation</h3>
+<p>Use Strategy A (root-level assembly collection) as the default.
+Design the node type system so that assembly operations are always
+children of the root product, not of individual layers. This makes the
+graph tree-like in practice (each node has one parent) while retaining
+DAG capability for the rare cases where true multi-parent relationships
+are needed. When you do encounter a genuine diamond, use Strategy C with
+explicit cost-allocation rules.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-17-7-orphan-detection-and-graph-integrity">17.7 Orphan Detection and Graph Integrity</h2>
+<p>An orphan is a node that exists in the flat map but is not reachable
+from the root node. This happens when a node is removed from its
+parent's children array but not deleted from the map, or when a reparent
+operation leaves a node disconnected.</p>
+<p>Orphans waste storage and can cause confusion, but they are not
+dangerous (the pricing engine never reaches them because it starts from
+the root). However, detecting them is simple and should be done as part
+of configuration validation:</p>
+<blockquote>
+<p>function findOrphans(config) {</p>
+<p>const reachable = new Set();</p>
+<p>function walk(nodeId) {</p>
+<p>if (reachable.has(nodeId)) return;</p>
+<p>reachable.add(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>for (const childId of node.children) {</p>
+<p>walk(childId);</p>
+<p>}</p>
+<p>}</p>
+<p>walk(config.root_node_id);</p>
+<p>const allIds = new Set(Object.keys(config.nodes));</p>
+<p>const orphans = [...allIds].filter(id =&gt; !reachable.has(id));</p>
+<p>return orphans; // IDs of nodes not reachable from root</p>
+<p>}</p>
+</blockquote>
+<p>Run this after every mutation. If orphans are found, either reconnect
+them (if the disconnection was accidental) or delete them (if the parent
+was intentionally removed).</p>
+<h2 id="ch-17-8-academic-foundations-dags-in-manufacturing-re">17.8 Academic Foundations: DAGs in Manufacturing Research</h2>
+<p>The use of DAGs to model manufacturing systems is not a novel concept
+invented for this architecture. It has deep academic roots, most notably
+in the work of Denis Borenstein, whose 2000 paper in the European
+Journal of Operational Research established the theoretical framework
+for using directed acyclic graphs to represent routing flexibility in
+manufacturing systems.</p>
+<p>Borenstein's key contribution was demonstrating that manufacturing
+operation sequences, meaning the order in which processes are applied to
+a part, can be rigorously represented as DAGs. His model defines three
+representation levels that map directly to the concerns of our product
+configuration architecture:</p>
+<h3 id="ch-borenstein-s-three-levels">Borenstein's Three Levels</h3>
+<ol type="1">
+<li><p>The Precedence Graph of Operations. This represents the hard
+constraints: which operations must happen before which other operations.
+In our architecture, this is equivalent to the dependency edges in the
+configuration graph. Spot UV must happen after printing (because UV is
+applied over the print). Die cutting must happen after all surface
+treatments are complete. These precedence relationships are encoded in
+the parent-child structure of our DAG.</p></li>
+<li><p>The Tree of Feasible Operations. Given the precedence
+constraints, this enumerates all valid sequences through the
+manufacturing process. For a card with CMYK printing, spot UV, and die
+cutting, there may be multiple valid orderings: print-then-UV-then-die
+or print-then-die-then-UV, depending on the specific die cut shape and
+UV area. Borenstein showed that the DAG representation compactly encodes
+all these valid sequences without explicitly listing each one, which
+becomes critical when the number of valid sequences grows
+combinatorially.</p></li>
+<li><p>The Projected Route Graph (PRG) of Operations and Machines. This
+maps feasible operations to specific machines on the shop floor. A spot
+UV process might be executable on UV-Coater-1 or UV-Coater-3, each with
+different capabilities and costs. The PRG extends the operation DAG to
+include this machine-level routing flexibility.</p></li>
+</ol>
+<p>The direct parallel to our architecture is striking. Borenstein's
+Level 1 is our product configuration graph (what the product is and how
+its components relate). His Level 2 is what our pricing engine traverses
+when computing costs across valid process sequences. His Level 3 is what
+our event sourcing system tracks when recording which specific machine
+and operator handled each process.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-why-this-academic-foundation-matters">Why This Academic Foundation Matters</h3>
+<p>Borenstein proved mathematically that DAG representations are more
+storage-efficient and have lower search complexity than alternative
+methods such as Petri nets for manufacturing routing. This means the
+graph-based approach in this architecture is not just intuitively
+cleaner than the relational model; it is provably more efficient for the
+specific problem of representing composable manufacturing sequences.
+When you encounter skepticism about abandoning the relational approach,
+this is peer-reviewed evidence in a top-tier operations research journal
+that the graph model is the correct abstraction.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Borenstein also demonstrated that DAGs can be embedded within
+simulation models for real-time analysis, which anticipates the event
+sourcing and CQRS patterns in our architecture. The shop floor is not
+static: machines break down, priorities change, and the optimal route
+through the manufacturing process shifts dynamically. A DAG
+representation enables real-time re-routing decisions because the
+alternative paths are already encoded in the graph structure, not locked
+into a fixed sequence in a relational table.</p>
+<h2 id="ch-17-9-cross-domain-insights-what-causal-inference-d">17.9 Cross-Domain Insights: What Causal Inference DAGs Teach Us</h2>
+<p>DAGs are used extensively outside of manufacturing, most prominently
+in causal inference and statistical modeling. In causal inference, the
+nodes represent variables (education, income, health), the edges
+represent causal relationships (education causes higher income), and the
+entire framework exists to answer the question: which variables should
+you control for in a regression to get an unbiased estimate of a causal
+effect?</p>
+<p>The graph theory underlying both uses is identical. The same
+algorithms for traversal, the same concepts of ancestors and
+descendants, the same mathematical properties of acyclicity all apply.
+But the semantics are different, and understanding both the overlap and
+the divergence strengthens your ability to work with product
+configuration graphs.</p>
+<h3 id="ch-concepts-that-transfer-directly">Concepts That Transfer Directly</h3>
+<ul>
+<li><p>Ancestors and descendants. In causal DAGs, an ancestor of a node
+is any variable that has a directed path to it. In product graphs, an
+ancestor of a process node is the layer it belongs to, the product that
+layer belongs to, and so on up to the root. The pricing engine uses
+ancestor traversal when a process needs to reference its parent layer's
+attributes (e.g., die cutting cost depends on the substrate thickness of
+the parent layer).</p></li>
+<li><p>Independence of branches. In causal DAGs, two variables that
+share no common ancestor or descendant are independent. In product
+graphs, two layers that share no processes are independent, meaning they
+can be priced in parallel. This is the theoretical foundation for the
+parallel subtree evaluation optimization described in Chapter
+11.</p></li>
+<li><p>d-Separation (conditional independence). In causal inference,
+d-separation determines whether two variables are statistically
+independent given a set of conditioning variables. In product graphs,
+the equivalent concept determines whether two nodes' pricing
+computations are independent given the current pricing context. If Layer
+1's cost does not depend on anything in Layer 2's subtree, and vice
+versa, they are 'd-separated' in pricing terms and can be computed
+independently.</p></li>
+</ul>
+<h3 id="ch-concepts-that-do-not-transfer">Concepts That Do Not Transfer</h3>
+<ul>
+<li><p>Confounders. In causal DAGs, a confounder is a variable that
+causes both the treatment and the outcome, creating a spurious
+correlation. Product graphs do not have confounders because the edges
+represent composition, not causation. A substrate does not 'cause' a
+process; it is a physical component that the process acts upon.</p></li>
+<li><p>Colliders. In causal DAGs, a collider is a variable caused by two
+other variables. Conditioning on a collider creates a spurious
+association between its causes. Product graphs can have nodes with
+multiple parents (the shared lamination node), but conditioning on them
+does not create spurious associations because we are computing costs,
+not estimating statistical effects.</p></li>
+<li><p>Backdoor paths. The causal concept of tracing non-causal paths
+between variables has no meaningful parallel in product configuration.
+There are no 'backdoor paths' through a product graph because all paths
+represent real structural relationships.</p></li>
+</ul>
+<h3 id="ch-the-dependency-path-concept">The Dependency Path Concept</h3>
+<p>The single most useful concept that transfers from causal DAGs to
+product graphs is the dependency path. In causal inference, you trace
+paths through the graph to understand what influences what. In the
+pricing engine, dependency paths determine three critical behaviors:</p>
+<ol start="4" type="1">
+<li><p>Cache invalidation scope. When you change an attribute on a node,
+which cached pricing results become stale? The answer is: the node
+itself and all of its ancestors up to the root. Its siblings and their
+subtrees are unaffected. This is determined by tracing the dependency
+path upward through the DAG.</p></li>
+<li><p>Parallel evaluation boundaries. Nodes can be evaluated in
+parallel if and only if they share no dependency path. Two layers with
+no shared child nodes have no dependency path between them and can be
+priced simultaneously. A shared lamination node creates a dependency
+path between the layers it joins, requiring sequential evaluation of
+that shared node.</p></li>
+<li><p>Pricing function input resolution. When a pricing function needs
+data from another node (e.g., die cut cost needs substrate GSM), it
+resolves this by walking the dependency path to the relevant ancestor.
+The pricing context's resolve_node function is essentially a path
+traversal through the graph.</p></li>
+</ol>
+<h2 id="ch-17-10-reachability-analysis-who-depends-on-whom">17.10 Reachability Analysis: Who Depends on Whom</h2>
+<p>Reachability is the graph theory concept of determining which nodes
+can be reached from a given starting node by following directed edges.
+In product graphs, reachability has two directions, each serving a
+different purpose:</p>
+<h3 id="ch-forward-reachability-root-to-leaves">Forward Reachability (Root to Leaves)</h3>
+<p>Starting from the root product node and following child edges,
+forward reachability answers: 'What are all the components of this
+product?' This is what the pricing engine uses to enumerate every node
+that needs to be priced. It is also what the production tracking system
+uses to determine the complete list of operations for a job.</p>
+<blockquote>
+<p>function forwardReachable(config, startNodeId) {</p>
+<p>const reached = new Set();</p>
+<p>const queue = [startNodeId];</p>
+<p>while (queue.length &gt; 0) {</p>
+<p>const nodeId = queue.shift();</p>
+<p>if (reached.has(nodeId)) continue;</p>
+<p>reached.add(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>for (const childId of node.children) {</p>
+<p>queue.push(childId);</p>
+<p>}</p>
+<p>}</p>
+<p>return reached;</p>
+<p>}</p>
+<p>// Usage: all components of the product</p>
+<p>const allParts = forwardReachable(config, config.root_node_id);</p>
+</blockquote>
+<h3 id="ch-reverse-reachability-leaf-to-root">Reverse Reachability (Leaf to Root)</h3>
+<p>Starting from any node and following parent edges upward, reverse
+reachability answers: 'What is affected if this node changes?' This is
+critical for cache invalidation and change impact analysis. If the spot
+UV area percentage changes, reverse reachability tells you that the UV
+node, its parent layer, and the root product all need re-pricing. But
+the other layer and its processes are unaffected.</p>
+<blockquote>
+<p>function reverseReachable(config, startNodeId) {</p>
+<p>const reached = new Set();</p>
+<p>const queue = [startNodeId];</p>
+<p>while (queue.length &gt; 0) {</p>
+<p>const nodeId = queue.shift();</p>
+<p>if (reached.has(nodeId)) continue;</p>
+<p>reached.add(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>for (const parentId of node.parents) {</p>
+<p>queue.push(parentId);</p>
+<p>}</p>
+<p>}</p>
+<p>return reached;</p>
+<p>}</p>
+<p>// Usage: what needs re-pricing if this node changes?</p>
+<p>const invalidated = reverseReachable(config, changedNodeId);</p>
+<p>for (const id of invalidated) { priceCache.delete(id); }</p>
+</blockquote>
+<h2 id="ch-17-11-transitive-reduction-simplifying-the-graph">17.11 Transitive Reduction: Simplifying the Graph</h2>
+<p>Transitive reduction is a graph operation that removes redundant
+edges. An edge from A to C is redundant if there is already a path from
+A to B to C. In that case, the A-to-C edge is implied by the A-to-B and
+B-to-C edges and can be removed without losing any structural
+information.</p>
+<p>In product graphs, transitive reduction matters for two reasons:</p>
+<ul>
+<li><p>Visual clarity. When displaying the product configuration to a
+user, redundant edges create a cluttered graph that is harder to
+understand. The reduced graph shows only the essential
+relationships.</p></li>
+<li><p>Correct pricing aggregation. If a root product node has direct
+edges to both a layer and a process within that layer, the pricing
+aggregator might double-count the process (once as a direct child, once
+as a grandchild through the layer). Transitive reduction ensures each
+node appears exactly once in the aggregation path.</p></li>
+</ul>
+<blockquote>
+<p>function transitiveReduction(config) {</p>
+<p>// For each edge parent -&gt; child, check if there is</p>
+<p>// an alternative path from parent to child through</p>
+<p>// other nodes. If so, the direct edge is redundant.</p>
+<p>for (const [nodeId, node] of Object.entries(config.nodes)) {</p>
+<p>const redundant = [];</p>
+<p>for (const childId of node.children) {</p>
+<p>// Check if childId is reachable from nodeId</p>
+<p>// through any OTHER child</p>
+<p>const otherChildren = node.children</p>
+<p>.filter(c =&gt; c !== childId);</p>
+<p>for (const otherId of otherChildren) {</p>
+<p>if (forwardReachable(config, otherId).has(childId)) {</p>
+<p>redundant.push(childId);</p>
+<p>break;</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>// Remove redundant direct edges</p>
+<p>node.children = node.children</p>
+<p>.filter(c =&gt; !redundant.includes(c));</p>
+<p>}</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-17-12-depth-breadth-and-complexity-metrics">17.12 Depth, Breadth, and Complexity Metrics</h2>
+<p>Understanding the shape of your product graphs helps you predict
+performance and identify potential bottlenecks:</p>
+<ul>
+<li><p>Depth is the longest path from root to any leaf. A depth of 3
+(product → layer → process) is typical for simple cards. A depth of 6+
+occurs with nested assemblies (product → component → sub-component →
+layer → process → sub-process). The pricing engine's recursion depth
+equals the graph depth.</p></li>
+<li><p>Breadth is the maximum number of children at any single level. A
+product with 12 layers has a breadth of 12 at level 1. Breadth
+determines the potential for parallel evaluation: more independent
+siblings means more parallelism.</p></li>
+<li><p>Total nodes is the count of all nodes in the graph. This directly
+determines memory usage and the maximum number of pricing function
+evaluations per quote.</p></li>
+<li><p>Shared node ratio is the percentage of nodes with more than one
+parent. A ratio of 0% means the graph is a pure tree. Higher ratios mean
+more DAG complexity and more opportunities for memoization to save
+computation.</p></li>
+</ul>
+<blockquote>
+<p>function graphMetrics(config) {</p>
+<p>const nodes = Object.values(config.nodes);</p>
+<p>function depth(nodeId, visited = new Set()) {</p>
+<p>if (visited.has(nodeId)) return 0; // cycle protection</p>
+<p>visited.add(nodeId);</p>
+<p>const node = config.nodes[nodeId];</p>
+<p>if (node.children.length === 0) return 1;</p>
+<p>return 1 + Math.max(</p>
+<p>...node.children.map(c =&gt; depth(c, new Set(visited)))</p>
+<p>);</p>
+<p>}</p>
+<p>const maxBreadth = Math.max(</p>
+<p>...nodes.map(n =&gt; n.children.length)</p>
+<p>);</p>
+<p>const sharedNodes = nodes.filter(</p>
+<p>n =&gt; n.parents.length &gt; 1</p>
+<p>).length;</p>
+<p>return {</p>
+<p>total_nodes: nodes.length,</p>
+<p>max_depth: depth(config.root_node_id),</p>
+<p>max_breadth: maxBreadth,</p>
+<p>shared_node_count: sharedNodes,</p>
+<p>shared_node_ratio: sharedNodes / nodes.length</p>
+<p>};</p>
+<p>}</p>
+</blockquote>
+<p>For typical print products, you should expect depths of 2-5, breadths
+of 2-15, total node counts of 5-50, and shared node ratios below 10%. If
+your metrics regularly exceed these ranges, it may indicate either
+genuinely complex products (which the architecture handles well) or
+modeling issues where products are over-decomposed into too many
+fine-grained nodes.</p>
+<h1 id="ch-18-bottom-up-pricing-complete-step-by-step-walkthr">18. Bottom-Up Pricing: Complete Step-by-Step Walkthrough</h1>
+<p>This chapter walks through the pricing of the specialty card from
+Chapter 2, step by step, showing every computation, every cache entry,
+and every aggregation. By the end, you will understand exactly what the
+pricing engine does at each stage and why.</p>
+<h2 id="ch-18-1-the-configuration">18.1 The Configuration</h2>
+<p>We are pricing the following product at a quantity of 5,000
+cards:</p>
+<blockquote>
+<p>Product (root) ── qty: 5000</p>
+<p>├─ Layer 1: 350gsm Silk Art Board, 88×55mm</p>
+<p>│ ├─ CMYK Front: offset, 4 colors, 85% coverage</p>
+<p>│ ├─ CMYK Back: offset, 4 colors, 60% coverage</p>
+<p>│ ├─ Spot UV: 30% area, 25μm thickness</p>
+<p>│ └─ Die Cut: die DC-4421, medium complexity</p>
+<p>├─ Layer 2: 200μm Clear PET, 88×55mm</p>
+<p>│ └─ Screen Print: opaque white, 2 passes, 40% coverage</p>
+<p>└─ Lamination: PSA, 0.5mm tolerance</p>
+</blockquote>
+<h2 id="ch-18-2-step-0-load-the-pricing-context">18.2 Step 0: Load the Pricing Context</h2>
+<p>Before any node is evaluated, the engine loads all rate data into
+memory. This is the single batch-load step that replaces hundreds of
+individual queries:</p>
+<blockquote>
+<p>// One batch query loads everything we need</p>
+<p>const context = {</p>
+<p>quantity: 5000,</p>
+<p>rate_tables: {</p>
+<p>'substrate': {</p>
+<p>'350gsm_silk': { cost_per_sheet: 0.045, min_order: 500 },</p>
+<p>'200um_pet': { cost_per_sheet: 0.082, min_order: 200 }</p>
+<p>},</p>
+<p>'offset_print': {</p>
+<p>setup_per_color: 35.00,</p>
+<p>run_rate_per_1000: 12.50,</p>
+<p>coverage_multiplier: 1.0 // base rate at 100%</p>
+<p>},</p>
+<p>'screen_print': {</p>
+<p>setup_per_screen: 45.00,</p>
+<p>run_rate_per_1000: 28.00,</p>
+<p>white_ink_surcharge: 1.15 // 15% more expensive</p>
+<p>},</p>
+<p>'spot_uv': {</p>
+<p>setup_base: 65.00,</p>
+<p>material_rate_per_1000: 18.00,</p>
+<p>base_thickness: 20 // microns, rate is based on this</p>
+<p>},</p>
+<p>'die_cut': {</p>
+<p>die_lookup: { 'DC-4421': { setup: 55.00, per_1000: 8.50 } },</p>
+<p>complexity_multiplier: { simple: 0.8, medium: 1.0, complex: 1.4 }</p>
+<p>},</p>
+<p>'lamination': {</p>
+<p>psa_setup: 40.00,</p>
+<p>psa_per_1000: 15.00,</p>
+<p>tolerance_surcharge: { 1.0: 1.0, 0.5: 1.20, 0.25: 1.50 }</p>
+<p>}</p>
+<p>},</p>
+<p>quantity_curves: {</p>
+<p>'standard': { // price-per-unit decreases with quantity</p>
+<p>evaluate: (qty) =&gt; {</p>
+<p>if (qty &lt;= 500) return 1.0;</p>
+<p>if (qty &lt;= 2000) return 0.85;</p>
+<p>if (qty &lt;= 5000) return 0.72;</p>
+<p>return 0.65;</p>
+<p>}</p>
+<p>}</p>
+<p>},</p>
+<p>global_params: {</p>
+<p>print_waste_pct: 4,</p>
+<p>coating_waste_pct: 3,</p>
+<p>cutting_waste_pct: 2,</p>
+<p>screen_waste_pct: 6,</p>
+<p>assembly_waste_pct: 2,</p>
+<p>markup_pct: 40</p>
+<p>},</p>
+<p>resolve_node: (id) =&gt; config.nodes[id]</p>
+<p>};</p>
+</blockquote>
+<p>This context object exists in memory for the entire pricing
+computation. Every pricing function reads from it. Zero additional
+database queries will be made.</p>
+<h2 id="ch-18-3-step-1-topological-sort-determines-evaluation">18.3 Step 1: Topological Sort Determines Evaluation Order</h2>
+<p>The engine performs a reverse topological sort to determine the order
+in which nodes will be evaluated:</p>
+<blockquote>
+<p>Reverse topological sort result:</p>
+<p>Index 0: cmyk-front (leaf – no children)</p>
+<p>Index 1: cmyk-back (leaf – no children)</p>
+<p>Index 2: spot-uv (leaf – no children)</p>
+<p>Index 3: die-cut (leaf – no children)</p>
+<p>Index 4: screen-print (leaf – no children)</p>
+<p>Index 5: layer-1 (aggregator – children: 0,1,2,3)</p>
+<p>Index 6: layer-2 (aggregator – children: 4)</p>
+<p>Index 7: lamination (leaf – no children, assembly)</p>
+<p>Index 8: product (root aggregator – children: 5,6,7)</p>
+</blockquote>
+<p>The engine will now iterate from index 0 to index 8, evaluating each
+node. When it reaches a node, all of its children have already been
+evaluated and their results are in the memoization cache.</p>
+<h2 id="ch-18-4-steps-2-6-evaluating-leaf-nodes">18.4 Steps 2-6: Evaluating Leaf Nodes</h2>
+<h3 id="ch-evaluate-cmyk-front-index-0">Evaluate: CMYK Front (index 0)</h3>
+<blockquote>
+<p>Input: 4 colors, 85% coverage, offset</p>
+<p>qty = 5000, waste = 4% → effective_qty = 5200</p>
+<p>Setup: 4 colors × $35.00/color = $140.00</p>
+<p>Run: 5200 / 1000 × $12.50 = $65.00</p>
+<p>Coverage: $65.00 × 0.85 = $55.25</p>
+<p>Qty curve: 0.72 (5000 qty bracket)</p>
+<p>Adjusted run: $55.25 × 0.72 = $39.78</p>
+<p>Result: { setup: $140.00, run: $39.78, total: $179.78 }</p>
+<p>Cache: memo['cmyk-front'] = $179.78</p>
+</blockquote>
+<h3 id="ch-evaluate-cmyk-back-index-1">Evaluate: CMYK Back (index 1)</h3>
+<blockquote>
+<p>Input: 4 colors, 60% coverage, offset</p>
+<p>qty = 5000, waste = 4% → effective_qty = 5200</p>
+<p>Setup: 4 colors × $35.00/color = $140.00</p>
+<p>Run: 5200 / 1000 × $12.50 = $65.00</p>
+<p>Coverage: $65.00 × 0.60 = $39.00</p>
+<p>Qty curve: 0.72</p>
+<p>Adjusted run: $39.00 × 0.72 = $28.08</p>
+<p>Result: { setup: $140.00, run: $28.08, total: $168.08 }</p>
+<p>Cache: memo['cmyk-back'] = $168.08</p>
+</blockquote>
+<h3 id="ch-evaluate-spot-uv-index-2">Evaluate: Spot UV (index 2)</h3>
+<blockquote>
+<p>Input: 30% area, 25μm thickness</p>
+<p>qty = 5000, waste = 3% → effective_qty = 5150</p>
+<p>Setup: $65.00 (fixed)</p>
+<p>Material: 5150 / 1000 × $18.00 = $92.70</p>
+<p>Area factor: $92.70 × 0.30 = $27.81</p>
+<p>Thickness factor: 25 / 20 = 1.25</p>
+<p>Adjusted: $27.81 × 1.25 = $34.76</p>
+<p>Qty curve: 0.72</p>
+<p>Final run: $34.76 × 0.72 = $25.03</p>
+<p>Result: { setup: $65.00, run: $25.03, total: $90.03 }</p>
+<p>Cache: memo['spot-uv'] = $90.03</p>
+</blockquote>
+<h3 id="ch-evaluate-die-cut-index-3">Evaluate: Die Cut (index 3)</h3>
+<blockquote>
+<p>Input: die DC-4421, medium complexity</p>
+<p>qty = 5000, waste = 2% → effective_qty = 5100</p>
+<p>parent layer gsm = 350 → thickness_multiplier = 1.25</p>
+<p>(cross-node dependency: reads parent attribute)</p>
+<p>Setup: $55.00 (from die lookup)</p>
+<p>Run: 5100 / 1000 × $8.50 = $43.35</p>
+<p>Complexity: $43.35 × 1.0 (medium) = $43.35</p>
+<p>Thickness: $43.35 × 1.25 = $54.19</p>
+<p>Qty curve: 0.72</p>
+<p>Final run: $54.19 × 0.72 = $39.02</p>
+<p>Result: { setup: $55.00, run: $39.02, total: $94.02 }</p>
+<p>Cache: memo['die-cut'] = $94.02</p>
+</blockquote>
+<h3 id="ch-evaluate-screen-print-index-4">Evaluate: Screen Print (index 4)</h3>
+<blockquote>
+<p>Input: white ink, 2 passes, 40% coverage</p>
+<p>qty = 5000, waste = 6% → effective_qty = 5300</p>
+<p>Setup: 2 passes × $45.00/screen = $90.00</p>
+<p>Run: 5300 / 1000 × $28.00 = $148.40</p>
+<p>Coverage: $148.40 × 0.40 = $59.36</p>
+<p>White ink surcharge: $59.36 × 1.15 = $68.26</p>
+<p>Qty curve: 0.72</p>
+<p>Final run: $68.26 × 0.72 = $49.15</p>
+<p>Result: { setup: $90.00, run: $49.15, total: $139.15 }</p>
+<p>Cache: memo['screen-print'] = $139.15</p>
+</blockquote>
+<h2 id="ch-18-5-steps-7-8-evaluating-aggregator-nodes">18.5 Steps 7-8: Evaluating Aggregator Nodes</h2>
+<p>Now the engine reaches the layer nodes. These are aggregators: they
+compute their own cost (substrate material) and add their children's
+costs.</p>
+<h3 id="ch-evaluate-layer-1-index-5">Evaluate: Layer 1 (index 5)</h3>
+<blockquote>
+<p>SUBSTRATE COST (this node's own cost):</p>
+<p>350gsm Silk @ $0.045/sheet</p>
+<p>qty = 5000, waste = max of children waste factors</p>
+<p>effective_qty = 5200 (4% print waste dominates)</p>
+<p>Substrate: 5200 × $0.045 = $234.00</p>
+<p>Qty curve: $234.00 × 0.72 = $168.48</p>
+<p>CHILDREN ROLLUP (from memoization cache):</p>
+<p>memo['cmyk-front'] = $179.78</p>
+<p>memo['cmyk-back'] = $168.08</p>
+<p>memo['spot-uv'] = $90.03</p>
+<p>memo['die-cut'] = $94.02</p>
+<p>Children total = $531.91</p>
+<p>LAYER 1 TOTAL: $168.48 + $531.91 = $700.39</p>
+<p>Cache: memo['layer-1'] = $700.39</p>
+</blockquote>
+<h3 id="ch-evaluate-layer-2-index-6">Evaluate: Layer 2 (index 6)</h3>
+<blockquote>
+<p>SUBSTRATE COST:</p>
+<p>200μm Clear PET @ $0.082/sheet</p>
+<p>effective_qty = 5300 (6% screen waste)</p>
+<p>Substrate: 5300 × $0.082 = $434.60</p>
+<p>Qty curve: $434.60 × 0.72 = $312.91</p>
+<p>CHILDREN ROLLUP:</p>
+<p>memo['screen-print'] = $139.15</p>
+<p>LAYER 2 TOTAL: $312.91 + $139.15 = $452.06</p>
+<p>Cache: memo['layer-2'] = $452.06</p>
+</blockquote>
+<h3 id="ch-evaluate-lamination-index-7">Evaluate: Lamination (index 7)</h3>
+<blockquote>
+<p>Input: PSA method, 0.5mm tolerance</p>
+<p>qty = 5000, waste = 2% → effective_qty = 5100</p>
+<p>Setup: $40.00</p>
+<p>Run: 5100 / 1000 × $15.00 = $76.50</p>
+<p>Tolerance surcharge: $76.50 × 1.20 = $91.80</p>
+<p>Qty curve: 0.72</p>
+<p>Final run: $91.80 × 0.72 = $66.10</p>
+<p>Result: { setup: $40.00, run: $66.10, total: $106.10 }</p>
+<p>Cache: memo['lamination'] = $106.10</p>
+</blockquote>
+<h2 id="ch-18-6-step-9-evaluating-the-root-aggregator">18.6 Step 9: Evaluating the Root Aggregator</h2>
+<blockquote>
+<p>CHILDREN ROLLUP:</p>
+<p>memo['layer-1'] = $700.39</p>
+<p>memo['layer-2'] = $452.06</p>
+<p>memo['lamination'] = $106.10</p>
+<p>Subtotal = $1,258.55</p>
+<p>MARKUP APPLICATION:</p>
+<p>Markup: 40%</p>
+<p>$1,258.55 × 1.40 = $1,761.97</p>
+<p>FINAL QUOTE:</p>
+<p>Total: $1,761.97</p>
+<p>Per unit: $1,761.97 / 5000 = $0.3524</p>
+<p>Setup: $140 + $140 + $65 + $55 + $90 + $40 = $530.00</p>
+<p>Materials: (computed per above)</p>
+<p>Waste cost: sum of (effective_qty - qty) × unit_rates</p>
+</blockquote>
+<h2 id="ch-18-7-the-complete-memoization-map">18.7 The Complete Memoization Map</h2>
+<p>After evaluation, the memoization cache contains the complete
+breakdown. This is what the UI uses to display a line-item quote:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 15%" />
+<col style="width: 16%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Node</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Setup</strong></td>
+<td><strong>Run</strong></td>
+<td><strong>Total</strong></td>
+<td><strong>Eval Order</strong></td>
+</tr>
+<tr class="even">
+<td>CMYK Front</td>
+<td>print_process</td>
+<td>$140.00</td>
+<td>$39.78</td>
+<td>$179.78</td>
+<td>0 (leaf)</td>
+</tr>
+<tr class="odd">
+<td>CMYK Back</td>
+<td>print_process</td>
+<td>$140.00</td>
+<td>$28.08</td>
+<td>$168.08</td>
+<td>1 (leaf)</td>
+</tr>
+<tr class="even">
+<td>Spot UV</td>
+<td>coating_process</td>
+<td>$65.00</td>
+<td>$25.03</td>
+<td>$90.03</td>
+<td>2 (leaf)</td>
+</tr>
+<tr class="odd">
+<td>Die Cut</td>
+<td>cutting_process</td>
+<td>$55.00</td>
+<td>$39.02</td>
+<td>$94.02</td>
+<td>3 (leaf)</td>
+</tr>
+<tr class="even">
+<td>Screen Print</td>
+<td>print_process</td>
+<td>$90.00</td>
+<td>$49.15</td>
+<td>$139.15</td>
+<td>4 (leaf)</td>
+</tr>
+<tr class="odd">
+<td>Layer 1</td>
+<td>substrate_layer</td>
+<td>$0.00</td>
+<td>$168.48</td>
+<td>$700.39</td>
+<td>5 (agg)</td>
+</tr>
+<tr class="even">
+<td>Layer 2</td>
+<td>substrate_layer</td>
+<td>$0.00</td>
+<td>$312.91</td>
+<td>$452.06</td>
+<td>6 (agg)</td>
+</tr>
+<tr class="odd">
+<td>Lamination</td>
+<td>assembly_process</td>
+<td>$40.00</td>
+<td>$66.10</td>
+<td>$106.10</td>
+<td>7 (leaf)</td>
+</tr>
+<tr class="even">
+<td>Product</td>
+<td>product (root)</td>
+<td>$0.00</td>
+<td>$0.00</td>
+<td>$1,761.97</td>
+<td>8 (root)</td>
+</tr>
+</tbody>
+</table>
+<p>Every number in this table is traceable. An estimator can click on
+any line item, see the formula that produced it, see which rate table
+values were used, and verify the result. This transparency is not
+possible in a system where pricing is computed through opaque stored
+procedures and scattered table joins.</p>
+<h2 id="ch-18-8-re-quoting-after-a-single-change">18.8 Re-Quoting After a Single Change</h2>
+<p>Now the customer asks: 'What if we increase the spot UV area from 30%
+to 50%?' In the legacy system, the entire quote is recomputed from
+scratch (200+ queries). In the graph engine:</p>
+<ol start="7" type="1">
+<li><p>Invalidate memo['spot-uv'] (the changed node).</p></li>
+<li><p>Invalidate memo['layer-1'] (parent of changed node).</p></li>
+<li><p>Invalidate memo['product'] (parent of layer-1).</p></li>
+<li><p>Nodes cmyk-front, cmyk-back, die-cut, screen-print, layer-2,
+lamination are UNCHANGED. Their cached results are still valid.</p></li>
+</ol>
+<p>The engine re-evaluates only 3 nodes out of 9. It takes approximately
+30% of the original computation time. For larger products with 50+
+nodes, this optimization is even more dramatic: a change to one leaf
+process may require re-evaluating only 3-4 nodes while 46+ retain their
+cached results.</p>
+<h1 id="ch-19-quantity-propagation-waste-cascading-and-cross-">19. Quantity Propagation, Waste Cascading, and Cross-Node Dependencies</h1>
+<p>This is the chapter where the real-world complexity of print
+production meets graph theory. These are the problems that separate a
+toy quoting system from one that produces accurate, production-ready
+estimates.</p>
+<h2 id="ch-19-1-quantity-propagation-how-quantity-flows-throu">19.1 Quantity Propagation: How Quantity Flows Through the Graph</h2>
+<p>Quantity is not a simple global variable. In a multi-layer product,
+different parts of the graph may need different effective quantities
+because waste rates differ by process.</p>
+<p>The base quantity (5,000 cards) is set at the root. But by the time
+that quantity reaches the substrate of Layer 1, it must account for the
+waste of every process that will be applied to that substrate. If you
+print on the substrate (4% waste), then coat it (3% waste), then die cut
+it (2% waste), the substrate order quantity must be enough to yield
+5,000 good finished pieces after all three stages of waste.</p>
+<h3 id="ch-forward-waste-accumulation-simple-but-wrong">Forward Waste Accumulation (Simple but Wrong)</h3>
+<p>The naive approach is to add waste percentages: 4% + 3% + 2% = 9%, so
+order 5,450 sheets. This is wrong because waste compounds. If 4% is lost
+at print, you need 3% of the remaining 96%, not 3% of the original
+100%.</p>
+<h3 id="ch-reverse-yield-calculation-correct">Reverse Yield Calculation (Correct)</h3>
+<p>The correct approach works backward from the required good
+output:</p>
+<blockquote>
+<p>function calculateEffectiveQuantity(requiredGood, processes) {</p>
+<p>// Start from the LAST process and work backward</p>
+<p>// (reverse of production order)</p>
+<p>let needed = requiredGood;</p>
+<p>// Processes in reverse production order</p>
+<p>const reversed = [...processes].reverse();</p>
+<p>for (const process of reversed) {</p>
+<p>const yield_rate = 1 - (process.waste_pct / 100);</p>
+<p>needed = Math.ceil(needed / yield_rate);</p>
+<p>}</p>
+<p>return needed;</p>
+<p>}</p>
+<p>// Example: 5000 good pieces, processes in production order:</p>
+<p>// 1. Print (4% waste), 2. Coat (3% waste), 3. Die cut (2% waste)</p>
+<p>// Working backward from die cut:</p>
+<p>// After die cut: need 5000 good</p>
+<p>// Before die cut: 5000 / 0.98 = 5103</p>
+<p>// Before coating: 5103 / 0.97 = 5261</p>
+<p>// Before printing: 5261 / 0.96 = 5480</p>
+<p>// Order 5480 sheets (not 5450!)</p>
+<p>// The difference (30 sheets) matters at scale.</p>
+<p>// At 50,000 qty the compound error is 300 sheets.</p>
+<p>// At $0.045/sheet that is $13.50 of material cost</p>
+<p>// the naive approach misses per job.</p>
+</blockquote>
+<h2 id="ch-19-2-waste-cascading-when-one-process-wastes-anoth">19.2 Waste Cascading: When One Process Wastes Another's Output</h2>
+<p>Waste cascading is the phenomenon where waste at a later production
+stage destroys value that was added by earlier stages. If a die cutting
+operation wastes 2% of sheets, those wasted sheets have already been
+printed, coated, and UV-treated. The cost of that waste includes not
+just the substrate cost but the cost of all processes that were applied
+before the waste occurred.</p>
+<p>The pricing engine must account for this. The correct approach is to
+compute waste cost at each stage based on the cumulative value of the
+product at that point, not just the raw material cost:</p>
+<blockquote>
+<p>function computeWasteCost(node, processOrder, nodeResults) {</p>
+<p>// Find this node's position in the process order</p>
+<p>const position = processOrder.indexOf(node.id);</p>
+<p>// Sum the per-unit cost of all processes BEFORE this one</p>
+<p>// (these costs are 'baked in' to each sheet at this stage)</p>
+<p>let cumulative_unit_value = 0;</p>
+<p>for (let i = 0; i &lt; position; i++) {</p>
+<p>const prevResult = nodeResults[processOrder[i]];</p>
+<p>cumulative_unit_value += prevResult.unit_cost;</p>
+<p>}</p>
+<p>// Add substrate cost</p>
+<p>cumulative_unit_value += nodeResults['substrate'].unit_cost;</p>
+<p>// Waste at this stage costs the cumulative value</p>
+<p>const waste_qty = node.effective_qty - node.good_qty;</p>
+<p>const waste_cost = waste_qty * cumulative_unit_value;</p>
+<p>return waste_cost;</p>
+<p>}</p>
+<p>// Example: die cut wastes 102 sheets (2% of 5103)</p>
+<p>// Each wasted sheet had been printed ($0.035) and</p>
+<p>// coated ($0.005), plus substrate ($0.045)</p>
+<p>// Waste cost = 102 * ($0.045 + $0.035 + $0.005) = $8.67</p>
+<p>// NOT just 102 * $0.045 (substrate only) = $4.59</p>
+</blockquote>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><h3 id="ch-why-this-matters-commercially">Why This Matters Commercially</h3>
+<p>Most legacy MIS systems compute waste cost as substrate cost only,
+because tracking cumulative value through the process chain is difficult
+with table lookups. This systematically underestimates the true cost of
+waste, especially for products with many value-adding processes before
+the wasteful step. The graph engine computes this correctly because the
+process ordering and per-node costs are all available in the memoization
+cache.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ch-19-3-cross-node-dependencies">19.3 Cross-Node Dependencies</h2>
+<p>Cross-node dependencies occur when a node's pricing depends on
+attributes of a sibling, parent, or distant node in the graph. The die
+cut example from Chapter 18 showed a child-to-parent dependency (die cut
+reads parent layer's GSM). Here are the other common patterns:</p>
+<h3 id="ch-sibling-dependencies">Sibling Dependencies</h3>
+<p>A coating process may adjust its cost based on what print process was
+applied before it. Spot UV over digital print has different preparation
+requirements than spot UV over offset print. The coating pricing
+function needs to examine its sibling print node:</p>
+<blockquote>
+<p>function evaluateSpotUV(node, context, childResults) {</p>
+<p>// Find sibling print process</p>
+<p>const parentLayer = context.resolve_node(node.parents[0]);</p>
+<p>const printSibling = parentLayer.children</p>
+<p>.map(id =&gt; context.resolve_node(id))</p>
+<p>.find(n =&gt; n.type === 'print_process');</p>
+<p>// Adjust prep cost based on print method</p>
+<p>const prep_surcharge =</p>
+<p>printSibling.attributes.method === 'digital' ? 25.00 : 0;</p>
+<p>// ... rest of pricing logic with prep_surcharge added</p>
+<p>}</p>
+</blockquote>
+<h3 id="ch-cross-layer-dependencies">Cross-Layer Dependencies</h3>
+<p>An assembly process (lamination) that joins two layers needs to know
+the dimensions and material of both layers to calculate cost correctly.
+PET-to-cardboard lamination has different rates than PET-to-PET:</p>
+<blockquote>
+<p>function evaluateLamination(node, context, childResults) {</p>
+<p>// Read both input layers from the 'inputs' attribute</p>
+<p>const inputLayers = node.attributes.inputs</p>
+<p>.map(id =&gt; context.resolve_node(id));</p>
+<p>// Determine material combination</p>
+<p>const materials = inputLayers.map(</p>
+<p>l =&gt; l.attributes.material_category // 'paper', 'pet', etc.</p>
+<p>);</p>
+<p>const combo = materials.sort().join('_to_'); // 'paper_to_pet'</p>
+<p>// Look up rate for this specific combination</p>
+<p>const rate = context.rate_tables.lamination[combo];</p>
+<p>// ... compute with rate</p>
+<p>}</p>
+</blockquote>
+<h3 id="ch-quantity-dependent-process-availability">Quantity-Dependent Process Availability</h3>
+<p>Some processes are only available above certain quantities. Offset
+printing may require a minimum of 1,000 sheets to be economical; below
+that, digital printing is substituted. This is not just a pricing change
+but a configuration change that the engine must handle:</p>
+<blockquote>
+<p>function resolveProcessMethod(node, context) {</p>
+<p>if (node.type === 'print_process') {</p>
+<p>if (node.attributes.method === 'offset' &amp;&amp;</p>
+<p>context.quantity &lt; 1000) {</p>
+<p>// Auto-substitute digital for small runs</p>
+<p>return {</p>
+<p>...node,</p>
+<p>attributes: {</p>
+<p>...node.attributes,</p>
+<p>method: 'digital',</p>
+<p>auto_substituted: true,</p>
+<p>original_method: 'offset'</p>
+<p>},</p>
+<p>pricing_function_id: 'pf-digital-print'</p>
+<p>};</p>
+<p>}</p>
+<p>}</p>
+<p>return node;</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-19-4-process-ordering-and-its-effect-on-pricing">19.4 Process Ordering and Its Effect on Pricing</h2>
+<p>The order in which processes are applied to a layer matters for
+pricing, even though the graph's children array does not inherently
+encode temporal order. Spot UV before die cutting has different
+economics than die cutting before spot UV (you waste UV-coated material
+vs. uncoated material).</p>
+<p>The solution is to add an explicit process_order attribute to process
+nodes, or to define a production_sequence on the layer node:</p>
+<blockquote>
+<p>// On the layer node:</p>
+<p>attributes: {</p>
+<p>material: '350gsm Silk',</p>
+<p>production_sequence: [</p>
+<p>'cmyk-front', // step 1</p>
+<p>'cmyk-back', // step 2</p>
+<p>'spot-uv', // step 3</p>
+<p>'die-cut' // step 4 (last, so waste is cheapest)</p>
+<p>]</p>
+<p>}</p>
+</blockquote>
+<p>The layer's aggregator pricing function uses this sequence to
+determine the correct effective quantity for each process and to compute
+waste cascading costs accurately. The sequence itself is part of the
+product configuration and can be modified without changing any code.</p>
+<h2 id="ch-19-5-gang-running-and-sheet-layout-quantity-transf">19.5 Gang Running and Sheet Layout: Quantity Transformation</h2>
+<p>One of the most complex pricing scenarios in print is gang running
+(also called n-up or imposition), where multiple copies of a card are
+printed on a single large sheet, then cut apart. This transforms the
+quantity from 'number of finished cards' to 'number of press sheets,'
+and the transformation depends on the card size, the press sheet size,
+and the layout.</p>
+<blockquote>
+<p>function computeSheetLayout(cardWidth, cardHeight, sheetWidth,</p>
+<p>sheetHeight, gutterMm) {</p>
+<p>// Try both orientations and pick the best</p>
+<p>const layout1 = {</p>
+<p>across: Math.floor(sheetWidth / (cardWidth + gutterMm)),</p>
+<p>down: Math.floor(sheetHeight / (cardHeight + gutterMm))</p>
+<p>};</p>
+<p>const layout2 = { // rotated 90°</p>
+<p>across: Math.floor(sheetWidth / (cardHeight + gutterMm)),</p>
+<p>down: Math.floor(sheetHeight / (cardWidth + gutterMm))</p>
+<p>};</p>
+<p>const up1 = layout1.across * layout1.down;</p>
+<p>const up2 = layout2.across * layout2.down;</p>
+<p>const best = up1 &gt;= up2 ? layout1 : layout2;</p>
+<p>const n_up = Math.max(up1, up2);</p>
+<p>return {</p>
+<p>n_up, // cards per sheet</p>
+<p>across: best.across,</p>
+<p>down: best.down,</p>
+<p>sheets_needed: Math.ceil(5000 / n_up), // for 5000 cards</p>
+<p>waste_cards: (Math.ceil(5000/n_up) * n_up) - 5000</p>
+<p>};</p>
+<p>}</p>
+<p>// Example: 88x55mm card on 720x1020mm SRA3 sheet, 3mm gutter</p>
+<p>// Layout 1: floor(720/91) x floor(1020/58) = 7 x 17 = 119 up</p>
+<p>// Layout 2: floor(720/58) x floor(1020/91) = 12 x 11 = 132 up</p>
+<p>// Best: 132-up, need ceil(5000/132) = 38 sheets</p>
+<p>// Waste: 38*132 - 5000 = 16 cards (effectively zero waste)</p>
+</blockquote>
+<p>The sheet layout calculation transforms the quantity context for all
+press-related pricing. The offset print pricing function receives 38
+sheets, not 5,000 cards. Setup costs are per press run. Run rates are
+per sheet impression. The substrate pricing uses 38 sheets at the SRA3
+sheet cost, not 5,000 at the card-size cost.</p>
+<p>This transformation is handled by a layout resolver node that sits
+between the product root and the layer, converting card-quantity to
+sheet-quantity:</p>
+<blockquote>
+<p>Product (qty: 5000 cards)</p>
+<p>└─ Layout Resolver (transforms qty: 5000 cards → 38 sheets)</p>
+<p>└─ Layer 1 (qty context: 38 sheets)</p>
+<p>├─ CMYK Front (prices at 38 sheet impressions)</p>
+<p>├─ Spot UV (prices at 38 sheets)</p>
+<p>└─ Die Cut (prices at 38 sheets, cuts 132 cards/sheet)</p>
+</blockquote>
+<h1 id="ch-20-pitfalls-edge-cases-and-failure-modes">20. Pitfalls, Edge Cases, and Failure Modes</h1>
+<p>This chapter catalogs every significant way the system can fail,
+produce incorrect results, or behave unexpectedly. Each pitfall includes
+the root cause, the symptom, and the fix. Treat this as a checklist
+during implementation.</p>
+<h2 id="ch-20-1-floating-point-pricing-errors">20.1 Floating-Point Pricing Errors</h2>
+<p>JavaScript and most languages use IEEE 754 double-precision
+floating-point for numbers. This leads to infamous precision errors:</p>
+<blockquote>
+<p>0.1 + 0.2 = 0.30000000000000004 // not 0.3</p>
+<p>// In pricing, this manifests as:</p>
+<p>// $12.50 * 0.72 = $8.999999999999998 (not $9.00)</p>
+<p>// Over 50 line items, these errors can accumulate to visible</p>
+<p>// differences ($0.01 - $0.05) that destroy user trust.</p>
+</blockquote>
+<p>The fix: use integer arithmetic in the smallest currency unit (cents
+or tenths of cents). Store all monetary values as integers, perform all
+arithmetic as integer operations, and convert to decimal only for
+display:</p>
+<blockquote>
+<p>// WRONG: floating point</p>
+<p>const price = 12.50 * 0.72; // 8.999999...</p>
+<p>// CORRECT: integer cents</p>
+<p>const price_cents = 1250 * 72 / 100; // 900 cents = $9.00</p>
+<p>// For sub-cent precision (rate tables often have fractions):</p>
+<p>// Use tenths of cents (multiply all values by 1000)</p>
+<p>const price_mills = 12500 * 720 / 1000; // 9000 mills = $9.00</p>
+<p>// Convert to display only at the very end:</p>
+<p>function formatPrice(mills) {</p>
+<p>return '$' + (Math.round(mills) / 1000).toFixed(2);</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-20-2-stale-memoization-cache">20.2 Stale Memoization Cache</h2>
+<p>The memoization cache is per-quote-request. It should never persist
+across requests. If it does (due to a bug where the cache is
+module-scoped instead of function-scoped), a configuration change will
+not be reflected in subsequent quotes because the cache returns old
+results.</p>
+<blockquote>
+<p>// WRONG: module-scoped cache persists across calls</p>
+<p>const globalCache = new Map(); // DANGEROUS</p>
+<p>function generateQuote(config) {</p>
+<p>return evaluateNode(config.root_node_id, globalCache);</p>
+<p>}</p>
+<p>// CORRECT: cache is scoped to each quote request</p>
+<p>function generateQuote(config) {</p>
+<p>const requestCache = new Map(); // FRESH per call</p>
+<p>return evaluateNode(config.root_node_id, requestCache);</p>
+<p>}</p>
+</blockquote>
+<p>The subtree price cache (Redis-level, for unchanged configurations)
+is a separate concern. That cache uses a content hash as the key, so any
+configuration change produces a new key and a cache miss. The two
+caching levels must not be confused.</p>
+<h2 id="ch-20-3-circular-reference-in-cross-node-dependencies">20.3 Circular Reference in Cross-Node Dependencies</h2>
+<p>The cycle detection from Chapter 17 prevents cycles in the
+parent-child graph structure. But cross-node dependencies (Chapter 19)
+can create logical cycles that are invisible to the structural cycle
+detector.</p>
+<p>Example: Process A reads an attribute from Process B to determine its
+cost. Process B reads an attribute from Process A to determine its cost.
+Neither is a child of the other, so there is no structural cycle. But
+the pricing functions create a circular dependency that causes infinite
+recursion or undefined behavior.</p>
+<p>The fix: cross-node pricing dependencies must be declared, and the
+engine must build a dependency graph that includes both structural
+(parent-child) and pricing (reads-attribute-from) edges, then check for
+cycles in the combined graph:</p>
+<blockquote>
+<p>interface PricingFunction {</p>
+<p>id: string;</p>
+<p>// Declared dependencies (beyond parent-child)</p>
+<p>reads_from: {</p>
+<p>node_ref: string; // 'parent', 'sibling:type', 'node:id'</p>
+<p>attributes: string[];</p>
+<p>}[];</p>
+<p>evaluate(node, context, childResults): PricingResult;</p>
+<p>}</p>
+<p>// At registration time, build the full dependency graph</p>
+<p>// and reject any function that creates a cycle</p>
+<p>function validatePricingDependencies(typeRegistry) {</p>
+<p>// Build a graph of type-level pricing dependencies</p>
+<p>// If TypeA's function reads from TypeB, and</p>
+<p>// TypeB's function reads from TypeA, reject both</p>
+<p>}</p>
+</blockquote>
+<h2 id="ch-20-4-concurrent-configuration-edits">20.4 Concurrent Configuration Edits</h2>
+<p>Two users editing the same configuration simultaneously can cause
+lost updates. User A loads version 3, changes the UV area. User B loads
+version 3, changes the paper weight. User A saves (version becomes 4).
+User B saves (overwrites version 4 with their changes, losing User A's
+UV edit).</p>
+<p>The fix is optimistic concurrency control using the version
+field:</p>
+<blockquote>
+<p>async function saveConfig(config) {</p>
+<p>const result = await db.query(</p>
+<p>`UPDATE product_configurations</p>
+<p>SET config = $1, version = version + 1,</p>
+<p>updated_at = NOW()</p>
+<p>WHERE id = $2 AND version = $3</p>
+<p>RETURNING version`,</p>
+<p>[config, config.id, config.version]</p>
+<p>);</p>
+<p>if (result.rowCount === 0) {</p>
+<p>// Version mismatch: someone else saved first</p>
+<p>throw new ConcurrentModificationError(</p>
+<p>`Configuration ${config.id} was modified by another user.`</p>
+<p>+ ` Please reload and reapply your changes.`</p>
+<p>);</p>
+<p>}</p>
+<p>config.version = result.rows[0].version;</p>
+<p>}</p>
+</blockquote>
+<p>The WHERE version = $3 clause ensures the update only succeeds if no
+one else has modified the configuration since it was loaded. If it
+fails, the user is prompted to reload and reapply their change. This is
+a standard pattern in collaborative editing systems.</p>
+<h2 id="ch-20-5-orphaned-nodes-after-bulk-operations">20.5 Orphaned Nodes After Bulk Operations</h2>
+<p>Bulk operations (deleting a layer with all its processes, cloning a
+subtree, merging two configurations) can leave orphaned nodes if the
+operation is not atomic. If the system crashes after removing a layer
+from the root's children but before deleting the layer's process nodes
+from the flat map, those process nodes become orphans.</p>
+<p>The fix: wrap bulk operations in database transactions, and run
+orphan detection (from Chapter 17.7) as a post-save validation step. If
+orphans are detected after a transaction commits, log a warning and run
+a cleanup job.</p>
+<h2 id="ch-20-6-rate-table-version-mismatch">20.6 Rate Table Version Mismatch</h2>
+<p>Rate tables are loaded into the pricing context at the start of a
+quote. If a rate table is updated between loading and quote generation
+(e.g., a paper supplier changes their price), the quote uses the old
+rates. This is usually correct behavior (the quote reflects rates at the
+time it was generated), but it must be handled explicitly:</p>
+<ul>
+<li><p>Every quote document stores the rate table versions that were
+used, so the quote can be audited and reproduced.</p></li>
+<li><p>When a rate table changes, all cached quotes that used the old
+rates should be flagged (not invalidated, since historical quotes should
+reflect historical rates).</p></li>
+<li><p>The system should offer a 're-quote at current rates' function
+that generates a new quote using the latest rates, separate from the
+historical quote.</p></li>
+</ul>
+<h2 id="ch-20-7-deep-graph-performance-degradation">20.7 Deep Graph Performance Degradation</h2>
+<p>For most products, the graph has 2-4 levels of depth and 10-50 nodes.
+The engine handles this in microseconds. But what happens when a product
+has 20 layers, each with 10 processes, and 15 assembly operations
+referencing various layers? That is 215+ nodes and 200+ edges.</p>
+<p>The sequential traversal still completes in single-digit milliseconds
+for this scale. But if the pricing functions themselves are complex
+(involving iterative calculations, PDF parsing for area computation, or
+external API calls for real-time material pricing), each node evaluation
+might take 10-50ms. At 215 nodes and 30ms average, that is 6.5 seconds,
+which is unacceptable for interactive quoting.</p>
+<p>The fixes, in order of implementation priority:</p>
+<ol type="1">
+<li><p>Profile first. Measure where time is actually spent. Often 90% of
+the time is in 2-3 functions. Optimize those.</p></li>
+<li><p>Parallel subtree evaluation. Independent branches (Layer 1 and
+Layer 2) can be evaluated in parallel using Promise.all. This cuts time
+proportional to the graph's branching factor.</p></li>
+<li><p>Precompute expensive attributes. If a pricing function parses a
+PDF to compute UV area, do this once at configuration time and store the
+result as a node attribute, not at quote time.</p></li>
+<li><p>Lazy evaluation for non-critical nodes. If the user is
+interactively configuring and only needs to see the total, evaluate only
+the subtrees that affect the total. Evaluate the full breakdown only
+when requested.</p></li>
+<li><p>Worker thread offloading. Move the pricing computation to a Web
+Worker (frontend) or Worker Thread (Node.js) so it does not block the UI
+or event loop.</p></li>
+</ol>
+<h2 id="ch-20-8-event-ordering-in-distributed-systems">20.8 Event Ordering in Distributed Systems</h2>
+<p>If you scale to multiple application servers, events can arrive at
+the event store out of order. Server A records 'process started' and
+Server B records 'process completed' nearly simultaneously. If the
+network delay causes 'completed' to arrive before 'started' in the event
+store, the projection will show an impossible state transition.</p>
+<p>The fix: use a monotonically increasing sequence number per
+configuration (not a global sequence, which creates a bottleneck). Each
+event includes the expected previous sequence number. If the event store
+receives an event with a gap in the sequence, it holds the event in a
+buffer until the gap is filled, or flags the inconsistency for manual
+resolution.</p>
+<h2 id="ch-20-9-the-kitchen-sink-node-type-antipattern">20.9 The 'Kitchen Sink' Node Type Antipattern</h2>
+<p>A common mistake is creating a single 'process' node type with dozens
+of optional attributes to cover every possible process. This defeats the
+purpose of the type system:</p>
+<blockquote>
+<p>// ANTIPATTERN: one type to rule them all</p>
+<p>{</p>
+<p>type_id: 'generic_process',</p>
+<p>attribute_schema: {</p>
+<p>properties: {</p>
+<p>colors: { type: 'number' }, // only for print</p>
+<p>area_pct: { type: 'number' }, // only for coatings</p>
+<p>die_ref: { type: 'string' }, // only for die cut</p>
+<p>edge_color: { type: 'string' }, // only for edge paint</p>
+<p>foil_type: { type: 'string' }, // only for foil stamp</p>
+<p>// ... 30 more optional fields</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<p>// CORRECT: specific types with relevant attributes</p>
+<p>// 'print_process' has colors, coverage, method</p>
+<p>// 'coating_process' has area_pct, thickness, finish</p>
+<p>// 'cutting_process' has die_ref, complexity</p>
+<p>// Each type is focused, validated, and self-documenting</p>
+</blockquote>
+<p>The kitchen-sink type provides no validation (any combination of
+attributes is 'valid'), generates confusing UI forms (most fields are
+irrelevant), and makes pricing function dispatch ambiguous (which
+function handles a node with both 'colors' and 'die_ref'?). Keep types
+specific and focused.</p>
+<h2 id="ch-20-10-testing-strategy">20.10 Testing Strategy</h2>
+<p>Testing a graph-based pricing engine requires a different approach
+than testing CRUD operations. Here is the testing pyramid for this
+architecture:</p>
+<h3 id="ch-unit-tests-one-per-pricing-function">Unit Tests: One per Pricing Function</h3>
+<p>Each pricing function should have 10-20 unit tests covering normal
+cases, edge cases (zero quantity, maximum coverage, minimum order
+quantities), boundary conditions (exactly at quantity break thresholds),
+and rounding behavior. These tests use a mocked PricingContext with
+known rate table values.</p>
+<h3 id="ch-integration-tests-known-product-configurations">Integration Tests: Known Product Configurations</h3>
+<p>Create 5-10 reference configurations that represent your most common
+and most complex products. Compute the expected quote by hand (using a
+spreadsheet). The integration test loads the configuration, runs the
+engine, and asserts that every line item matches the spreadsheet within
+$0.01.</p>
+<h3 id="ch-shadow-testing-engine-vs-legacy-system">Shadow Testing: Engine vs. Legacy System</h3>
+<p>During migration, every quote generated by the legacy system should
+also be generated by the graph engine. Differences are logged and
+investigated. This is the most powerful validation tool because it uses
+real-world data with real-world complexity.</p>
+<h3 id="ch-property-based-tests-invariant-checking">Property-Based Tests: Invariant Checking</h3>
+<p>Rather than testing specific outputs, test invariants that should
+always hold:</p>
+<ul>
+<li><p>A quote total must always be positive if quantity is
+positive.</p></li>
+<li><p>Increasing quantity must decrease or maintain per-unit price
+(never increase it, assuming standard quantity curves).</p></li>
+<li><p>Adding a process to a product must increase the total (never
+decrease it).</p></li>
+<li><p>The sum of all node results' setup costs must equal the quote's
+total setup cost.</p></li>
+<li><p>The memoization cache must contain exactly one entry per
+reachable node in the configuration.</p></li>
+</ul>
+<h1 id="ch-21-glossary">21. Glossary</h1>
+<p><strong>Adjacency List</strong> — A graph representation where each
+node stores references (IDs) to its connected nodes. The flat-map format
+used in this architecture is an adjacency list.</p>
+<p><strong>ConfigNode</strong> — The universal data structure
+representing any element in a product configuration: a product, layer,
+process, or assembly step.</p>
+<p><strong>Configuration Graph</strong> — The complete DAG of
+ConfigNodes that defines a product. Stored as a single JSON
+document.</p>
+<p><strong>CQRS</strong> — Command Query Responsibility Segregation. A
+pattern where the write-side data model is different from the read-side
+data model. Writes go to the event store; reads come from purpose-built
+projections.</p>
+<p><strong>DAG</strong> — Directed Acyclic Graph. A graph where edges
+have direction and there are no cycles. Products are modeled as DAGs
+because a process can serve multiple layers (shared node).</p>
+<p><strong>Eventual Consistency</strong> — The property of a distributed
+system where read-side data may lag behind write-side data by a short
+interval (typically 1-5 seconds). A fundamental trade-off of CQRS.</p>
+<p><strong>Event Sourcing</strong> — A pattern where state changes are
+stored as immutable events rather than overwriting current state.
+Current state is derived by replaying the event log.</p>
+<p><strong>Event Upcasting</strong> — The process of converting old
+event formats to new ones during replay, enabling event schema evolution
+without data migration.</p>
+<p><strong>GIN Index</strong> — Generalized Inverted Index. A PostgreSQL
+index type that enables fast queries into JSONB documents.</p>
+<p><strong>Idempotency</strong> — The property where performing an
+operation multiple times produces the same result as performing it once.
+Critical for event consumers that may process the same event more than
+once.</p>
+<p><strong>JSONB</strong> — Binary JSON storage in PostgreSQL. Supports
+indexing, querying, and partial updates on JSON documents.</p>
+<p><strong>Memoization</strong> — Caching the result of a function call
+so that identical calls return the cached result instead of
+re-computing. Used in the pricing engine to avoid redundant evaluation
+of shared DAG nodes.</p>
+<p><strong>Node Type Definition</strong> — A schema that describes the
+attributes, allowed children, and default pricing function for a
+category of ConfigNode. Stored in a registry; drives UI rendering and
+validation.</p>
+<p><strong>Optimistic Concurrency</strong> — A strategy where updates
+check a version number before writing. If the version has changed since
+the data was read, the update is rejected and must be retried.</p>
+<p><strong>Post-Order Traversal</strong> — A tree/graph traversal that
+visits children before parents. Used by the pricing engine to compute
+costs bottom-up.</p>
+<p><strong>Pricing Context</strong> — The pre-loaded collection of rate
+tables, quantity curves, and global parameters used during quote
+computation. Loaded once per quote, not per node.</p>
+<p><strong>Pricing Function</strong> — A registered function that
+computes the cost of a single ConfigNode given its attributes, context,
+and children's results.</p>
+<p><strong>Projection</strong> — A read-side view of data derived from
+events. Optimized for a specific query pattern (e.g., job board, station
+queue). Can be rebuilt from events at any time.</p>
+<p><strong>Shadow Quoting</strong> — Running the new pricing engine in
+parallel with the legacy system to compare outputs. Used during
+migration to validate accuracy before switching over.</p>
+<p><strong>Strangler Fig</strong> — A migration pattern where a new
+system is built alongside the old one, progressively taking over traffic
+until the old system is retired. Named after the strangler fig tree that
+grows around its host.</p>
+<p><strong>YAGNI</strong> — You Aren't Gonna Need It. A principle that
+advises against building infrastructure or features in anticipation of
+needs that have not yet materialized.</p>
+<p><strong>Cycle Detection</strong> — An algorithm that identifies
+circular references in a graph. Uses three-color marking
+(white/gray/black) during DFS. Must run on every graph mutation.</p>
+<p><strong>Diamond Dependency</strong> — A pattern where two nodes share
+a common descendant, creating a diamond shape in the graph. Causes
+double-counting if not handled with memoization and cost-allocation
+rules.</p>
+<p><strong>Gang Running (N-Up)</strong> — Printing multiple copies of a
+product on a single press sheet, then cutting apart. Transforms the
+quantity context from finished pieces to press sheets.</p>
+<p><strong>Orphan Node</strong> — A node that exists in the flat map but
+is not reachable from the root node. Caused by incomplete deletion
+operations. Detected by comparing reachable nodes against all nodes.</p>
+<p><strong>Reverse Topological Sort</strong> — An ordering of graph
+nodes where every child appears before its parent. Guarantees that when
+a node is evaluated, all its children's results are already
+available.</p>
+<p><strong>Waste Cascading</strong> — The phenomenon where waste at a
+later production stage destroys value added by all earlier stages.
+Correct waste costing must account for cumulative value, not just raw
+material cost.</p>
+<p><strong>Reverse Yield Calculation</strong> — The correct method for
+computing effective quantities by working backward from required good
+output, accounting for compounding waste at each process stage.</p>
+<p><strong>Cross-Node Dependency</strong> — A pricing dependency where
+one node's cost calculation reads attributes from a sibling, parent, or
+distant node. Must be declared and checked for cycles.</p>
+<p><strong>Optimistic Concurrency Control</strong> — A strategy for
+handling concurrent edits by checking a version number before saving.
+Rejects writes that would overwrite changes made by another user since
+the data was loaded.</p>
+<p><strong>Borenstein Routing Model</strong> — A 2000 paper in the
+European Journal of Operational Research that established the
+theoretical framework for representing manufacturing routing flexibility
+as DAGs. Demonstrates three representation levels: Precedence Graph,
+Feasible Operations Tree, and Projected Route Graph.</p>
+<p><strong>Dependency Path</strong> — A directed path through the
+product graph from one node to another. Determines cache invalidation
+scope (which ancestors need re-pricing when a node changes), parallel
+evaluation boundaries (nodes without dependency paths can be priced
+simultaneously), and pricing function input resolution.</p>
+<p><strong>Forward Reachability</strong> — Starting from a node and
+following child edges to determine all descendants. Used to enumerate
+all components of a product for pricing and production tracking.</p>
+<p><strong>Reverse Reachability</strong> — Starting from a node and
+following parent edges upward to determine all ancestors. Used for cache
+invalidation: when a node changes, all ancestors need re-pricing.</p>
+<p><strong>Transitive Reduction</strong> — A graph simplification that
+removes redundant edges. An edge A-to-C is redundant if a path
+A-to-B-to-C already exists. Prevents double-counting in pricing
+aggregation and improves visual clarity.</p>
+<p><strong>d-Separation (in product graphs)</strong> — Borrowed from
+causal inference. Two nodes are d-separated if no dependency path
+connects them through the pricing context. d-Separated nodes can be
+evaluated in parallel because their pricing computations are
+independent.</p>
+<p><strong>Graph Depth</strong> — The longest path from the root node to
+any leaf. Equals the maximum recursion depth of the pricing engine.
+Typical values for print products: 2-5.</p>
+<p><strong>Graph Breadth</strong> — The maximum number of children at
+any single level. Determines the potential for parallel evaluation. A
+product with 12 layers has breadth 12 at level 1.</p>
+<p><strong>Shared Node Ratio</strong> — The percentage of nodes with
+more than one parent. A ratio of 0% means the graph is a pure tree.
+Higher ratios indicate more DAG complexity and more memoization
+benefit.</p>
+<p><em>End of Document</em></p>
+  </div>
+
+</div>
+
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">&uarr;</button>
+
+<script>
+// Progress bar
+const prog = document.getElementById('progress');
+const btn = document.getElementById('backTop');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = (window.scrollY / h) * 100;
+  prog.style.width = pct + '%';
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+
+// TOC toggle
+document.querySelector('.toc-toggle')?.addEventListener('click', () => {
+  document.querySelector('.toc').classList.toggle('open');
+});
+
+// Insert toggle button into TOC
+const toc = document.querySelector('.toc');
+if (toc) {
+  const btn2 = document.createElement('button');
+  btn2.className = 'toc-toggle';
+  btn2.textContent = 'Show Table of Contents';
+  btn2.addEventListener('click', () => {
+    toc.classList.toggle('open');
+    btn2.textContent = toc.classList.contains('open') ? 'Hide Table of Contents' : 'Show Table of Contents';
+  });
+  toc.insertBefore(btn2, toc.querySelector('ol'));
+}
+</script>
+
+</body>
+</html>

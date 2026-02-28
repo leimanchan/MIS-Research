@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIS Architecture Report — Card Manufacturing</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #111827;
+      --code-border: #2d3748;
+      --hr: #2d3748;
+      --table-head: #1e2235;
+      --table-border: #2d3748;
+      --blockquote-border: #4f8ef7;
+      --blockquote-bg: #1a2240;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      padding: 0 1rem 4rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    /* ── TOC / header ── */
+    .report-header {
+      padding: 2.5rem 0 1.5rem;
+      border-bottom: 1px solid var(--hr);
+      margin-bottom: 2rem;
+    }
+    .report-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .report-header .meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    /* ── headings ── */
+    h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); margin: 2.5rem 0 1rem; line-height: 1.3; }
+    h2 { font-size: clamp(1.2rem, 3.5vw, 1.6rem); color: var(--accent2); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--hr); }
+    h3 { font-size: clamp(1rem, 3vw, 1.25rem); color: #7dd3fc; margin: 2rem 0 0.6rem; }
+    h4 { font-size: 1rem; color: #86efac; margin: 1.5rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    h5, h6 { font-size: 0.95rem; color: var(--muted); margin: 1.2rem 0 0.4rem; }
+    /* ── paragraphs & text ── */
+    p { margin: 0.85rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: #f1f5f9; font-weight: 600; }
+    em { color: #fde68a; font-style: italic; }
+    /* ── code ── */
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 4px;
+      padding: 0.1em 0.45em;
+      font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+      font-size: 0.85em;
+      color: #7dd3fc;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 8px;
+      padding: 1.2rem 1rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.82em;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    /* ── lists ── */
+    ul, ol { padding-left: 1.5rem; margin: 0.8rem 0; }
+    li { margin: 0.35rem 0; }
+    /* ── blockquote ── */
+    blockquote {
+      border-left: 3px solid var(--blockquote-border);
+      background: var(--blockquote-bg);
+      margin: 1.2rem 0;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0 6px 6px 0;
+      font-style: italic;
+      color: #cbd5e1;
+    }
+    /* ── tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 0.9rem;
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    th {
+      background: var(--table-head);
+      color: var(--accent);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+      border: 1px solid var(--table-border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--table-border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) { background: var(--surface); }
+    /* ── hr ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--hr);
+      margin: 2.5rem 0;
+    }
+    /* ── sticky TOC toggle on mobile ── */
+    #toc-toggle {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    @media (max-width: 600px) {
+      body { font-size: 15px; }
+      #toc-toggle { display: flex; align-items: center; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>MIS Architecture Report<br>Card Manufacturing System</h1>
+  <div class="meta">From First Principles to CQRS-Ready &nbsp;·&nbsp; February 2026</div>
+</div>
+
+<h1 id="mis-architecture-report-card-manufacturing-system">MIS Architecture Report: Card Manufacturing System</h1>
+<h2 id="from-first-principles-to-cqrs-ready-a-complete-guide">From First Principles to CQRS-Ready — A Complete Guide</h2>
+<p><em>Prepared for: Printing/Card Manufacturing MIS</em> <em>Date: February 2026</em></p>
+<hr>
+<h2 id="table-of-contents">TABLE OF CONTENTS</h2>
+<ol>
+<li><a href="#1-the-core-problem-stated-precisely">The Core Problem, Stated Precisely</a></li>
+<li><a href="#2-first-principles-what-is-this-system-actually-doing">First Principles: What Is This System Actually Doing?</a></li>
+<li><a href="#3-domain-modeling-before-everything">Domain Modeling Before Everything</a></li>
+<li><a href="#4-the-fan-out--fan-in-problem">The Fan-Out / Fan-In Problem</a></li>
+<li><a href="#5-event-driven-thinking-without-infrastructure">Event-Driven Thinking Without Infrastructure</a></li>
+<li><a href="#6-cqrs-origins-theory-and-what-it-actually-solves">CQRS: Origins, Theory, and What It Actually Solves</a></li>
+<li><a href="#7-the-progression-path-crud--cqrs-ready--cqrs--event-sourcing">The Progression Path: CRUD → CQRS-Ready → CQRS → Event Sourcing</a></li>
+<li><a href="#8-when-to-introduce-cqrs-specific-signals">When to Introduce CQRS (Specific Signals)</a></li>
+<li><a href="#9-how-to-build-cqrs-ready-without-cqrs">How to Build CQRS-Ready Without CQRS</a></li>
+<li><a href="#10-projections-the-mathematics-of-read-models">Projections: The Mathematics of Read Models</a></li>
+<li><a href="#11-process-manager-vs-saga-which-one-you-need">Process Manager vs Saga: Which One You Need</a></li>
+<li><a href="#12-manufacturing-genealogy-and-serialization-industry-precedent">Manufacturing Genealogy and Serialization: Industry Precedent</a></li>
+<li><a href="#13-event-modeling-designing-the-system-before-writing-code">Event Modeling: Designing the System Before Writing Code</a></li>
+<li><a href="#14-capacity-planning-the-data-model">Capacity Planning: The Data Model</a></li>
+<li><a href="#15-build-order-first-principles-to-production">Build Order: First Principles to Production</a></li>
+<li><a href="#16-the-ai-layer-why-this-foundation-matters">The AI Layer: Why This Foundation Matters</a></li>
+<li><a href="#17-common-mistakes-to-avoid">Common Mistakes to Avoid</a></li>
+<li><a href="#18-summary-the-master-sequence">Summary: The Master Sequence</a></li>
+</ol>
+<hr>
+<h2 id="1-the-core-problem-stated-precisely">1. The Core Problem, Stated Precisely</h2>
+<p>Your manufacturing process has a property that breaks most off-the-shelf systems: <strong>a single tracked object transforms into N individually-tracked objects, each of which must later reconverge into an exact, validated set.</strong></p>
+<p>Most MIS/ERP systems track at the <strong>order</strong> or <strong>batch</strong> level. They answer "how many cards were completed?" They cannot answer "where is card #7 of job J-1044 right now, what operations has it been through, does it have a serial number, and has it been matched to its complement cards for packing?"</p>
+<p>This is not a software feature gap. It is a <strong>data modeling gap</strong>. The systems don't have the concept of an individually-tracked sub-unit that:</p>
+<ul>
+<li>Derives its identity from a parent (the sheet)</li>
+<li>Has its own lifecycle independent of that parent after the cut</li>
+<li>Must later prove membership in a specific set</li>
+</ul>
+<p>The semiconductor industry solved this first — a wafer becomes hundreds of individual dies, each serialized and tracked individually through packaging and test. The pharmaceutical industry solved it second — a batch of ingredients becomes thousands of individually-tracked pills. You are solving the same class of problem for trading cards.</p>
+<p>This report is about how to model this precisely, build the foundation correctly, and evolve the architecture to support it at scale.</p>
+<hr>
+<h2 id="2-first-principles-what-is-this-system-actually-doing">2. First Principles: What Is This System Actually Doing?</h2>
+<p>Before touching code, define the system's job in mathematical terms.</p>
+<h3 id="the-system-tracks-state-changes-of-physical-objects-over-time">The System Tracks State Changes of Physical Objects Over Time</h3>
+<p>That's it. Everything else is derived from that.</p>
+<p>A physical object (sheet, card) has:</p>
+<ul>
+<li><strong>Identity</strong> — it can be uniquely distinguished from all other objects</li>
+<li><strong>State</strong> — a set of properties at a given moment</li>
+<li><strong>History</strong> — an ordered sequence of state transitions</li>
+<li><strong>Lineage</strong> — its relationship to the objects it came from</li>
+</ul>
+<p>A production operation is a <strong>function</strong> that takes one or more objects, applies work, and returns:</p>
+<ul>
+<li>The same objects in a new state, OR</li>
+<li>A set of new objects (fan-out), OR</li>
+<li>A single new object (fan-in / assembly)</li>
+</ul>
+<p>This is the mathematical core. Your software is recording the <strong>application of these functions over time</strong>, with enough fidelity to answer any question about any object at any point.</p>
+<h3 id="the-business-s-real-questions">The Business's Real Questions</h3>
+<p>Your system must answer two classes of questions:</p>
+<p><strong>Forward-looking (capacity planning):</strong></p>
+<ul>
+<li>"How much work is queued at station X?"</li>
+<li>"Can we commit job J-1044 for delivery on date D?"</li>
+<li>"Which jobs are at risk of missing their deadline?"</li>
+</ul>
+<p><strong>Backward-looking (tracking and traceability):</strong></p>
+<ul>
+<li>"Where is this specific card right now?"</li>
+<li>"Has every card in set S passed QA?"</li>
+<li>"Show me the complete history of this card from sheet to pack"</li>
+</ul>
+<p>These two question types have fundamentally different data shapes. This observation is the seed of CQRS — but we don't need to act on it yet.</p>
+<hr>
+<h2 id="3-domain-modeling-before-everything">3. Domain Modeling Before Everything</h2>
+<p>The most important work you can do is <strong>model the domain purely, without any persistence, framework, or infrastructure concern</strong>. This is not an intermediate step. This is the foundation that determines everything else's quality.</p>
+<h3 id="the-ubiquitous-language">The Ubiquitous Language</h3>
+<p>Before writing a single class, establish the vocabulary. Every term should mean exactly one thing:</p>
+<table><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
+<tr><td><strong>ProductionOrder</strong></td><td>A commitment to produce a specific quantity of a specific product for a specific customer</td></tr>
+<tr><td><strong>Job</strong></td><td>The work unit created to fulfill a ProductionOrder (one Order may spawn multiple Jobs)</td></tr>
+<tr><td><strong>Sheet</strong></td><td>A physical substrate (paper) that enters the press. The unit of pre-cut work.</td></tr>
+<tr><td><strong>Cut</strong></td><td>The operation that destroys a Sheet as a tracked entity and creates N CardUnits</td></tr>
+<tr><td><strong>CardUnit</strong></td><td>An individual card. Born at Cut, dies when Packed. Has its own lifecycle.</td></tr>
+<tr><td><strong>Operation</strong></td><td>A discrete unit of work performed on a Sheet or CardUnit at a Station</td></tr>
+<tr><td><strong>Station</strong></td><td>A physical location where an operation type is performed (e.g., FOIL-1, QA-BENCH-3)</td></tr>
+<tr><td><strong>Embellishment</strong></td><td>Any decorative operation: foil stamping, UV coating, die cutting, etc.</td></tr>
+<tr><td><strong>Memorabilia</strong></td><td>A physical insert placed into a card (autograph, relic, etc.)</td></tr>
+<tr><td><strong>Set</strong></td><td>The N CardUnits that originated from the same Sheet and must be reunited for packing</td></tr>
+<tr><td><strong>Assembly</strong></td><td>The gathering of all N cards in a Set, validated as complete before packing</td></tr>
+<tr><td><strong>Pack</strong></td><td>A physical shipment container (box, case, pallet)</td></tr>
+<tr><td><strong>QA</strong></td><td>Quality inspection of a CardUnit. Result is pass or fail with reason.</td></tr>
+</tbody></table>
+<p>Getting this language right means your code reads like the business. When a developer reads <code>sheet.cut(n_up=18)</code> and gets back <code>List[CardUnit]</code>, they understand the domain without needing comments.</p>
+<h3 id="value-objects-vs-entities">Value Objects vs Entities</h3>
+<p>This distinction from Domain-Driven Design is fundamental:</p>
+<p><strong>Entities</strong> have identity. Two entities with identical properties are still different things if they have different IDs. A CardUnit is an entity — card #7 and card #8 from the same sheet are different things even if they look identical.</p>
+<p><strong>Value Objects</strong> have no identity — they are defined entirely by their values. Two value objects with the same values are interchangeable. An <code>Embellishment</code> specification (type: "foil", color: "gold", die: "wave") is a value object — it doesn't need its own ID.</p>
+<p>For your system:</p>
+<ul>
+<li><strong>Entities</strong>: ProductionOrder, Job, Sheet, CardUnit, Pack, Station</li>
+<li><strong>Value Objects</strong>: EmbellishmentSpec, QAResult, SequentialNumber, Address, Dimensions</li>
+</ul>
+<pre><code class="language-python">
+# Entity — identity-based equality
+@dataclass
+class CardUnit:
+    card_unit_id: CardUnitId
+    sheet_id: SheetId
+    position: int           # position on sheet (1-18)
+    job_id: JobId
+    status: CardUnitStatus
+    # ... operations history stored separately as events
+
+    def __eq__(self, other):
+        return isinstance(other, CardUnit) and self.card_unit_id == other.card_unit_id
+
+# Value Object — value-based equality
+@dataclass(frozen=True)
+class EmbellishmentSpec:
+    embellishment_type: str    # "foil" | "uv" | "die_cut" | "glue"
+    color: str | None
+    die_name: str | None
+    position: str | None       # "front" | "back"
+    # No ID. Immutable. Two identical specs are the same thing.
+</code></pre>
+<h3 id="aggregate-roots-and-invariants">Aggregate Roots and Invariants</h3>
+<p>An <strong>aggregate</strong> is a cluster of objects that must change together to maintain consistency. The <strong>aggregate root</strong> controls all access.</p>
+<p>The critical design question for your system: <strong>Is the Sheet the aggregate root, or is each CardUnit its own aggregate?</strong></p>
+<p>The answer has major implications for how you model the cut operation and how you handle concurrent updates.</p>
+<p><strong>Option A: Sheet as root, CardUnits as children</strong></p>
+<pre><code class="language-">
+Sheet (aggregate root)
+  └── List[CardUnit]
+</code></pre>
+<p>This makes the cut operation clean (it's a method on Sheet that spawns children), and invariants like "all cards come from a valid sheet" are easy to enforce. But it means every operation on a single CardUnit requires loading the whole Sheet aggregate, and concurrent operations on different cards from the same sheet can conflict.</p>
+<p><strong>Option B: CardUnit as its own aggregate after cut</strong></p>
+<pre><code class="language-">
+Sheet (aggregate root, pre-cut)
+    ↓ cut event
+CardUnit (new aggregate root, post-cut)
+</code></pre>
+<p>This is the right answer for your domain. After the cut, CardUnits need to be independently updateable — one card is at QA while another is at the foil stamp station. They can't be locked to each other. Sheet remains the aggregate for pre-cut operations. At the cut, it fires a domain event that spawns N new CardUnit aggregates.</p>
+<p><strong>The invariant that bridges them</strong>: a <code>Set</code> or <code>Assembly</code> aggregate is responsible for enforcing that all CardUnits are present and accounted for before packing. This aggregate holds the set membership rules and validates completeness.</p>
+<pre><code class="language-python">
+@dataclass
+class Assembly:
+    assembly_id: AssemblyId
+    job_id: JobId
+    sheet_id: SheetId          # which sheet these cards came from
+    expected_count: int         # 18 (or N)
+    gathered_card_ids: List[CardUnitId]
+    status: AssemblyStatus     # "in_progress" | "complete" | "error"
+
+    def gather(self, card_unit: CardUnit) -&gt; 'Assembly':
+        """Pure function. Returns new Assembly state. Raises if wrong card."""
+        if card_unit.sheet_id != self.sheet_id:
+            raise WrongCardForAssembly(card_unit.card_unit_id, self.assembly_id)
+        if card_unit.card_unit_id in self.gathered_card_ids:
+            raise DuplicateCardInAssembly(card_unit.card_unit_id)
+        new_gathered = self.gathered_card_ids + [card_unit.card_unit_id]
+        new_status = AssemblyStatus.COMPLETE if len(new_gathered) == self.expected_count else AssemblyStatus.IN_PROGRESS
+        return Assembly(
+            assembly_id=self.assembly_id,
+            job_id=self.job_id,
+            sheet_id=self.sheet_id,
+            expected_count=self.expected_count,
+            gathered_card_ids=new_gathered,
+            status=new_status
+        )
+</code></pre>
+<p>Notice: pure function, no I/O, no database, returns new state. This is the right model.</p>
+<hr>
+<h2 id="4-the-fan-out-fan-in-problem">4. The Fan-Out / Fan-In Problem</h2>
+<p>This is the architectural heart of your system. Most resources don't address it directly, so let's be precise.</p>
+<h3 id="fan-out-one-object-becomes-many">Fan-Out: One Object Becomes Many</h3>
+<p>The cut operation is a <strong>destructive transformation</strong> — the Sheet as a tracked entity ceases to exist, and N CardUnits come into existence. This is not just an update; it is a lifecycle event that creates new aggregate roots.</p>
+<pre><code class="language-">
+Before Cut:           After Cut:
+Sheet S-001           CardUnit S-001-01
+                      CardUnit S-001-02
+                      CardUnit S-001-03
+                      ...
+                      CardUnit S-001-18
+</code></pre>
+<p>Key design decisions:</p>
+<ol>
+<li><strong>Sheet S-001 is not deleted</strong> — it is archived. Its history is preserved. The cut is an event on the Sheet.</li>
+<li><strong>CardUnit IDs encode lineage</strong> — <code>S-001-07</code> tells you immediately it is position 7 from Sheet S-001. This is deterministic identity, not a UUID.</li>
+<li><strong>All 18 CardUnits inherit Sheet metadata at creation</strong> — job ID, product spec, embellishment specs, customer — so each CardUnit is self-describing without joins.</li>
+</ol>
+<h3 id="fan-in-many-objects-must-become-one-set">Fan-In: Many Objects Must Become One Set</h3>
+<p>The assembly operation is a <strong>convergence</strong> — N separate CardUnit lifecycles must merge into a single, validated Set. This is where the zero-error requirement lives.</p>
+<p>The Assembly aggregate is responsible for:</p>
+<ol>
+<li>Knowing exactly which cards belong (from the Sheet's lineage)</li>
+<li>Tracking which have arrived</li>
+<li>Refusing to accept cards that don't belong</li>
+<li>Refusing to complete until all expected cards are present</li>
+<li>Detecting and alerting on cards that are absent past a timeout</li>
+</ol>
+<p>This is fundamentally a <strong>Process Manager</strong> (see section 11) — it tracks the state of a multi-actor, long-running process and enforces completion rules.</p>
+<h3 id="the-tricky-part-what-happens-when-a-card-is-lost-or-damaged">The Tricky Part: What Happens When a Card Is Lost or Damaged?</h3>
+<p>Your system must have a policy for:</p>
+<ul>
+<li>A card fails QA and cannot be repaired → the set is incomplete</li>
+<li>A card is lost → the set is incomplete</li>
+<li>A replacement card is produced → it must be linked to the original sheet lineage</li>
+</ul>
+<p>This is a domain decision, not a software decision. But your data model must support it. The right approach is:</p>
+<ul>
+<li>A CardUnit can be <code>VOIDED</code> (with reason) — it exits the set</li>
+<li>A <code>ReplacementCardUnit</code> can be created with explicit reference to the original it replaces</li>
+<li>The Assembly tracks both expected and actual composition</li>
+<li>Packing requires explicit manager authorization when a set is assembled with a replacement</li>
+</ul>
+<p>Document this as a domain decision before you model it. Don't let the software make this choice implicitly.</p>
+<hr>
+<h2 id="5-event-driven-thinking-without-infrastructure">5. Event-Driven Thinking Without Infrastructure</h2>
+<p>Before introducing any event bus, message queue, or CQRS infrastructure, you should think in events. This is the modeling discipline — not the technology.</p>
+<h3 id="what-is-a-domain-event">What Is a Domain Event?</h3>
+<p>A domain event is a <strong>fact about something that happened in the past</strong> in your domain. It is:</p>
+<ul>
+<li>Immutable — it happened; you can't un-happen it</li>
+<li>Named in past tense — <code>SheetCut</code>, <code>CardUnitEnteredStation</code>, <code>QAPassed</code>, <code>AssemblyCompleted</code></li>
+<li>Meaningful to the business — a domain expert would say "yes, that's something that matters"</li>
+<li>Rich — it carries all the context needed to understand what happened without lookups</li>
+</ul>
+<pre><code class="language-python">
+@dataclass(frozen=True)
+class SheetCut:
+    """Fired when a sheet is cut into individual card units."""
+    occurred_at: datetime
+    sheet_id: SheetId
+    job_id: JobId
+    n_up: int                     # how many cards were cut
+    operator_id: OperatorId
+    station_id: StationId
+    # All 18 CardUnit IDs determined at this moment
+    card_unit_ids: tuple[CardUnitId, ...]
+
+@dataclass(frozen=True)
+class CardUnitEnteredStation:
+    occurred_at: datetime
+    card_unit_id: CardUnitId
+    station_id: StationId
+    operator_id: OperatorId
+    # Inferred from sequence: previous station exit
+    # No "exited" event needed — next "entered" implies exit from previous
+
+@dataclass(frozen=True)
+class QAResultRecorded:
+    occurred_at: datetime
+    card_unit_id: CardUnitId
+    result: QAOutcome            # PASS | FAIL
+    inspector_id: OperatorId
+    failure_reason: str | None   # None if PASS
+    failure_codes: tuple[str, ...] # [] if PASS
+</code></pre>
+<h3 id="events-are-not-log-messages">Events Are Not Log Messages</h3>
+<p>A common mistake: treating events as structured logs ("INFO: card scanned at station"). Events are <strong>domain facts</strong> that could trigger other behavior, update read models, or be replayed to reconstruct state. They carry business meaning, not technical meaning.</p>
+<p>A log message: <code>"Card S-001-07 scanned at QA-BENCH-3 by operator OP-42 at 14:32:07"</code> A domain event: <code>QAResultRecorded(card<em>unit</em>id="S-001-07", result=PASS, inspector<em>id="OP-42", occurred</em>at=...)</code></p>
+<p>The log is for debugging. The event is for the domain.</p>
+<h3 id="raising-events-from-pure-functions">Raising Events From Pure Functions</h3>
+<p>Your domain functions should <strong>return</strong> events, not emit them to a bus. The adapter layer does the emission. This keeps the core pure.</p>
+<pre><code class="language-python">
+# In core — pure function returns events
+def cut_sheet(sheet: Sheet, n_up: int, operator_id: OperatorId, station_id: StationId, at: datetime) -&gt; tuple[Sheet, list[DomainEvent]]:
+    if sheet.status != SheetStatus.READY_TO_CUT:
+        raise SheetNotReadyForCut(sheet.sheet_id, sheet.status)
+
+    card_unit_ids = [CardUnitId.for_position(sheet.sheet_id, i) for i in range(1, n_up + 1)]
+    new_sheet = dataclasses.replace(sheet, status=SheetStatus.CUT)
+
+    events = [
+        SheetCut(
+            occurred_at=at,
+            sheet_id=sheet.sheet_id,
+            job_id=sheet.job_id,
+            n_up=n_up,
+            operator_id=operator_id,
+            station_id=station_id,
+            card_unit_ids=tuple(card_unit_ids)
+        )
+    ] + [
+        CardUnitCreated(
+            occurred_at=at,
+            card_unit_id=cuid,
+            sheet_id=sheet.sheet_id,
+            job_id=sheet.job_id,
+            position=i + 1,
+        )
+        for i, cuid in enumerate(card_unit_ids)
+    ]
+
+    return new_sheet, events
+
+# In adapter layer — emits events
+sheet, events = cut_sheet(sheet, n_up=18, operator_id=op, station_id=station, at=now())
+for event in events:
+    event_store.append(event)
+    # optionally: message_bus.publish(event)
+</code></pre>
+<hr>
+<h2 id="6-cqrs-origins-theory-and-what-it-actually-solves">6. CQRS: Origins, Theory, and What It Actually Solves</h2>
+<h3 id="the-intellectual-lineage">The Intellectual Lineage</h3>
+<p>CQRS traces back to <strong>Bertrand Meyer's Command-Query Separation (CQS)</strong> principle (1988), which states:</p>
+<blockquote><em>Every method should either be a command that performs an action, or a query that returns data to the caller, but not both.</em></blockquote>
+<p>Meyer applied this at the method level. Greg Young extended it to the object and system level in 2010. The insight: if a command and a query can't share the same method, they may not need to share the same model either.</p>
+<p>Greg Young's original definition:</p>
+<blockquote><em>"CQRS uses the same definition of commands and queries that Meyer used and maintains the viewpoint that they should be pure. The fundamental difference is that, in CQRS, objects are split into two objects, one containing the commands, one containing the queries."</em></blockquote>
+<p>Udi Dahan added the business context:</p>
+<blockquote><em>"CQRS addresses two driving forces: collaboration (multiple actors modifying shared data) and staleness (data shown to users becomes outdated). The pattern separates command processing from query handling to handle these realities more effectively."</em></blockquote>
+<p>Martin Fowler's warning (critically important):</p>
+<blockquote><em>"Be very cautious about using CQRS. CQRS adds risky complexity to your system. For most systems, sharing a model is easier. I've seen CQRS implementation cause significant drag on productivity in real projects."</em></blockquote>
+<h3 id="what-cqrs-actually-solves">What CQRS Actually Solves</h3>
+<p>CQRS solves a specific problem: <strong>your write model and read model want to be different shapes</strong>.</p>
+<p>When you write a command, you care about:</p>
+<ul>
+<li>Consistency (did this state transition violate any invariants?)</li>
+<li>Atomicity (did the full change succeed or fail cleanly?)</li>
+<li>Business rules (is this command valid given the current state?)</li>
+</ul>
+<p>When you read data, you care about:</p>
+<ul>
+<li>Query performance (fast!)</li>
+<li>View shape (flat, denormalized, ready to display)</li>
+<li>Aggregated data (totals, counts, progress percentages)</li>
+</ul>
+<p>These are fundamentally different concerns. A normalized, invariant-protecting domain model is terrible at fast reads. A denormalized read table is terrible at enforcing business rules.</p>
+<p>CQRS says: <strong>use separate models for each</strong>. The write model handles commands and produces events. Events update the read model. The read model answers queries.</p>
+<h3 id="the-consistency-question">The Consistency Question</h3>
+<p>The most important practical question with CQRS is: <strong>how long can the read model lag behind the write model?</strong></p>
+<p><strong>Synchronous (same transaction)</strong>: Update the read model in the same database transaction as the event. Zero lag. This is the minimum viable CQRS and is correct for most applications.</p>
+<p><strong>Asynchronous (eventual consistency)</strong>: Update the read model after the transaction commits, via a queue or event stream. Lag exists — could be milliseconds or seconds. Requires your UI to handle "your action was recorded, results will appear shortly." Adds significant complexity. Only worth it at scale.</p>
+<p>For a manufacturing tracking system with dozens of concurrent operators (not thousands of concurrent users), <strong>synchronous CQRS is sufficient and correct</strong>. Do not add eventual consistency until you have a proven performance problem.</p>
+<hr>
+<h2 id="7-the-progression-path-crud-cqrs-ready-cqrs-event-sourcing">7. The Progression Path: CRUD → CQRS-Ready → CQRS → Event Sourcing</h2>
+<p>This is the most important section for your build strategy.</p>
+<h3 id="stage-0-stateless-tools-where-you-are-now">Stage 0: Stateless Tools (Where You Are Now)</h3>
+<p>Your current <code>tool-hub-try5</code> is here. Pure functions, no persistence. Excellent foundation.</p>
+<h3 id="stage-1-cqrs-ready-where-to-go-next">Stage 1: CQRS-Ready (Where to Go Next)</h3>
+<p>You add state, but you structure it so CQRS can be introduced without rewriting anything.</p>
+<p>Characteristics:</p>
+<ul>
+<li><strong>Append-only event log</strong> — every state change is recorded as an event row</li>
+<li><strong>Pure reducer functions</strong> in core that project events → current state</li>
+<li><strong>Read models</strong> updated synchronously in the same transaction</li>
+<li><strong>Single database</strong> (Postgres is fine — you don't need separate read/write stores yet)</li>
+<li><strong>No message bus</strong> — events flow within the request/response cycle</li>
+</ul>
+<p>What you're building in Stage 1 looks like CQRS but uses the same database for reads and writes. The separation is <strong>conceptual and code-level</strong>, not infrastructure-level. This is the minimum viable approach and it carries you very far.</p>
+<h3 id="stage-2-cqrs-if-and-when-you-need-it">Stage 2: CQRS (If and When You Need It)</h3>
+<p>You separate read and write databases. Events are published to a bus or queue. Read models are updated asynchronously.</p>
+<p><strong>Only do this if you have proven</strong>:</p>
+<ul>
+<li>Read query performance is inadequate on the shared database</li>
+<li>You need to scale reads independently of writes</li>
+<li>Your team understands eventual consistency and has built UI to handle it</li>
+<li>You have monitoring to detect when read models lag unacceptably</li>
+</ul>
+<h3 id="stage-3-full-event-sourcing-probably-never">Stage 3: Full Event Sourcing (Probably Never)</h3>
+<p>The event log <strong>is</strong> the source of truth. You never update entity state — you replay events from scratch to reconstruct current state. Read models are always projections.</p>
+<p><strong>Only do this if you need</strong>:</p>
+<ul>
+<li>Complete temporal auditability (replay any moment in history)</li>
+<li>The ability to add new read models from historical events</li>
+<li>Regulatory compliance requiring immutable audit trail</li>
+</ul>
+<p>For a card manufacturing shop, Stage 1 (CQRS-Ready) will serve you for years. Stage 2 only if you grow to hundreds of concurrent operators and measurable DB bottlenecks. Stage 3 almost certainly never.</p>
+<hr>
+<h2 id="8-when-to-introduce-cqrs-specific-signals">8. When to Introduce CQRS (Specific Signals)</h2>
+<p>The signals that tell you it's time to split read and write stores:</p>
+<h3 id="signal-1-query-shape-impedance">Signal 1: Query Shape Impedance</h3>
+<p>Your domain model requires complex joins, aggregations, or transformations for every read query. You're spending more time transforming data for display than processing commands. Example: to show the dashboard, you join 6 tables and aggregate 3 datasets on every page load.</p>
+<h3 id="signal-2-read-write-contention">Signal 2: Read/Write Contention</h3>
+<p>Dashboards and reporting queries are taking table locks that delay write operations. Workers scanning barcodes are waiting because someone ran a report.</p>
+<h3 id="signal-3-divergent-scaling-needs">Signal 3: Divergent Scaling Needs</h3>
+<p>You have 10 operators doing writes but 500 managers refreshing dashboards. Or the inverse: massive batch import jobs with few concurrent readers.</p>
+<h3 id="signal-4-read-model-complexity-exceeds-write-model">Signal 4: Read Model Complexity Exceeds Write Model</h3>
+<p>The queries your business needs are so complex that they require materialized, pre-computed views that the write model cannot efficiently produce.</p>
+<h3 id="signal-5-multiple-consumer-shapes">Signal 5: Multiple Consumer Shapes</h3>
+<p>Different departments need completely different views of the same underlying events: operations wants real-time station load, finance wants job cost rollups, shipping wants pack manifests. Maintaining these as separate read models from a shared event log is cleaner than trying to query-engineer everything from a normalized schema.</p>
+<p><strong>Warning signals that you don't need CQRS:</strong></p>
+<ul>
+<li>"We read more than we write" — this is not sufficient justification</li>
+<li>"CQRS is modern best practice" — not a technical reason</li>
+<li>"We want to scale eventually" — scale to what? How many orders?</li>
+<li>"Event sourcing sounds interesting" — solve real problems, not hypothetical ones</li>
+</ul>
+<hr>
+<h2 id="9-how-to-build-cqrs-ready-without-cqrs">9. How to Build CQRS-Ready Without CQRS</h2>
+<p>This is the practical section. Here is exactly how to structure the code so that introducing full CQRS later requires no rewrites — only additions.</p>
+<h3 id="the-event-log-table-the-foundation-of-everything">The Event Log Table (The Foundation of Everything)</h3>
+<pre><code class="language-sql">
+CREATE TABLE production_events (
+    -- Global ordering (safe for concurrent writers)
+    sequence_num     BIGSERIAL PRIMARY KEY,
+
+    -- Per-aggregate ordering (for optimistic concurrency)
+    aggregate_id     TEXT NOT NULL,
+    aggregate_type   TEXT NOT NULL,       -- 'sheet' | 'card_unit' | 'assembly' | 'job'
+    aggregate_version INTEGER NOT NULL,    -- monotonically increasing per aggregate
+
+    -- The event
+    event_type       TEXT NOT NULL,       -- 'SheetCut' | 'CardUnitEnteredStation' | ...
+    event_payload    JSONB NOT NULL,      -- the full event, serialized
+
+    -- Context
+    occurred_at      TIMESTAMPTZ NOT NULL,
+    recorded_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    operator_id      TEXT,
+    station_id       TEXT,
+    correlation_id   TEXT,               -- links events from the same user action
+
+    -- Enforce no duplicate versions per aggregate (optimistic concurrency)
+    UNIQUE (aggregate_id, aggregate_type, aggregate_version)
+);
+
+CREATE INDEX ON production_events (aggregate_id, aggregate_type);
+CREATE INDEX ON production_events (event_type);
+CREATE INDEX ON production_events (occurred_at);
+</code></pre>
+<p>This table never gets UPDATE or DELETE. Ever. It is append-only.</p>
+<h3 id="read-model-tables-materialized-projections">Read Model Tables (Materialized Projections)</h3>
+<p>These are updated synchronously when events are appended. In Stage 1, they live in the same database:</p>
+<pre><code class="language-sql">
+-- Current state of each card unit
+CREATE TABLE rm_card_units (
+    card_unit_id        TEXT PRIMARY KEY,
+    sheet_id            TEXT NOT NULL,
+    job_id              TEXT NOT NULL,
+    position            INTEGER NOT NULL,    -- 1..N on sheet
+    current_station_id  TEXT,
+    status              TEXT NOT NULL,       -- 'in_progress' | 'qa_passed' | 'qa_failed' | 'assembled' | 'packed'
+    qa_result           TEXT,               -- 'pass' | 'fail' | null
+    qa_failure_reason   TEXT,
+    sequential_number   TEXT,               -- if serialized
+    last_event_seq      BIGINT,             -- which event last updated this
+    updated_at          TIMESTAMPTZ
+);
+
+-- Station current load
+CREATE TABLE rm_station_load (
+    station_id          TEXT PRIMARY KEY,
+    card_unit_count     INTEGER NOT NULL DEFAULT 0,
+    sheet_count         INTEGER NOT NULL DEFAULT 0,
+    last_event_seq      BIGINT,
+    updated_at          TIMESTAMPTZ
+);
+
+-- Job progress
+CREATE TABLE rm_job_progress (
+    job_id              TEXT PRIMARY KEY,
+    total_sheets        INTEGER,
+    total_cards         INTEGER,
+    cards_at_qa         INTEGER DEFAULT 0,
+    cards_qa_passed     INTEGER DEFAULT 0,
+    cards_qa_failed     INTEGER DEFAULT 0,
+    cards_assembled     INTEGER DEFAULT 0,
+    cards_packed        INTEGER DEFAULT 0,
+    status              TEXT,
+    last_event_seq      BIGINT,
+    updated_at          TIMESTAMPTZ
+);
+
+-- Assembly (gathering) state
+CREATE TABLE rm_assemblies (
+    assembly_id         TEXT PRIMARY KEY,
+    sheet_id            TEXT NOT NULL,
+    job_id              TEXT NOT NULL,
+    expected_count      INTEGER NOT NULL,
+    gathered_count      INTEGER NOT NULL DEFAULT 0,
+    missing_positions   INTEGER[],
+    status              TEXT NOT NULL,    -- 'pending' | 'in_progress' | 'complete' | 'error'
+    last_event_seq      BIGINT,
+    updated_at          TIMESTAMPTZ
+);
+</code></pre>
+<h3 id="the-pure-reducer-functions-in-core">The Pure Reducer Functions in Core</h3>
+<p>These live in <code>core/</code> with no I/O:</p>
+<pre><code class="language-python">
+# core/projections/card_unit_projection.py
+
+@dataclass
+class CardUnitReadModel:
+    card_unit_id: str
+    sheet_id: str
+    job_id: str
+    position: int
+    current_station_id: str | None
+    status: str
+    qa_result: str | None
+    qa_failure_reason: str | None
+    sequential_number: str | None
+    last_event_seq: int
+
+def apply_event(state: CardUnitReadModel | None, event: dict) -&gt; CardUnitReadModel | None:
+    """
+    Pure function. Given current read model state and an event dict,
+    return new read model state.
+    This is a left-fold: fold(events) -&gt; current_state.
+    """
+    event_type = event["event_type"]
+    payload = event["event_payload"]
+    seq = event["sequence_num"]
+
+    match event_type:
+        case "CardUnitCreated":
+            return CardUnitReadModel(
+                card_unit_id=payload["card_unit_id"],
+                sheet_id=payload["sheet_id"],
+                job_id=payload["job_id"],
+                position=payload["position"],
+                current_station_id=None,
+                status="created",
+                qa_result=None,
+                qa_failure_reason=None,
+                sequential_number=None,
+                last_event_seq=seq,
+            )
+        case "CardUnitEnteredStation":
+            if state is None: return None
+            return dataclasses.replace(state,
+                current_station_id=payload["station_id"],
+                last_event_seq=seq,
+            )
+        case "QAResultRecorded":
+            if state is None: return None
+            return dataclasses.replace(state,
+                status="qa_passed" if payload["result"] == "PASS" else "qa_failed",
+                qa_result=payload["result"],
+                qa_failure_reason=payload.get("failure_reason"),
+                last_event_seq=seq,
+            )
+        case _:
+            return state  # event not relevant to this projection
+</code></pre>
+<p><strong>This is the mathematical core of CQRS.</strong> Each read model is a left-fold over the event stream:</p>
+<pre><code class="language-">
+current_state = fold(apply_event, initial_state, events)
+</code></pre>
+<p>This is functionally equivalent to:</p>
+<pre><code class="language-python">
+state = None
+for event in events:
+    state = apply_event(state, event)
+return state
+</code></pre>
+<p>The power: if you need a new read model, write a new reducer. <strong>You never change the event log.</strong> You replay historical events through the new reducer and you have your new view — historically complete, back to day one.</p>
+<h3 id="the-adapter-synchronous-projection-update">The Adapter: Synchronous Projection Update</h3>
+<p>In the adapter layer, when you write an event, you immediately update the read model in the same transaction:</p>
+<pre><code class="language-python">
+# adapters/event_store/postgres.py
+
+def append_event(conn, event: dict, aggregate_version: int) -&gt; dict:
+    """
+    Append event to log and update read models — all in one transaction.
+    This is synchronous CQRS. No eventual consistency. No message bus.
+    """
+    with conn.transaction():
+        # 1. Append to event log
+        row = conn.execute("""
+            INSERT INTO production_events
+            (aggregate_id, aggregate_type, aggregate_version, event_type, event_payload, occurred_at, operator_id, station_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING sequence_num, recorded_at
+        """, [
+            event["aggregate_id"],
+            event["aggregate_type"],
+            aggregate_version,
+            event["event_type"],
+            json.dumps(event["payload"]),
+            event["occurred_at"],
+            event.get("operator_id"),
+            event.get("station_id"),
+        ]).fetchone()
+
+        event_with_seq = {**event, "sequence_num": row["sequence_num"]}
+
+        # 2. Update all relevant read models (pure functions decide new state)
+        _update_card_unit_projection(conn, event_with_seq)
+        _update_station_load_projection(conn, event_with_seq)
+        _update_job_progress_projection(conn, event_with_seq)
+        _update_assembly_projection(conn, event_with_seq)
+
+    return event_with_seq
+</code></pre>
+<p>When you're ready to go to full CQRS, you:</p>
+<ol>
+<li>Remove the synchronous projection updates from this function</li>
+<li>Add event publishing after commit</li>
+<li>Run projection updaters as separate services consuming the event stream</li>
+</ol>
+<p><strong>Zero rewrites to core.</strong> The reducer functions stay identical.</p>
+<hr>
+<h2 id="10-projections-the-mathematics-of-read-models">10. Projections: The Mathematics of Read Models</h2>
+<p>A projection is a <strong>left-fold</strong> (functional programming term) over an ordered sequence of events:</p>
+<pre><code class="language-">
+fold :: (state → event → state) → initial_state → [event] → state
+</code></pre>
+<p>This is mathematically equivalent to the reduce/accumulate pattern:</p>
+<pre><code class="language-python">
+from functools import reduce
+
+def build_state(events: list[Event], initial_state: State) -&gt; State:
+    return reduce(apply_event, events, initial_state)
+</code></pre>
+<h3 id="why-this-matters">Why This Matters</h3>
+<ol>
+<li><strong>Correctness</strong>: Pure functions are trivially testable. Give a sequence of events, assert the resulting state. No database setup needed.</li>
+</ol>
+<ol>
+<li><strong>Rebuildability</strong>: If you have a bug in a projection, fix the reducer and replay. The event log is the ground truth.</li>
+</ol>
+<ol>
+<li><strong>New Views for Free</strong>: Six months from now when you need "show me all cards from Job J-1044 that failed QA at FOIL-2 during the last week", you write a new reducer. You don't need new data — it was already captured.</li>
+</ol>
+<ol>
+<li><strong>Time Travel</strong>: Project only events before timestamp T to see the state of the system at time T. This is how you answer "what did we think we knew at 2pm on Tuesday?"</li>
+</ol>
+<h3 id="live-vs-materialized-projections">Live vs Materialized Projections</h3>
+<p><strong>Live projection</strong>: rebuild on every query by replaying events. Simple, always correct, slow for large event streams.</p>
+<p><strong>Materialized projection</strong>: maintain a pre-built read model table, update it when events come in. Fast queries, requires keeping the table in sync.</p>
+<p>The recommended strategy (from EventStoreDB/Kurrent's documentation):</p>
+<blockquote><em>"Start with the live projection strategy — rebuild on demand. Then, if necessary, switch to the full-blown implementation with a separate service."</em></blockquote>
+<p>For your system: materialize the critical dashboards (station load, job progress, assembly status). Keep less-critical views as live projections.</p>
+<h3 id="snapshot-for-long-running-aggregates">Snapshot for Long-Running Aggregates</h3>
+<p>If a Sheet has been through 50 events before being cut, you don't want to replay all 50 to get its current state every time you process a command. A <strong>snapshot</strong> is a cached state at a known version:</p>
+<pre><code class="language-python">
+@dataclass
+class SheetSnapshot:
+    sheet_id: str
+    at_version: int         # which event version this snapshot represents
+    state: dict             # serialized Sheet state
+    created_at: datetime
+</code></pre>
+<p>When loading a Sheet: load the latest snapshot, then replay only events after that snapshot's version. For small systems, you won't need snapshots for a while — aggregate streams rarely exceed 100-200 events.</p>
+<hr>
+<h2 id="11-process-manager-vs-saga-which-one-you-need">11. Process Manager vs Saga: Which One You Need</h2>
+<p>These two patterns are often confused. The distinction matters for your fan-in problem.</p>
+<h3 id="saga-choreography">Saga (Choreography)</h3>
+<p>A Saga has <strong>no centralized state</strong>. Each step publishes an event, and other components react. No coordinator knows the full picture.</p>
+<pre><code class="language-">
+CardUnit QA Passes → QAPassed event → Assembly hears it → updates its own state
+</code></pre>
+<p>Simple, decoupled, but hard to debug. If something breaks mid-process, there's no single place to look. Hard to enforce "all 18 cards must be gathered before packing" because nobody owns that invariant.</p>
+<h3 id="process-manager-orchestration">Process Manager (Orchestration)</h3>
+<p>A Process Manager <strong>is a stateful coordinator</strong>. It knows where the process is, listens for events, and issues commands to advance it.</p>
+<pre><code class="language-python">
+@dataclass
+class AssemblyProcessManager:
+    """
+    Coordinates the gathering of N CardUnits into a complete Set.
+    Knows the expected membership. Tracks who has arrived.
+    Enforces the invariant: all members present before completion.
+    """
+    assembly_id: AssemblyId
+    job_id: JobId
+    sheet_id: SheetId
+    expected_positions: frozenset[int]     # {1, 2, 3, ... 18}
+    gathered_positions: frozenset[int]     # which have arrived
+    status: ProcessStatus
+
+    def on_card_unit_scanned_for_assembly(self, event: CardScannedForAssembly) -&gt; list[Command]:
+        """React to event. Return commands to issue."""
+        # Validate: does this card belong here?
+        if event.sheet_id != self.sheet_id:
+            return [RejectCard(card_id=event.card_unit_id, reason="wrong_sheet")]
+
+        # Validate: is this a duplicate?
+        if event.position in self.gathered_positions:
+            return [RejectCard(card_id=event.card_unit_id, reason="duplicate")]
+
+        new_gathered = self.gathered_positions | {event.position}
+
+        # Are we complete?
+        if new_gathered == self.expected_positions:
+            return [CompleteAssembly(assembly_id=self.assembly_id)]
+
+        # Missing positions
+        missing = self.expected_positions - new_gathered
+        return [UpdateAssemblyProgress(assembly_id=self.assembly_id, missing=missing)]
+</code></pre>
+<p><strong>For your system: use a Process Manager for assembly.</strong> The zero-error requirement means you need centralized state that can enforce the completeness invariant. A saga would let cards slip through the cracks.</p>
+<p>The Process Manager's state is persisted to its own table and updated via its own events. It is a first-class entity in your domain.</p>
+<hr>
+<h2 id="12-manufacturing-genealogy-and-serialization-industry-precedent">12. Manufacturing Genealogy and Serialization: Industry Precedent</h2>
+<p>Your problem has been solved at scale in semiconductor manufacturing. Wafer-to-die is the canonical example:</p>
+<p><strong>Wafer → Dies (1:300+ transformation)</strong></p>
+<ul>
+<li>Each wafer gets a unique ID at creation (scribed or laser-marked)</li>
+<li>At dicing (cut), each die receives a coordinate-based ID: <code>(Wafer-ID, X, Y)</code> — deterministic, encodes lineage</li>
+<li>Dies go through individual bonding, packaging, and test operations</li>
+<li>Genealogy is maintained as a tree: wafer → die → packaged unit → tested unit</li>
+<li>Any field failure can be traced back to the exact wafer, lot, process run, and operator</li>
+</ul>
+<p><strong>What they got right that you should copy:</strong></p>
+<ol>
+<li><strong>Deterministic IDs that encode lineage</strong> — you can read a die ID and know its wafer without a database lookup</li>
+<li><strong>The cut as a first-class event</strong> — it's recorded with context (which machine, which operator, at what time)</li>
+<li><strong>Parent inherits nothing forward</strong> — the wafer's status is "diced" but the dies have their own independent status</li>
+<li><strong>Genealogy stored as relationships, not copies</strong> — the die knows its wafer ID; you look up the wafer separately</li>
+<li><strong>Zero-defect traceability</strong> — every operation, every operator, every timestamp</li>
+</ol>
+<p><strong>For your system:</strong></p>
+<pre><code class="language-">
+Sheet ID:      J1044-S003           (Job 1044, Sheet 3)
+CardUnit IDs:  J1044-S003-01        (position 1)
+               J1044-S003-02        (position 2)
+               ...
+               J1044-S003-18        (position 18)
+</code></pre>
+<p>The ID is a string, but it is not opaque — it carries meaning. A new developer can look at <code>J1044-S003-07</code> and understand exactly what it is.</p>
+<hr>
+<h2 id="13-event-modeling-designing-the-system-before-writing-code">13. Event Modeling: Designing the System Before Writing Code</h2>
+<p>Event Modeling (Adam Dymitruk, 2018) is a methodology for designing information systems using events as the primary building block. It is designed to eliminate rework by producing a blueprint that all stakeholders (developers, domain experts, UX designers) can read.</p>
+<h3 id="the-four-ingredients">The Four Ingredients</h3>
+<ol>
+<li><strong>Events</strong> (orange) — facts about what happened: <code>SheetCut</code>, <code>CardUnitEnteredStation</code>, <code>QAPassed</code></li>
+<li><strong>Commands</strong> (blue) — user intents that trigger events: <code>CutSheet</code>, <code>ScanCardAtStation</code>, <code>RecordQAResult</code></li>
+<li><strong>Read Models / Views</strong> (green) — what users see that informs their next command: "Current Station Load", "Assembly Progress"</li>
+<li><strong>Automations</strong> (purple) — system-triggered commands: "when all 18 cards assemble, automatically start packing workflow"</li>
+</ol>
+<h3 id="the-event-modeling-timeline-for-your-system">The Event Modeling Timeline for Your System</h3>
+<p>Reading left to right:</p>
+<pre><code class="language-">
+[View: Job Queue]
+      ↓ operator reviews queue
+[Command: StartJob]
+      ↓
+[Event: JobStarted]
+      ↓ creates
+[Event: SheetsCreated]
+      ↓
+[View: Press Queue / Sheet List]
+      ↓ pressman selects next sheet
+[Command: CheckSheetIntoPressStation]
+      ↓
+[Event: SheetEnteredPressStation]
+      ↓
+[Command: RecordPrintComplete]
+      ↓
+[Event: PrintCompleted]
+      ↓
+[Event: SheetExitedPressStation]
+      ↓
+... (foil stamping, embellishment operations) ...
+      ↓
+[View: Cutting Queue]
+      ↓ operator selects sheet
+[Command: CutSheet]
+      ↓
+[Event: SheetCut]
+      ↓
+[Events: CardUnit01Created, CardUnit02Created, ... CardUnit18Created]
+      ↓
+[View: Individual Card Queues — 18 parallel lanes]
+      ↓
+... (individual operations, QA per card) ...
+      ↓
+[View: Assembly Station — shows which cards in set have arrived]
+      ↓ gather operator scans each card
+[Command: ScanCardForAssembly]
+      ↓
+[Event: CardScannedForAssembly]
+      ↓
+[Automation: when all 18 scanned → AssemblyComplete]
+      ↓
+[Event: AssemblyCompleted]
+      ↓
+[Command: PackSet]
+      ↓
+[Event: SetPacked]
+</code></pre>
+<p><strong>This blueprint is your specification.</strong> Before writing a single class, you can walk a domain expert through this and verify it matches reality. Every box that doesn't make sense is a domain question to resolve before coding.</p>
+<h3 id="the-mapping-to-cqrs">The Mapping to CQRS</h3>
+<p>Event modeling naturally produces CQRS:</p>
+<ul>
+<li><strong>Commands</strong> = write side inputs</li>
+<li><strong>Events</strong> = write side outputs (stored in event log)</li>
+<li><strong>Read Models / Views</strong> = read side (projections)</li>
+<li><strong>Automations</strong> = event handlers that issue new commands</li>
+</ul>
+<p>When you draw out the event model, you're implicitly designing your CQRS architecture. The only thing missing is the infrastructure to run it.</p>
+<hr>
+<h2 id="14-capacity-planning-the-data-model">14. Capacity Planning: The Data Model</h2>
+<p>Capacity planning requires knowing: <strong>how much work can a station do, and how much work is queued?</strong></p>
+<h3 id="core-concepts">Core Concepts</h3>
+<p><strong>Station</strong> — a physical resource with a capacity rate:</p>
+<pre><code class="language-python">
+@dataclass
+class Station:
+    station_id: StationId
+    name: str
+    station_type: StationType          # PRESS | FOIL_STAMP | QA | CUTTING | ASSEMBLY
+    capacity_unit: CapacityUnit        # SHEETS_PER_HOUR | CARDS_PER_HOUR
+    rated_capacity: Decimal            # e.g., 500 (cards/hour)
+    setup_time_minutes: int            # changeover time between jobs
+    operating_hours: OperatingSchedule # when this station is staffed
+</code></pre>
+<p><strong>Operation</strong> — a unit of work for a specific entity type:</p>
+<pre><code class="language-python">
+@dataclass(frozen=True)
+class OperationSpec:
+    operation_type: str
+    station_type: StationType
+    standard_time: Decimal      # expected time per unit (minutes)
+    # Used for scheduling and capacity planning
+</code></pre>
+<p><strong>Queue</strong> — derived from events. You don't store the queue — you project it:</p>
+<pre><code class="language-python">
+def project_station_queue(events: list[Event], station_id: StationId) -&gt; StationQueue:
+    """
+    Project current queue for a station from events.
+    An entity is 'in queue' if it last entered this station and hasn't left.
+    """
+    ...
+</code></pre>
+<h3 id="capacity-planning-algorithm">Capacity Planning Algorithm</h3>
+<p>The simplest correct approach:</p>
+<ol>
+<li>For each Job, enumerate all required Operations (from product spec)</li>
+<li>For each Operation, look up the standard time at the required Station</li>
+<li>Build a timeline: earliest start = max(predecessor operations complete, station available)</li>
+<li>Station available = station's current queue + in-progress work / station capacity</li>
+<li>Commit date = latest operation end time + pack + ship duration</li>
+</ol>
+<p>This is a <strong>directed acyclic graph (DAG)</strong> scheduling problem. Your product spec defines the DAG structure (what operations must happen in what order). Your event data gives you current position in the DAG.</p>
+<pre><code class="language-python">
+@dataclass
+class OperationNode:
+    operation_id: str
+    operation_type: str
+    station_type: StationType
+    required_for_entity_type: str    # "sheet" or "card_unit"
+    predecessors: list[str]          # operation_ids that must complete first
+    standard_time_minutes: Decimal
+
+@dataclass
+class ProductSpec:
+    product_type: str
+    operation_dag: list[OperationNode]
+    n_up: int                        # cards per sheet
+</code></pre>
+<p>Start simple: estimate only. Build the data structures that let you later add constraint-based scheduling. Don't try to build SAP-level scheduling on day one.</p>
+<hr>
+<h2 id="15-build-order-first-principles-to-production">15. Build Order: First Principles to Production</h2>
+<p>This is the master plan. Each phase is self-contained and useful. No phase requires the next phase to deliver value.</p>
+<hr>
+<h3 id="phase-0-domain-language-and-identity-pure-core-no-db">Phase 0: Domain Language and Identity (Pure Core, No DB)</h3>
+<p><strong>What:</strong> Define the ubiquitous language as a DECISIONS.md. Build identity primitives as pure functions. Write tests.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>DECISIONS.md</code> — every domain concept defined, every invariant stated</li>
+<li><code>core/identity/</code> — <code>SheetId</code>, <code>CardUnitId</code>, <code>JobId</code> with deterministic generation</li>
+<li><code>core/domain/models.py</code> — <code>Sheet</code>, <code>CardUnit</code>, <code>Job</code>, <code>Assembly</code>, <code>Station</code> as pure dataclasses</li>
+<li><code>core/domain/events.py</code> — all domain events as frozen dataclasses</li>
+<li><code>core/domain/commands.py</code> — all commands as frozen dataclasses</li>
+<li><code>core/domain/state_machines.py</code> — valid transitions for Sheet and CardUnit</li>
+<li>Tests for all identity, invariant, and state transition logic</li>
+</ul>
+<p><strong>No database. No adapters. No HTTP. Just math.</strong></p>
+<p>This phase is the most important. Get the vocabulary right here and everything else follows. Get it wrong and you'll be refactoring across your entire codebase.</p>
+<hr>
+<h3 id="phase-1-domain-logic-pure-core-no-db">Phase 1: Domain Logic (Pure Core, No DB)</h3>
+<p><strong>What:</strong> Implement the business rules as pure functions. The full domain logic for every operation.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>core/production/sheet<em>operations.py</code> — <code>create</em>sheet()</code>, <code>cut<em>sheet()</code>, <code>enter</em>station()</code>, <code>exit_station()</code></li>
+<li><code>core/production/card<em>unit</em>operations.py</code> — <code>create<em>card</em>unit()</code>, <code>record<em>qa()</code>, <code>apply</em>sequential<em>number()</code>, <code>place</em>memorabilia()</code></li>
+<li><code>core/production/assembly.py</code> — <code>scan<em>card</em>for<em>assembly()</code>, <code>validate</em>assembly_complete()</code></li>
+<li><code>core/projections/</code> — all reducer functions (pure folds)</li>
+<li><code>core/capacity/</code> — station capacity calculations, queue length projection</li>
+<li>Full test coverage for every function</li>
+</ul>
+<p><strong>All functions have signature: <code>(state, command) -> (new<em>state, list[events])</code> or <code>(state, event) -> new</em>state</code></strong></p>
+<hr>
+<h3 id="phase-2-event-store-adapter-first-persistence">Phase 2: Event Store Adapter (First Persistence)</h3>
+<p><strong>What:</strong> Postgres adapter. Append-only event log + synchronous read model updates.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>adapters/event_store/</code> — Postgres event log writer</li>
+<li><code>adapters/projections/</code> — synchronous read model updaters (call core reducers, write to DB)</li>
+<li>Database schema (migrations)</li>
+<li>Integration tests with real Postgres</li>
+</ul>
+<hr>
+<h3 id="phase-3-scan-api-first-http">Phase 3: Scan API (First HTTP)</h3>
+<p><strong>What:</strong> Minimal HTTP API for barcode scanning. Workers scan once; system infers transitions.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>adapters/flask/scan_api/</code> — single endpoint <code>POST /scan</code></li>
+<li>Payload: <code>{barcode, station<em>id, operator</em>id, timestamp}</code></li>
+<li>System determines: is this a sheet? A card? What state transition does this trigger?</li>
+<li>Returns: current entity state + any validation errors</li>
+<li>No UI. JSON only. Designed to be called by a simple barcode scanner app.</li>
+</ul>
+<hr>
+<h3 id="phase-4-read-api-queries">Phase 4: Read API (Queries)</h3>
+<p><strong>What:</strong> HTTP endpoints for all read model queries. No writes.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>GET /jobs/{id}/progress</code> — job completion status</li>
+<li><code>GET /stations/{id}/queue</code> — current queue at station</li>
+<li><code>GET /card-units/{id}</code> — current state + history of a card</li>
+<li><code>GET /assemblies/{id}</code> — which cards present, which missing</li>
+<li><code>GET /capacity</code> — current system-wide load</li>
+</ul>
+<p><strong>These are trivial because the read models are already maintained.</strong></p>
+<hr>
+<h3 id="phase-5-job-and-order-management">Phase 5: Job and Order Management</h3>
+<p><strong>What:</strong> Create and manage production orders and jobs. Connect to existing quoting tools.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>POST /jobs</code> — create a new job (spawns sheets, defines operation plan)</li>
+<li><code>GET /jobs</code> — list all active jobs</li>
+<li>Integration with existing <code>order<em>quote</code> and <code>trading</em>card<em>sheet</em>normalizer</code> tools</li>
+<li>Product specification model (defines the operation DAG for each product type)</li>
+</ul>
+<hr>
+<h3 id="phase-6-capacity-planning">Phase 6: Capacity Planning</h3>
+<p><strong>What:</strong> Forward-looking scheduling from current state.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li><code>core/scheduling/</code> — DAG-based schedule computation</li>
+<li><code>GET /capacity/forecast</code> — predicted load at each station for next N days</li>
+<li><code>GET /jobs/{id}/estimated-completion</code> — derived from current state + remaining operations</li>
+<li>Alert rules: jobs at risk of missing commit date</li>
+</ul>
+<hr>
+<h3 id="phase-7-ai-layer">Phase 7: AI Layer</h3>
+<p><strong>What:</strong> Build on top of the structured event log.</p>
+<p><strong>Deliverables:</strong></p>
+<ul>
+<li>Anomaly detection: flag operations that take 2x standard time</li>
+<li>Predictive QA: identify patterns that correlate with failures</li>
+<li>Smart scheduling suggestions</li>
+<li>Eventually: vision-based scan (camera recognizes barcode automatically)</li>
+</ul>
+<p>The AI layer is easy to build when you have a clean, structured event log. You are building the training data in Phases 0-6.</p>
+<hr>
+<h2 id="16-the-ai-layer-why-this-foundation-matters">16. The AI Layer: Why This Foundation Matters</h2>
+<p>Every event in your log is a structured data point:</p>
+<pre><code class="language-json">
+{
+  "event_type": "QAResultRecorded",
+  "occurred_at": "2026-03-15T14:32:07Z",
+  "card_unit_id": "J1044-S003-07",
+  "sheet_id": "J1044-S003",
+  "job_id": "J1044",
+  "inspector_id": "OP-42",
+  "station_id": "QA-BENCH-3",
+  "result": "FAIL",
+  "failure_reason": "foil_adhesion",
+  "failure_codes": ["F-201"]
+}
+</code></pre>
+<p>After six months of operation, you have tens of thousands of events like this. You can answer:</p>
+<ul>
+<li>"Which operators have the highest QA pass rates?"</li>
+<li>"Does job type X correlate with higher foil adhesion failures?"</li>
+<li>"At what time of day do QA failures spike?"</li>
+<li>"Which product specs produce the most rework?"</li>
+</ul>
+<p>An LLM agent can query this structured event log and produce insights that would take weeks to surface from a traditional system. But only if the data is structured. Unstructured logs, spreadsheets, or ad-hoc database schemas produce noise.</p>
+<p><strong>Build the event log correctly now. The AI reads it later.</strong></p>
+<hr>
+<h2 id="17-common-mistakes-to-avoid">17. Common Mistakes to Avoid</h2>
+<h3 id="mistake-1-modeling-state-instead-of-events">Mistake 1: Modeling State Instead of Events</h3>
+<p>Wrong: <code>UPDATE card<em>units SET status = 'qa</em>passed' WHERE id = 'J1044-S003-07'</code> Right: <code>INSERT INTO production<em>events (event</em>type='QAResultRecorded', ...) → update read model</code></p>
+<p>Once you update in place, you lose the history. You can't answer "when did this card pass QA?" or "how many QA attempts did it take?"</p>
+<h3 id="mistake-2-making-ids-opaque">Mistake 2: Making IDs Opaque</h3>
+<p>Wrong: <code>card<em>unit</em>id = uuid4()</code> — tells you nothing about the card Right: <code>card<em>unit</em>id = "J1044-S003-07"</code> — tells you job, sheet, and position at a glance</p>
+<p>Opaque IDs force database lookups to understand what something is. Semantic IDs make the system self-describing.</p>
+<h3 id="mistake-3-the-god-aggregate">Mistake 3: The God Aggregate</h3>
+<p>Wrong: One <code>ProductionOrder</code> aggregate that contains sheets, cards, operations, QA results, everything. Right: Small, focused aggregates. <code>Sheet</code> knows about sheet-level operations. <code>CardUnit</code> knows about card-level operations. <code>Assembly</code> coordinates gathering.</p>
+<p>God aggregates create massive contention — you can't update a single card without locking the entire order.</p>
+<h3 id="mistake-4-introducing-eventual-consistency-too-early">Mistake 4: Introducing Eventual Consistency Too Early</h3>
+<p>Eventual consistency is a performance optimization with a significant UX and operational cost. Don't add it until you have proven you need it. A synchronous, single-database CQRS can handle thousands of operations per day without breaking a sweat.</p>
+<h3 id="mistake-5-reporting-as-events">Mistake 5: Reporting As Events</h3>
+<p>Wrong: emitting events like <code>DashboardViewed</code> or <code>ReportGenerated</code> — these are queries, not domain facts. Right: events are state changes in the domain. Only things that happened to physical objects or business entities are events.</p>
+<h3 id="mistake-6-skipping-the-ubiquitous-language">Mistake 6: Skipping the Ubiquitous Language</h3>
+<p>If your code uses "item", "thing", "record", or "object" where the business says "card unit", "sheet", and "assembly", you've already introduced translation costs. Every time a developer reads a variable named <code>item</code>, they have to translate. Name things what the business calls them.</p>
+<h3 id="mistake-7-building-ui-before-domain">Mistake 7: Building UI Before Domain</h3>
+<p>You will be tempted to build a nice interface to see your progress. Don't. The UI is a trap — it shapes the data model to what looks good on screen rather than what is correct in the domain. Build the domain model first. Build the API second. Build the UI last.</p>
+<h3 id="mistake-8-using-cqrs-as-top-level-architecture">Mistake 8: Using CQRS as Top-Level Architecture</h3>
+<p>Udi Dahan: <em>"CQRS is not a top-level architecture. CQRS is something that happens at a much lower level."</em> Apply it within a bounded context (e.g., production tracking), not across your entire system. Your quoting tool doesn't need CQRS. Your label generator doesn't need CQRS. Your production tracking module does.</p>
+<hr>
+<h2 id="18-summary-the-master-sequence">18. Summary: The Master Sequence</h2>
+<pre><code class="language-">
+PHASE 0: Language and Identity
+  → DECISIONS.md (domain vocabulary, invariants, non-goals)
+  → Identity primitives (deterministic IDs with lineage)
+  → Domain model (pure dataclasses)
+  → Domain events (frozen dataclasses, past tense)
+  → State machines (valid transitions)
+  → No persistence. No HTTP. 100% testable.
+
+PHASE 1: Domain Logic
+  → Sheet operations (create, station entry/exit, cut → N cards)
+  → CardUnit operations (create, individual ops, QA, sequential numbers)
+  → Assembly (scan, validate, complete)
+  → Projections/reducers (pure left-fold functions)
+  → Capacity calculations
+  → No persistence. No HTTP. 100% testable.
+
+PHASE 2: Event Store
+  → Postgres append-only event log
+  → Synchronous read model updates (same transaction)
+  → This is "CQRS-Ready" — full CQRS requires only adding a message bus
+  → Integration tests with real DB
+
+PHASE 3: Scan API
+  → POST /scan → command → events → read model updated
+  → Zero-friction for workers
+
+PHASE 4: Read API
+  → GET endpoints for all dashboards
+  → Trivially implemented from read models
+
+PHASE 5: Job Management
+  → Order intake → job creation → sheet spawning
+  → Integration with existing tools
+
+PHASE 6: Capacity Planning
+  → Scheduling, forecasting, deadline risk
+
+PHASE 7: AI Layer
+  → Anomaly detection, prediction, optimization
+  → Easy because the event log is clean structured data
+
+CQRS UPGRADE (when signals appear — not before):
+  → Separate read database
+  → Event publishing after transaction commit
+  → Async projection updaters
+  → Zero core rewrites — only adapter changes
+</code></pre>
+<hr>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://cqrs.wordpress.com/wp-content/uploads/2010/11/cqrs_documents.pdf">CQRS Documents by Greg Young (2010)</a></li>
+<li><a href="https://www.martinfowler.com/bliki/CQRS.html">Martin Fowler on CQRS</a></li>
+<li><a href="https://udidahan.com/2009/12/09/clarified-cqrs/">Clarified CQRS — Udi Dahan</a></li>
+<li><a href="https://udidahan.com/2012/02/10/udi-greg-reach-cqrs-agreement/">Udi &amp; Greg Reach CQRS Agreement</a></li>
+<li><a href="https://medium.com/@mbue/some-thoughts-on-using-cqrs-without-event-sourcing-938b878166a2">CQRS without Event Sourcing — Medium</a></li>
+<li><a href="https://medium.com/@marco_be/cqrs-without-event-sourcing-but-most-likely-with-an-event-log-94fb5a5b5b84">CQRS without Event Sourcing, but with Event Log — Medium</a></li>
+<li><a href="https://dev.to/kspeakman/event-storage-in-postgres-4dk2">Event Storage in Postgres — DEV Community</a></li>
+<li><a href="https://www.kurrent.io/blog/live-projections-for-read-models-with-event-sourcing-and-cqrs">Live Projections for Read Models — Kurrent/EventStoreDB</a></li>
+<li><a href="https://eventmodeling.org/">Event Modeling — eventmodeling.org</a></li>
+<li><a href="https://www.infoq.com/news/2020/09/adameventmodeling/">Interview with Adam Dymitruk on Event Modeling — InfoQ</a></li>
+<li><a href="https://www.cosmicpython.com/book/chapter<em>01</em>domain_model.html">Architecture Patterns with Python (Cosmic Python) — Domain Modeling</a></li>
+<li><a href="https://www.cosmicpython.com/book/chapter<em>08</em>events<em>and</em>message_bus.html">Architecture Patterns with Python — Events and Message Bus</a></li>
+<li><a href="https://event-driven.io/en/saga<em>process</em>manager<em>distributed</em>transactions/">Saga and Process Manager — event-driven.io</a></li>
+<li><a href="https://blog.intraratio.com/die-serialization">Semiconductor Wafer to Die Serialization — Intraratio RunCard MES</a></li>
+<li><a href="https://www.ibaset.com/how-genealogy-and-serialization-is-eased-in-digital-manufacturing/">Genealogy and Serialization in Digital Manufacturing — iBase-t</a></li>
+<li><a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs">CQRS Pattern — Azure Architecture Center</a></li>
+<li><a href="https://lostechies.com/jimmybogard/2012/08/22/busting-some-cqrs-myths/">Busting CQRS Myths — Jimmy Bogard</a></li>
+<li><a href="https://itnext.io/1-year-of-event-sourcing-and-cqrs-fb9033ccd1c6">1 Year of Event Sourcing and CQRS — ITNEXT</a></li>
+<li><a href="https://squirrel.pl/blog/2015/09/14/achieving-consistency-in-cqrs-with-linear-event-store/">Achieving Consistency in CQRS with Linear Event Store</a></li>
+<li><a href="https://medium.com/@john200Ok/domain-models-that-are-100-ignorant-of-persistence-and-orm-unaware-d8f7a8253c7b">Hexagonal Architecture: Persistence-Ignorant Domain Models — Medium</a></li>
+</ul>
+
+<button id="toc-toggle" onclick="document.getElementById('table-of-contents').scrollIntoView({behavior:'smooth'})">&#9776;</button>
+
+</body>
+</html>
