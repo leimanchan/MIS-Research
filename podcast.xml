@@ -6,43 +6,54 @@
     <title>MIS Research Audio</title>
     <link>https://leimanchan.github.io/MIS-Research/</link>
     <atom:link href="https://leimanchan.github.io/MIS-Research/podcast.xml" rel="self" type="application/rss+xml" />
-    <description>NotebookLM audio exports and research listenables.</description>
+    <description>NotebookLM audio exports on software architecture, data modeling, and composable systems — ordered least to most complex.</description>
     <language>en-us</language>
-    <lastBuildDate>Sat, 28 Feb 2026 12:07:33 -0800</lastBuildDate>
+    <lastBuildDate>Fri, 28 Feb 2026 14:00:00 -0800</lastBuildDate>
 
     <item>
-      <title>Separate Software Thinking From Talking</title>
-      <pubDate>Sat, 28 Feb 2026 12:07:32 -0800</pubDate>
-      <guid>https://leimanchan.github.io/MIS-Research/audio/Separate_Software_Thinking_From_Talking.m4a</guid>
-      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Separate_Software_Thinking_From_Talking.m4a" length="36818459" type="audio/mp4" />
-    </item>
-
-    <item>
-      <title>Software Architecture Is Just Business Management</title>
-      <pubDate>Sat, 28 Feb 2026 12:07:32 -0800</pubDate>
-      <guid>https://leimanchan.github.io/MIS-Research/audio/Software_Architecture_Is_Just_Business_Management.m4a</guid>
-      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Software_Architecture_Is_Just_Business_Management.m4a" length="37429768" type="audio/mp4" />
-    </item>
-
-    <item>
-      <title>Solving The N+1 Nightmare With Graph Architecture</title>
-      <pubDate>Sat, 28 Feb 2026 12:07:33 -0800</pubDate>
-      <guid>https://leimanchan.github.io/MIS-Research/audio/Solving_The_N+1_Nightmare_With_Graph_Architecture.m4a</guid>
+      <title>Episode 5: Solving The N+1 Nightmare With Graph Architecture</title>
+      <itunes:episode>5</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Fri, 28 Feb 2026 10:04:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep5</guid>
       <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Solving_The_N+1_Nightmare_With_Graph_Architecture.m4a" length="45145725" type="audio/mp4" />
     </item>
 
     <item>
-      <title>The Trading Card Data Modeling Nightmare</title>
-      <pubDate>Sat, 28 Feb 2026 12:07:32 -0800</pubDate>
-      <guid>https://leimanchan.github.io/MIS-Research/audio/The_Trading_Card_Data_Modeling_Nightmare.m4a</guid>
+      <title>Episode 4: Why SQL Can't Price Composable Products</title>
+      <itunes:episode>4</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Fri, 28 Feb 2026 10:03:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep4</guid>
+      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Why_SQL_Can_t_Price_Composable_Products.m4a" length="45108373" type="audio/mp4" />
+    </item>
+
+    <item>
+      <title>Episode 3: The Trading Card Data Modeling Nightmare</title>
+      <itunes:episode>3</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Fri, 28 Feb 2026 10:02:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep3</guid>
       <enclosure url="https://leimanchan.github.io/MIS-Research/audio/The_Trading_Card_Data_Modeling_Nightmare.m4a" length="46416902" type="audio/mp4" />
     </item>
 
     <item>
-      <title>Why SQL Can't Price Composable Products</title>
-      <pubDate>Sat, 28 Feb 2026 12:07:32 -0800</pubDate>
-      <guid>https://leimanchan.github.io/MIS-Research/audio/Why_SQL_Can_t_Price_Composable_Products.m4a</guid>
-      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Why_SQL_Can_t_Price_Composable_Products.m4a" length="45108373" type="audio/mp4" />
+      <title>Episode 2: Separate Software Thinking From Talking</title>
+      <itunes:episode>2</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Fri, 28 Feb 2026 10:01:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep2</guid>
+      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Separate_Software_Thinking_From_Talking.m4a" length="36818459" type="audio/mp4" />
     </item>
+
+    <item>
+      <title>Episode 1: Software Architecture Is Just Business Management</title>
+      <itunes:episode>1</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Fri, 28 Feb 2026 10:00:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep1</guid>
+      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Software_Architecture_Is_Just_Business_Management.m4a" length="37429768" type="audio/mp4" />
+    </item>
+
   </channel>
 </rss>
