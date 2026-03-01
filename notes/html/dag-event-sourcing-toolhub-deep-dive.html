@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAG Event Sourcing × Tool Hub — Enterprise ERP MIS Deep Dive</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #111827;
+      --code-border: #2d3748;
+      --hr: #2d3748;
+      --table-head: #1e2235;
+      --table-border: #2d3748;
+      --blockquote-border: #4f8ef7;
+      --blockquote-bg: #1a2240;
+      --green: #86efac;
+      --yellow: #fde68a;
+      --orange: #fdba74;
+      --red: #fca5a5;
+      --teal: #7dd3fc;
+      --sidebar-w: 280px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    /* ── Sidebar TOC ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--hr);
+      overflow-y: auto;
+      padding: 1.5rem 1rem;
+      z-index: 100;
+      scrollbar-width: thin;
+      scrollbar-color: var(--hr) transparent;
+    }
+    .sidebar h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      border: none;
+      padding: 0;
+    }
+    .sidebar ol {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li { margin: 0; }
+    .sidebar a {
+      display: block;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 4px;
+      line-height: 1.4;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar a:hover {
+      background: var(--surface2);
+      color: var(--accent);
+    }
+    .sidebar .toc-h2 { font-weight: 600; color: var(--text); margin-top: 0.5rem; }
+    .sidebar .toc-h3 { padding-left: 1.2rem; font-size: 0.75rem; }
+
+    /* ── Main content ── */
+    .content {
+      margin-left: var(--sidebar-w);
+      max-width: 860px;
+      padding: 0 2rem 4rem;
+    }
+
+    /* ── Header ── */
+    .report-header {
+      padding: 2.5rem 0 1.5rem;
+      border-bottom: 1px solid var(--hr);
+      margin-bottom: 2rem;
+    }
+    .report-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .report-header .meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .report-header .badges {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-blue { background: #1e3a5f; color: var(--accent); }
+    .badge-purple { background: #2d1b69; color: var(--accent2); }
+    .badge-teal { background: #0c2d3e; color: var(--teal); }
+    .badge-green { background: #1a3326; color: var(--green); }
+
+    /* ── Headings ── */
+    h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); margin: 2.5rem 0 1rem; line-height: 1.3; }
+    h2 { font-size: clamp(1.2rem, 3.5vw, 1.6rem); color: var(--accent2); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--hr); }
+    h3 { font-size: clamp(1rem, 3vw, 1.25rem); color: var(--teal); margin: 2rem 0 0.6rem; }
+    h4 { font-size: 1rem; color: var(--green); margin: 1.5rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    h5 { font-size: 0.95rem; color: var(--muted); margin: 1.2rem 0 0.4rem; }
+
+    /* ── Text ── */
+    p { margin: 0.85rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: #f1f5f9; font-weight: 600; }
+    em { color: var(--yellow); font-style: italic; }
+
+    /* ── Code ── */
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 4px;
+      padding: 0.1em 0.45em;
+      font-family: "SF Mono", "Fira Code", Consolas, "Courier New", monospace;
+      font-size: 0.85em;
+      color: var(--teal);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 8px;
+      padding: 1.2rem 1rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.82em;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    /* ── Lists ── */
+    ul, ol { padding-left: 1.5rem; margin: 0.8rem 0; }
+    li { margin: 0.35rem 0; }
+
+    /* ── Blockquote ── */
+    blockquote {
+      border-left: 3px solid var(--blockquote-border);
+      background: var(--blockquote-bg);
+      margin: 1.2rem 0;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0 6px 6px 0;
+      font-style: italic;
+      color: #cbd5e1;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 0.9rem;
+      display: block;
+      overflow-x: auto;
+    }
+    th {
+      background: var(--table-head);
+      color: var(--accent);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+      border: 1px solid var(--table-border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--table-border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) { background: var(--surface); }
+
+    /* ── Diagrams ── */
+    .diagram {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.78em;
+      line-height: 1.5;
+      color: var(--muted);
+      white-space: pre;
+    }
+    .diagram .highlight { color: var(--accent); font-weight: 700; }
+    .diagram .hl-purple { color: var(--accent2); font-weight: 700; }
+    .diagram .hl-teal { color: var(--teal); font-weight: 700; }
+    .diagram .hl-green { color: var(--green); font-weight: 700; }
+    .diagram .hl-yellow { color: var(--yellow); font-weight: 700; }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.92rem;
+    }
+    .callout-blue { background: #1a2744; border-left: 3px solid var(--accent); }
+    .callout-purple { background: #1f1a3d; border-left: 3px solid var(--accent2); }
+    .callout-green { background: #1a2e24; border-left: 3px solid var(--green); }
+    .callout-yellow { background: #2b2514; border-left: 3px solid var(--yellow); }
+    .callout-red { background: #2b1a1a; border-left: 3px solid var(--red); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+
+    /* ── Phase cards ── */
+    .phase-card {
+      background: var(--surface);
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .phase-card h4 { margin-top: 0; }
+
+    /* ── HR ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--hr);
+      margin: 2rem 0;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; padding: 0 1rem 4rem; }
+    }
+
+    /* ── Print ── */
+    @media print {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      body { background: white; color: black; font-size: 11pt; }
+      pre, .diagram { border: 1px solid #ccc; }
+      h2 { color: #333; border-color: #ccc; }
+      h3 { color: #555; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SIDEBAR TOC                                                 -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a class="toc-h2" href="#ch1">1. Executive Summary</a></li>
+    <li><a class="toc-h2" href="#ch2">2. The Problem Statement</a></li>
+    <li>
+      <a class="toc-h2" href="#ch3">3. Current Architecture</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch3-1">3.1 Soft Code Discipline</a></li>
+        <li><a class="toc-h3" href="#ch3-2">3.2 Canonical Tool Structure</a></li>
+        <li><a class="toc-h3" href="#ch3-3">3.3 What Exists Today</a></li>
+        <li><a class="toc-h3" href="#ch3-4">3.4 Strengths &amp; Gaps</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch4">4. DAG Product Model</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch4-1">4.1 Why DAGs, Not Trees</a></li>
+        <li><a class="toc-h3" href="#ch4-2">4.2 Universal Node Schema</a></li>
+        <li><a class="toc-h3" href="#ch4-3">4.3 Node Type Registry</a></li>
+        <li><a class="toc-h3" href="#ch4-4">4.4 Graph Operations</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch5">5. Event Sourcing</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch5-1">5.1 Why Immutable Events</a></li>
+        <li><a class="toc-h3" href="#ch5-2">5.2 Event Anatomy</a></li>
+        <li><a class="toc-h3" href="#ch5-3">5.3 Event Streams &amp; Replay</a></li>
+        <li><a class="toc-h3" href="#ch5-4">5.4 Projections</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch6">6. CQRS Pattern</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch6-1">6.1 Command Side</a></li>
+        <li><a class="toc-h3" href="#ch6-2">6.2 Query Side</a></li>
+        <li><a class="toc-h3" href="#ch6-3">6.3 Eventual Consistency</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch7">7. Pricing Engine</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch7-1">7.1 Pre-load, Evaluate, Aggregate</a></li>
+        <li><a class="toc-h3" href="#ch7-2">7.2 Bottom-Up Traversal</a></li>
+        <li><a class="toc-h3" href="#ch7-3">7.3 Three-Layer Caching</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch8">8. Storage: Supabase Postgres + JSONB</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch8-1">8.1 Why This Stack</a></li>
+        <li><a class="toc-h3" href="#ch8-2">8.2 Hybrid Storage Strategy</a></li>
+        <li><a class="toc-h3" href="#ch8-3">8.3 Schema Design</a></li>
+        <li><a class="toc-h3" href="#ch8-4">8.4 TOAST &amp; JSONB Performance</a></li>
+        <li><a class="toc-h3" href="#ch8-5">8.5 Row Level Security</a></li>
+        <li><a class="toc-h3" href="#ch8-6">8.6 Realtime &amp; Edge Functions</a></li>
+        <li><a class="toc-h3" href="#ch8-7">8.7 Migration Path</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch9">9. Integration Architecture</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch9-1">9.1 Layer Mapping</a></li>
+        <li><a class="toc-h3" href="#ch9-2">9.2 Tool Composition via DAG</a></li>
+        <li><a class="toc-h3" href="#ch9-3">9.3 Contract Evolution</a></li>
+        <li><a class="toc-h3" href="#ch9-4">9.4 Adapter Extensions</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch10">10. Phased Roadmap</a>
+      <ol>
+        <li><a class="toc-h3" href="#ch10-0">Phase 0: Foundation</a></li>
+        <li><a class="toc-h3" href="#ch10-1">Phase 1: Connect</a></li>
+        <li><a class="toc-h3" href="#ch10-2">Phase 2: Track</a></li>
+        <li><a class="toc-h3" href="#ch10-3">Phase 3: Agentic</a></li>
+      </ol>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch11">11. Trade-offs &amp; Risks</a>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch12">12. What Changes, What Stays</a>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch13">13. Reference: Data Models</a>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch14">14. Reference: SQL Schema</a>
+    </li>
+    <li>
+      <a class="toc-h2" href="#ch15">15. Glossary</a>
+    </li>
+  </ol>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT                                                -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="content">
+
+<header class="report-header">
+  <h1>DAG Event Sourcing &times; Tool Hub<br>Enterprise ERP MIS Deep Dive</h1>
+  <p class="meta">March 2026 &middot; Architecture study for tool-hub-try5 &rarr; Enterprise MIS evolution</p>
+  <div class="badges">
+    <span class="badge badge-blue">DAG Product Model</span>
+    <span class="badge badge-purple">Event Sourcing + CQRS</span>
+    <span class="badge badge-teal">Supabase Postgres</span>
+    <span class="badge badge-green">Agentic Roadmap</span>
+  </div>
+</header>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch1">1. Executive Summary</h2>
+
+<p>This document is the complete architectural reference for evolving <strong>tool-hub-try5</strong> &mdash; a repository of 12 stateless, pure-function tools built with Soft Code discipline &mdash; into an <strong>enterprise-grade ERP MIS</strong> capable of modeling composable products, millisecond quoting, full production tracking, and eventually agentic AI orchestration.</p>
+
+<p>The transformation strategy combines three architectural patterns:</p>
+
+<ol>
+  <li><strong>DAG Product Model</strong> &mdash; Products are directed acyclic graphs of typed nodes, not flat database rows. A trading card order with UV coating, security foil, and multiple layers becomes a graph of interconnected configuration nodes.</li>
+  <li><strong>Event Sourcing</strong> &mdash; Every state change is recorded as an immutable event. Instead of overwriting a job&rsquo;s status field, you append <code>JobCreated</code>, <code>NormalizationCompleted</code>, <code>SheetImposed</code> events. Current state is derived by replaying the event stream.</li>
+  <li><strong>Supabase Postgres + JSONB</strong> &mdash; Managed PostgreSQL with JSONB for flexible product configuration storage, relational tables for stable schemas (rate tables, customers), and Row Level Security for multi-tenant isolation.</li>
+</ol>
+
+<div class="callout callout-blue">
+  <strong>Key Insight</strong>
+  The existing Soft Code architecture &mdash; pure functions in <code>core/</code>, I/O in <code>adapters/</code>, dumb orchestrators, frozen dataclasses &mdash; is <em>already aligned</em> with event sourcing. Decisions are pure functions. Domain models are immutable. Orchestrators are sequence-only. The DAG and event layers are additive, not a rewrite.
+</div>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch2">2. The Problem Statement</h2>
+
+<h3>What We Have</h3>
+<p>Twelve independent, stateless tools. Each takes input, produces output, forgets everything. They normalize spreadsheets, match art to RFQs, build imposition layouts, split PDFs, generate labels, and calculate quotes. Each is rigorously structured: frozen dataclasses, pure decision functions, zero-branching orchestrators, thin Flask adapters.</p>
+
+<h3>What an Enterprise MIS Needs</h3>
+<table>
+  <thead>
+    <tr><th>Capability</th><th>Current State</th><th>Required State</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Product modeling</td><td>Each tool has its own flat data shapes</td><td>Unified composable product graph (DAG)</td></tr>
+    <tr><td>Quoting</td><td>Single-shot <code>order_quote</code> tool</td><td>Millisecond DAG-traversal pricing engine</td></tr>
+    <tr><td>State persistence</td><td>None &mdash; stateless request/response</td><td>Full job lifecycle with audit trail</td></tr>
+    <tr><td>Tool composition</td><td>Independent tools, manual chaining</td><td>DAG-defined workflows: tool A &rarr; tool B &rarr; tool C</td></tr>
+    <tr><td>Production tracking</td><td>None</td><td>Event-sourced station tracking, operator assignment</td></tr>
+    <tr><td>Agentic orchestration</td><td>None</td><td>AI agent navigating workflow DAGs, deciding next actions</td></tr>
+    <tr><td>Multi-tenant</td><td>Single-user Flask apps</td><td>Row-level security, customer isolation</td></tr>
+  </tbody>
+</table>
+
+<h3>The Core Gap</h3>
+<p>The gap is not in computation &mdash; your pure functions are excellent. The gap is in <strong>persistent structure</strong>: a shared domain model that connects tools, tracks state over time, and enables composition. DAG event sourcing provides that structure without compromising the existing architecture.</p>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch3">3. Current Architecture: Tool Hub Try5</h2>
+
+<h3 id="ch3-1">3.1 The Soft Code Discipline</h3>
+
+<p>Every function in this codebase must either <strong>make a decision</strong> (pure function: data in &rarr; data out) or <strong>perform plumbing</strong> (I/O: read files, write to network). Never both. This rule is enforced by 40+ automated validation scripts.</p>
+
+<div class="callout callout-green">
+  <strong>Why This Matters for Event Sourcing</strong>
+  Event sourcing requires that state transitions are deterministic pure functions. Your decision functions already are. Event sourcing requires that side effects (persistence, notifications) happen at the edges. Your adapters already do this. The architecture is pre-adapted.
+</div>
+
+<h3 id="ch3-2">3.2 Canonical Tool Structure</h3>
+
+<pre><code>core/&lt;tool_name&gt;/
+├── DECISIONS.md                    # Business decisions (what, not how)
+├── contracts.py                    # ToolInput, ToolOutput, run()
+├── domain/
+│   ├── models.py                   # Frozen dataclasses — plain data only
+│   ├── specs.py                    # Constants, CONTRACTS_VERSION
+│   └── schema_checklist.md         # Field types, defaults, error contract
+├── examples/
+│   ├── happy_path.json             # Valid input
+│   └── invalid_path.json           # Error case
+├── application/
+│   ├── input_validation.py         # Payload → domain objects
+│   ├── decision_logic.py           # Pure functions — the intellectual core
+│   ├── output_mapping.py           # Domain objects → result dict
+│   └── orchestrator.py             # Dumb sequencer — max 60 lines, ZERO branching
+└── tests/
+    └── test_decision_logic.py      # Pure function tests, no I/O</code></pre>
+
+<h3 id="ch3-3">3.3 What Exists Today (12 Tools)</h3>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Purpose</th><th>Origin</th><th>Adapter</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>sample_tool</code></td><td>Minimal reference example</td><td>New</td><td>&mdash;</td></tr>
+    <tr><td><code>order_quote</code></td><td>Pricing calculation</td><td>New</td><td>&mdash;</td></tr>
+    <tr><td><code>label_generator</code></td><td>Avery 5160 label layouts</td><td>Migrated</td><td>&mdash;</td></tr>
+    <tr><td><code>imposition_tool</code></td><td>13&times;19 press sheet imposition</td><td>Migrated</td><td>Flask</td></tr>
+    <tr><td><code>ud_rfqs_gdm</code></td><td>UD RFQ parsing + filtering</td><td>Migrated</td><td>Flask</td></tr>
+    <tr><td><code>ud_rfq_normalizer</code></td><td>UD RFQ normalization</td><td>Migrated</td><td>Flask</td></tr>
+    <tr><td><code>trading_card_sheet_normalizer</code></td><td>Multi-profile spreadsheet normalization</td><td>New</td><td>Flask + LLM</td></tr>
+    <tr><td><code>trading_card_subject_extractor</code></td><td>Vision-based text extraction</td><td>New</td><td>Flask + Ollama</td></tr>
+    <tr><td><code>card_art_rfq_matcher</code></td><td>RFQ-to-PDF page matching</td><td>New</td><td>Flask + Ollama</td></tr>
+    <tr><td><code>imposition_builder_18_up</code></td><td>18-up imposition packaging</td><td>New</td><td>Flask + Ollama</td></tr>
+    <tr><td><code>pdf_splitter</code></td><td>PDF split planning</td><td>Migrated</td><td>Flask</td></tr>
+  </tbody>
+</table>
+
+<h3 id="ch3-4">3.4 Strengths and Gaps</h3>
+
+<table>
+  <thead>
+    <tr><th>Strength (Keep)</th><th>Gap (Add)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Pure functions, deterministic, testable</td><td>No persistent state between tool invocations</td></tr>
+    <tr><td>Frozen immutable dataclasses</td><td>No shared domain model across tools</td></tr>
+    <tr><td>Dumb orchestrators (zero branching)</td><td>No tool-to-tool composition</td></tr>
+    <tr><td>Thin adapters with separated I/O</td><td>No database persistence layer</td></tr>
+    <tr><td>Automated enforcement (40+ checks)</td><td>No audit trail or event history</td></tr>
+    <tr><td>Contract versioning in every tool</td><td>No multi-tenant isolation</td></tr>
+    <tr><td>Structured error handling (first-class outputs)</td><td>No workflow orchestration</td></tr>
+  </tbody>
+</table>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch4">4. The DAG Product Model</h2>
+
+<h3 id="ch4-1">4.1 Why DAGs, Not Trees</h3>
+
+<p>A tree requires every node to have exactly one parent. But real products violate this constantly. A lamination process applies to <em>multiple</em> layers. A UV coating covers <em>multiple</em> components. In a tree, you&rsquo;d duplicate the lamination node under each layer &mdash; duplicating cost calculations and creating update anomalies.</p>
+
+<p>A <strong>Directed Acyclic Graph</strong> allows shared nodes with multiple parents. The lamination node exists once, with edges from each layer that passes through it. No duplication. Correct cost rollup. One update to the lamination spec propagates everywhere.</p>
+
+<div class="diagram"><span class="highlight">Trading Card Product DAG Example</span>
+
+                    ┌─────────────┐
+                    │  <span class="hl-purple">Card Order</span>  │   (root assembly)
+                    │  qty: 500   │
+                    └──────┬──────┘
+                ┌──────────┼──────────┐
+                ▼          ▼          ▼
+        ┌──────────┐ ┌──────────┐ ┌──────────┐
+        │ <span class="hl-teal">Front</span>    │ │ <span class="hl-teal">Back</span>     │ │ <span class="hl-teal">Insert</span>   │   (layer nodes)
+        │ 4/0 CMYK │ │ 4/0 CMYK │ │ 1/0 Black│
+        │ 14pt C2S │ │ 14pt C2S │ │ 80# text │
+        └─────┬────┘ └─────┬────┘ └────┬─────┘
+              │             │           │
+              ▼             ▼           │
+        ┌───────────────────────┐       │
+        │   <span class="hl-green">UV Coating</span>          │       │   (shared process — DAG!)
+        │   spot gloss, front   │       │
+        └───────────┬───────────┘       │
+                    │                   │
+                    ▼                   ▼
+              ┌───────────────────────────┐
+              │     <span class="hl-yellow">Lamination</span>            │   (shared process — DAG!)
+              │     matte, both sides     │
+              └───────────┬───────────────┘
+                          │
+                          ▼
+                    ┌───────────┐
+                    │ <span class="hl-green">Security</span>  │
+                    │ <span class="hl-green">Foil</span>      │   (finishing process)
+                    │ hologram  │
+                    └───────────┘</code></div>
+
+<h3 id="ch4-2">4.2 Universal Node Schema</h3>
+
+<p>Every node in the product graph conforms to a single schema, regardless of whether it represents a layer, a process, or an assembly:</p>
+
+<pre><code>@dataclass(frozen=True)
+class ConfigNode:
+    """Universal product configuration node."""
+    id: str                              # UUID
+    type: str                            # 'layer', 'process', 'assembly', 'finishing'
+    version: int                         # Optimistic concurrency
+    attributes: dict                     # Open schema — type-specific properties
+    children: tuple[str, ...]            # Child node IDs (directed edges down)
+    parents: tuple[str, ...]             # Parent node IDs (directed edges up)
+    pricing_function_id: str | None      # Which pricing function to invoke
+    tracking: TrackingState | None       # Production tracking (optional)
+
+@dataclass(frozen=True)
+class TrackingState:
+    status: str                          # 'pending', 'in_progress', 'complete'
+    assigned_to: str | None
+    station: str | None
+    timestamps: dict                     # {'started': ..., 'completed': ...}
+
+@dataclass(frozen=True)
+class ProductConfig:
+    """Complete product configuration — flat map of nodes."""
+    id: str                              # Product config UUID
+    root_node_id: str                    # Entry point for traversal
+    nodes: dict[str, ConfigNode]         # {node_id: ConfigNode} — O(1) lookup
+    version: int
+    created_at: str
+    metadata: dict                       # Customer, job name, etc.</code></pre>
+
+<div class="callout callout-purple">
+  <strong>Why a Flat Map, Not Nested Objects</strong>
+  The <code>nodes</code> dictionary stores every node by ID. Navigation follows <code>children</code> and <code>parents</code> references. This gives you O(1) node lookup, supports DAG (shared nodes with multiple parents), and avoids deeply nested JSON that hits PostgreSQL TOAST compression thresholds.
+</div>
+
+<h3 id="ch4-3">4.3 Node Type Registry</h3>
+
+<p>Instead of hardcoding node types or requiring schema migrations for new product capabilities, a <strong>type registry</strong> defines what each node type can contain:</p>
+
+<pre><code>@dataclass(frozen=True)
+class NodeTypeDefinition:
+    type_name: str                       # 'layer', 'process', 'assembly'
+    attribute_schema: dict               # JSON Schema for the attributes field
+    allowed_child_types: tuple[str, ...] # What can this node contain?
+    default_pricing_function: str | None # Default pricing strategy
+    display_name: str                    # Human-readable label
+
+# Example registry entries
+LAYER_TYPE = NodeTypeDefinition(
+    type_name="layer",
+    attribute_schema={
+        "required": ["substrate", "ink_colors", "sides"],
+        "properties": {
+            "substrate": {"type": "string"},
+            "ink_colors": {"type": "string"},    # e.g., "4/0 CMYK"
+            "sides": {"type": "integer", "enum": [1, 2]},
+            "weight": {"type": "string"},         # e.g., "14pt C2S"
+        }
+    },
+    allowed_child_types=("process", "finishing"),
+    default_pricing_function="layer_pricing_v1",
+    display_name="Print Layer",
+)
+
+PROCESS_TYPE = NodeTypeDefinition(
+    type_name="process",
+    attribute_schema={
+        "required": ["process_name"],
+        "properties": {
+            "process_name": {"type": "string"},   # 'uv_coating', 'lamination'
+            "coverage": {"type": "string"},        # 'full', 'spot'
+            "sides": {"type": "string"},           # 'front', 'both'
+        }
+    },
+    allowed_child_types=("process", "finishing"),
+    default_pricing_function="process_pricing_v1",
+    display_name="Process Step",
+)</code></pre>
+
+<p>New product capabilities (embossing, die-cutting, foil stamping) are added by registering new type definitions &mdash; no code deployment, no database migration, no schema change.</p>
+
+<h3 id="ch4-4">4.4 Graph Operations (Pure Functions)</h3>
+
+<p>All graph manipulation lives in <code>core/product_graph/application/</code> as pure functions:</p>
+
+<pre><code># graph_ops.py — structural mutations (return new graph, never mutate)
+
+def add_node(config: ProductConfig, node: ConfigNode) -> ProductConfig:
+    """Add a node to the product configuration. Returns new config."""
+    ...
+
+def connect(config: ProductConfig, parent_id: str, child_id: str) -> ProductConfig:
+    """Create a directed edge from parent to child. Returns new config."""
+    ...
+
+def remove_node(config: ProductConfig, node_id: str) -> ProductConfig:
+    """Remove a node and all its edges. Returns new config."""
+    ...
+
+def validate_acyclic(config: ProductConfig) -> list[str]:
+    """Detect cycles using three-color DFS. Returns list of errors (empty = valid)."""
+    ...</code></pre>
+
+<pre><code># traversal.py — read-only graph analysis
+
+def topological_sort(config: ProductConfig) -> list[str]:
+    """Return node IDs in dependency order (children before parents)."""
+    ...
+
+def evaluate_bottom_up(config: ProductConfig, eval_fn) -> dict[str, Any]:
+    """Post-order traversal with memoization for shared DAG nodes."""
+    ...
+
+def find_ancestors(config: ProductConfig, node_id: str) -> set[str]:
+    """All nodes reachable by following parent edges."""
+    ...
+
+def find_descendants(config: ProductConfig, node_id: str) -> set[str]:
+    """All nodes reachable by following child edges."""
+    ...</code></pre>
+
+<div class="callout callout-green">
+  <strong>Alignment with Soft Code</strong>
+  Every function above is pure: takes data in, returns data out, no I/O. They produce new <code>ProductConfig</code> instances (frozen dataclasses) rather than mutating in place. They live in <code>core/</code>, are tested without databases, and the orchestrator calls them in sequence with zero branching. Existing Soft Code discipline applies without modification.
+</div>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch5">5. Event Sourcing</h2>
+
+<h3 id="ch5-1">5.1 Why Immutable Events</h3>
+
+<p>Traditional MIS systems use mutable status fields: <code>UPDATE jobs SET status = 'printing' WHERE id = 123</code>. The previous state is destroyed. You cannot answer questions like:</p>
+
+<ul>
+  <li>How long did the job spend in prepress?</li>
+  <li>Who moved it to the printing station?</li>
+  <li>Was it ever sent back for rework?</li>
+  <li>What was the original configuration before the customer changed it?</li>
+</ul>
+
+<p>Event sourcing records every state change as an <strong>immutable, append-only event</strong>. The event stream <em>is</em> the source of truth. Current state is a <strong>derived projection</strong> &mdash; a fold over the event stream.</p>
+
+<pre><code># Instead of: UPDATE jobs SET status = 'printing'
+# You append:
+JobMovedToStation(
+    job_id="job-123",
+    station="heidelberg-xl-106",
+    operator="maria.garcia",
+    timestamp="2026-03-01T14:23:00Z",
+    previous_station="prepress-2"
+)</code></pre>
+
+<h3 id="ch5-2">5.2 Event Anatomy</h3>
+
+<pre><code>@dataclass(frozen=True)
+class DomainEvent:
+    """Base structure for all domain events."""
+    event_id: str                        # UUID — globally unique
+    stream_id: str                       # e.g., "job:abc-123" or "product:def-456"
+    version: int                         # Monotonic within stream (optimistic concurrency)
+    event_type: str                      # e.g., "JobCreated", "NodeAdded", "QuoteGenerated"
+    timestamp: str                       # ISO 8601
+    payload: dict                        # Event-specific data
+    metadata: dict                       # Actor, correlation_id, causation_id
+
+# Concrete event examples:
+
+@dataclass(frozen=True)
+class JobCreated:
+    job_id: str
+    customer_id: str
+    product_config_id: str
+    source_tool: str                     # Which tool initiated this
+    source_files: tuple[str, ...]
+
+@dataclass(frozen=True)
+class NormalizationCompleted:
+    job_id: str
+    tool: str                            # "trading_card_sheet_normalizer"
+    row_count: int
+    warning_count: int
+    error_count: int
+    profiles_detected: tuple[str, ...]
+
+@dataclass(frozen=True)
+class QuoteGenerated:
+    job_id: str
+    product_config_id: str
+    total_price: str                     # Decimal as string for precision
+    line_items: tuple[dict, ...]
+    rate_table_versions: dict            # Which rate tables were used
+
+@dataclass(frozen=True)
+class ProductionStageCompleted:
+    job_id: str
+    stage: str                           # "imposition", "printing", "cutting"
+    operator: str
+    station: str
+    waste_sheets: int
+    duration_seconds: int</code></pre>
+
+<h3 id="ch5-3">5.3 Event Streams and Replay</h3>
+
+<p>Events are grouped into <strong>streams</strong> by aggregate root (typically a job or a product configuration). Each stream is an ordered sequence:</p>
+
+<pre><code># Event stream for job "job-abc-123":
+# v1: JobCreated          {customer: "Acme Cards", product_config: "cfg-789"}
+# v2: NormalizationCompleted {rows: 45, warnings: 2}
+# v3: ArtMatchCompleted   {matched: 43, unmatched: 2}
+# v4: ImpositionBuilt     {sheets: 3, layout: "18-up"}
+# v5: QuoteGenerated      {total: "1,234.50"}
+# v6: QuoteApproved       {approved_by: "john.smith"}
+# v7: ProductionStarted   {station: "prepress-1"}
+# ...
+
+# Current state = fold(events, initial_state, apply_fn)
+def rebuild_job_state(events: list[DomainEvent]) -> JobState:
+    """Replay events to reconstruct current state."""
+    state = JobState.empty()
+    for event in events:
+        state = apply_event(state, event)
+    return state
+
+def apply_event(state: JobState, event: DomainEvent) -> JobState:
+    """Pure function: apply one event to produce new state."""
+    match event.event_type:
+        case "JobCreated":
+            return state.with_status("created").with_customer(event.payload["customer_id"])
+        case "QuoteApproved":
+            return state.with_status("approved")
+        case "ProductionStarted":
+            return state.with_status("in_production").with_station(event.payload["station"])
+        case _:
+            return state  # Unknown events are safely ignored</code></pre>
+
+<div class="callout callout-yellow">
+  <strong>Important: apply_event is a PURE function</strong>
+  It takes state + event, returns new state. No I/O. No database. No side effects. This means it lives in <code>core/event_store/application/decision_logic.py</code> and is tested with plain unit tests. The Soft Code discipline applies perfectly.
+</div>
+
+<h3 id="ch5-4">5.4 Projections (Materialized Read Models)</h3>
+
+<p>While event streams are the source of truth, querying them directly is expensive for operational views. <strong>Projections</strong> are pre-computed read models maintained by asynchronously processing new events:</p>
+
+<table>
+  <thead>
+    <tr><th>Projection</th><th>Source Events</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Job Board</td><td>JobCreated, StatusChanged, StageCompleted</td><td>Dashboard showing all jobs with current status</td></tr>
+    <tr><td>Station Queue</td><td>ProductionStarted, StageCompleted</td><td>What&rsquo;s waiting at each machine/station</td></tr>
+    <tr><td>Customer History</td><td>JobCreated, QuoteGenerated, QuoteApproved</td><td>All jobs for a customer, quotes, approvals</td></tr>
+    <tr><td>Pricing Audit</td><td>QuoteGenerated</td><td>Which rate tables were used, when, for what</td></tr>
+    <tr><td>Waste Report</td><td>StageCompleted</td><td>Waste sheets per station, operator, time period</td></tr>
+  </tbody>
+</table>
+
+<p>Projections are <strong>disposable and rebuildable</strong>. If a projection is corrupted or you change its schema, delete it and replay all events. The event stream is never lost.</p>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch6">6. CQRS Pattern</h2>
+
+<h3 id="ch6-1">6.1 Command Side (Writes)</h3>
+
+<p>Commands represent intentions: <em>&ldquo;create this job,&rdquo;</em> <em>&ldquo;approve this quote,&rdquo;</em> <em>&ldquo;move to next station.&rdquo;</em> The command handler validates, executes business logic (pure functions from <code>core/</code>), and emits events:</p>
+
+<pre><code># Command flow:
+# 1. Receive command (adapter layer — Flask route or API)
+# 2. Load current state (replay events for this stream)
+# 3. Validate command against current state (core decision function)
+# 4. Execute business logic (core decision function)
+# 5. Emit new events (adapter persists to event store)
+
+def handle_approve_quote(cmd: ApproveQuoteCommand, events: list[DomainEvent]) -> list[DomainEvent]:
+    """Pure function: given current events + command, return new events."""
+    state = rebuild_job_state(events)
+    errors = validate_approval(state, cmd)       # Can this quote be approved?
+    if errors:
+        return [CommandRejected(errors=errors)]
+    return [QuoteApproved(
+        job_id=cmd.job_id,
+        approved_by=cmd.approver,
+        approved_price=state.quoted_price,
+    )]</code></pre>
+
+<h3 id="ch6-2">6.2 Query Side (Reads)</h3>
+
+<p>Queries never touch the event store. They read from <strong>denormalized projection tables</strong> optimized for specific views:</p>
+
+<pre><code># Query side — reads from projections, never from event store
+# Each projection table is optimized for its use case:
+
+# Job board: SELECT * FROM job_board WHERE status = 'in_production' ORDER BY priority
+# Station:   SELECT * FROM station_queue WHERE station = 'heidelberg-xl-106'
+# Customer:  SELECT * FROM customer_history WHERE customer_id = 'acme-cards'
+# Agent:     SELECT * FROM job_board WHERE next_action IS NOT NULL</code></pre>
+
+<h3 id="ch6-3">6.3 Eventual Consistency</h3>
+
+<p>Projections are updated <strong>asynchronously</strong> as events arrive. There is a small delay (typically 1&ndash;5 seconds) between an event being written and the projection reflecting it.</p>
+
+<div class="callout callout-yellow">
+  <strong>Is this acceptable?</strong>
+  Yes. An operator seeing a job appear on their station queue 2 seconds after it was assigned is perfectly fine. A dashboard refreshing every 5 seconds is perfectly fine. Financial reports that run nightly are perfectly fine. The only thing that must be immediately consistent is the event stream itself — and it is, by definition (append-only with version constraints).
+</div>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch7">7. Pricing Engine</h2>
+
+<h3 id="ch7-1">7.1 The Three-Phase Pattern: Pre-load, Evaluate, Aggregate</h3>
+
+<p>Legacy MIS systems price composable products by querying the database for each variable: substrate cost, ink cost, finishing cost, shipping cost &mdash; one query per variable per component. A complex card with 20 configuration nodes triggers 50&ndash;200+ database round trips.</p>
+
+<p>The DAG pricing engine inverts this:</p>
+
+<table>
+  <thead>
+    <tr><th>Phase</th><th>I/O?</th><th>Operations</th><th>Queries</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>1. Pre-load</strong></td><td>Yes (adapter)</td><td>Load product config + all relevant rate tables</td><td>1&ndash;3 total</td></tr>
+    <tr><td><strong>2. Evaluate</strong></td><td>No (core)</td><td>Pure arithmetic on cached data, traverse DAG bottom-up</td><td>0</td></tr>
+    <tr><td><strong>3. Aggregate</strong></td><td>No (core)</td><td>Parent nodes roll up children results</td><td>0</td></tr>
+  </tbody>
+</table>
+
+<p>This transforms quoting from <strong>I/O-bound (seconds)</strong> to <strong>CPU-bound (milliseconds)</strong>.</p>
+
+<h3 id="ch7-2">7.2 Bottom-Up DAG Traversal with Memoization</h3>
+
+<pre><code>def evaluate_pricing(config: ProductConfig, rate_context: RateContext) -> PricingResult:
+    """Bottom-up (post-order) DAG traversal with memoization."""
+    memo: dict[str, NodePrice] = {}
+    order = topological_sort(config)     # Children before parents
+
+    for node_id in order:
+        node = config.nodes[node_id]
+        if node_id in memo:
+            continue                     # Already evaluated (DAG shared node)
+
+        # Evaluate children first (guaranteed by topological order)
+        child_prices = [memo[cid] for cid in node.children]
+
+        # Look up pricing function from registry
+        pricing_fn = get_pricing_function(node.pricing_function_id)
+
+        # Pure computation — no database access
+        node_price = pricing_fn(
+            node=node,
+            children=child_prices,
+            rates=rate_context,
+        )
+
+        memo[node_id] = node_price
+
+    return PricingResult(
+        total=memo[config.root_node_id].total,
+        breakdown=memo,
+    )</code></pre>
+
+<div class="callout callout-blue">
+  <strong>Memoization for Diamond Dependencies</strong>
+  In the trading card DAG, the Lamination node has two parents (Front layer and Back layer). Without memoization, it would be evaluated twice. The <code>memo</code> cache ensures each node is computed exactly once, regardless of how many paths lead to it.
+</div>
+
+<h3 id="ch7-3">7.3 Three-Layer Caching Strategy</h3>
+
+<table>
+  <thead>
+    <tr><th>Cache Layer</th><th>Scope</th><th>TTL / Invalidation</th><th>What It Caches</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>L1: Rate Tables</strong></td><td>Application-wide</td><td>1-hour TTL + explicit invalidation on update</td><td>Substrate prices, ink costs, finishing rates</td></tr>
+    <tr><td><strong>L2: Subtree Pricing</strong></td><td>Per-product</td><td>Hash of config document — invalidated on any mutation</td><td>Previously computed subtree results</td></tr>
+    <tr><td><strong>L3: Node Memoization</strong></td><td>Per-request</td><td>In-memory, discarded after request</td><td>Prevents redundant DAG node evaluation</td></tr>
+  </tbody>
+</table>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch8">8. Storage: Supabase Postgres + JSONB</h2>
+
+<h3 id="ch8-1">8.1 Why This Stack</h3>
+
+<p>The article recommends a <strong>hybrid storage strategy</strong>: JSONB documents for hierarchical product configurations, relational tables for stable reference data. Supabase gives you exactly this as a managed service:</p>
+
+<ul>
+  <li><strong>PostgreSQL</strong> — battle-tested, ACID-compliant, with JSONB, GIN indexes, and array types</li>
+  <li><strong>Managed operations</strong> — no ops burden while building; focus on architecture, not infrastructure</li>
+  <li><strong>Row Level Security (RLS)</strong> — built-in multi-tenant isolation at the database level</li>
+  <li><strong>Realtime subscriptions</strong> — push UI updates when projections change (with caveats)</li>
+  <li><strong>Edge Functions</strong> — lightweight server-side logic for event processing</li>
+  <li><strong>Migration path</strong> — standard Postgres; can move to self-hosted if you outgrow Supabase</li>
+</ul>
+
+<h3 id="ch8-2">8.2 Hybrid Storage Strategy</h3>
+
+<table>
+  <thead>
+    <tr><th>Data Type</th><th>Storage</th><th>Why</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Product configurations (DAG nodes)</td><td>Relational rows + JSONB <code>attributes</code></td><td>One row per node, JSONB for flexible properties</td></tr>
+    <tr><td>Event streams</td><td>Append-only table + JSONB <code>payload</code></td><td>Immutable events, indexed by stream + version</td></tr>
+    <tr><td>Rate tables</td><td>Relational columns</td><td>Stable schema, frequently queried, indexed</td></tr>
+    <tr><td>Customers, operators</td><td>Relational columns</td><td>Standard entity tables, RLS policies</td></tr>
+    <tr><td>Projections</td><td>Denormalized tables + JSONB <code>summary</code></td><td>Disposable read models, trigger-maintained</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-green">
+  <strong>The Key Insight</strong>
+  Frequently-queried fields get dedicated columns (indexed, typed, RLS-compatible). Variable, type-specific fields go in JSONB. This is the best-practice hybrid approach recommended by PostgreSQL experts: use JSONB as a &ldquo;catch-all&rdquo; for variable parts, columns for stable parts.
+</div>
+
+<h3 id="ch8-3">8.3 Complete Schema Design</h3>
+
+<pre><code>-- ═══════════════════════════════════════════════════════════════
+-- PRODUCT CONFIGURATION (DAG)
+-- ═══════════════════════════════════════════════════════════════
+
+-- One row per node, NOT one giant document per product.
+-- Each node's JSONB attributes stays small (well under TOAST threshold).
+CREATE TABLE config_nodes (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id      UUID NOT NULL,                -- Which product this node belongs to
+    type            TEXT NOT NULL,                 -- 'layer', 'process', 'assembly', 'finishing'
+    version         INT NOT NULL DEFAULT 1,        -- Optimistic concurrency
+    attributes      JSONB NOT NULL DEFAULT '{}',   -- Type-specific properties (open schema)
+    children        UUID[] DEFAULT '{}',           -- Child node IDs (directed edges)
+    parents         UUID[] DEFAULT '{}',           -- Parent node IDs (directed edges)
+    pricing_fn      TEXT,                          -- Pricing function identifier
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Product-level aggregation
+CREATE TABLE products (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_id     UUID NOT NULL REFERENCES customers(id),
+    name            TEXT NOT NULL,
+    root_node_id    UUID REFERENCES config_nodes(id),
+    version         INT NOT NULL DEFAULT 1,
+    status          TEXT NOT NULL DEFAULT 'draft',  -- 'draft', 'quoted', 'approved', 'in_production'
+    metadata        JSONB DEFAULT '{}',             -- Job name, PO number, etc.
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Indexes
+CREATE INDEX idx_nodes_product ON config_nodes(product_id);
+CREATE INDEX idx_nodes_type ON config_nodes(type);
+CREATE INDEX idx_nodes_attrs ON config_nodes USING GIN(attributes);
+CREATE INDEX idx_products_customer ON products(customer_id);
+CREATE INDEX idx_products_status ON products(status);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- NODE TYPE REGISTRY
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE node_types (
+    type_name       TEXT PRIMARY KEY,
+    display_name    TEXT NOT NULL,
+    attribute_schema JSONB NOT NULL,               -- JSON Schema for attributes validation
+    allowed_children TEXT[] DEFAULT '{}',           -- Allowed child type_names
+    default_pricing TEXT,                           -- Default pricing function ID
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- IMMUTABLE EVENT LOG
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stream_id       TEXT NOT NULL,                 -- e.g., 'job:abc-123', 'product:def-456'
+    version         INT NOT NULL,                  -- Monotonic within stream
+    event_type      TEXT NOT NULL,                 -- e.g., 'JobCreated', 'QuoteGenerated'
+    payload         JSONB NOT NULL,                -- Event-specific data
+    metadata        JSONB DEFAULT '{}',            -- Actor, correlation_id, causation_id
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(stream_id, version)                     -- Optimistic concurrency control
+);
+
+CREATE INDEX idx_events_stream ON events(stream_id, version);
+CREATE INDEX idx_events_type ON events(event_type);
+CREATE INDEX idx_events_created ON events(created_at);
+
+-- Prevent mutation: events are append-only
+CREATE OR REPLACE FUNCTION prevent_event_mutation()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'Events are immutable. Cannot update or delete.';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER events_immutable
+    BEFORE UPDATE OR DELETE ON events
+    FOR EACH ROW EXECUTE FUNCTION prevent_event_mutation();
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- RATE TABLES (Relational — Stable Schema)
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE rate_tables (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            TEXT NOT NULL,                 -- 'substrate_costs', 'ink_rates', 'finishing_rates'
+    category        TEXT NOT NULL,                 -- 'material', 'labor', 'equipment', 'finishing'
+    rates           JSONB NOT NULL,                -- Structured pricing data
+    quantity_breaks JSONB,                         -- Quantity-based pricing tiers
+    valid_from      TIMESTAMPTZ NOT NULL,
+    valid_until     TIMESTAMPTZ,                   -- NULL = currently active
+    version         INT NOT NULL DEFAULT 1,
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_rates_category ON rate_tables(category);
+CREATE INDEX idx_rates_valid ON rate_tables(valid_from, valid_until);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- PROJECTIONS (Denormalized Read Models — Disposable & Rebuildable)
+-- ═══════════════════════════════════════════════════════════════
+
+-- Job board projection
+CREATE TABLE proj_job_board (
+    job_id          TEXT PRIMARY KEY,
+    customer_name   TEXT,
+    product_name    TEXT,
+    status          TEXT NOT NULL,
+    current_station TEXT,
+    assigned_to     TEXT,
+    quoted_price    NUMERIC(12,2),
+    priority        INT DEFAULT 0,
+    summary         JSONB DEFAULT '{}',            -- Aggregated stats
+    last_event_at   TIMESTAMPTZ,
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Station queue projection
+CREATE TABLE proj_station_queue (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    station         TEXT NOT NULL,
+    job_id          TEXT NOT NULL,
+    stage           TEXT NOT NULL,
+    priority        INT DEFAULT 0,
+    queued_at       TIMESTAMPTZ DEFAULT now(),
+    estimated_duration_min INT
+);
+CREATE INDEX idx_station_queue ON proj_station_queue(station, priority);
+
+-- Customer history projection
+CREATE TABLE proj_customer_history (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_id     UUID NOT NULL,
+    job_id          TEXT NOT NULL,
+    event_type      TEXT NOT NULL,
+    summary         JSONB,
+    occurred_at     TIMESTAMPTZ
+);
+CREATE INDEX idx_customer_history ON proj_customer_history(customer_id, occurred_at);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- REFERENCE TABLES
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE customers (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            TEXT NOT NULL,
+    email           TEXT,
+    metadata        JSONB DEFAULT '{}',
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE operators (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            TEXT NOT NULL,
+    station         TEXT,
+    role            TEXT DEFAULT 'operator',
+    active          BOOLEAN DEFAULT true,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- ROW LEVEL SECURITY (Multi-Tenant Foundation)
+-- ═══════════════════════════════════════════════════════════════
+
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE config_nodes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+
+-- Example policy: users see only their organization's products
+-- (Uncomment and customize when multi-tenant is needed)
+-- CREATE POLICY products_tenant_isolation ON products
+--     USING (metadata->>'tenant_id' = current_setting('app.current_tenant'));</code></pre>
+
+<h3 id="ch8-4">8.4 TOAST and JSONB Performance</h3>
+
+<p>PostgreSQL applies <strong>TOAST (The Oversized-Attribute Storage Technique)</strong> compression to values exceeding ~2KB. TOAST-compressed values are stored in a separate table, requiring additional disk seeks on read.</p>
+
+<div class="callout callout-red">
+  <strong>The TOAST Trap</strong>
+  If you store an entire product configuration as one giant JSONB document (all 20+ nodes in a single column), you will exceed 2KB on any non-trivial product. Every read requires decompression from TOAST storage. Performance degrades.
+</div>
+
+<p><strong>The solution: one row per node.</strong> The schema above stores each <code>ConfigNode</code> as a separate row. The <code>attributes</code> JSONB per node is small (100&ndash;500 bytes typically). The flat-map is reconstructed in Python:</p>
+
+<pre><code># Adapter layer: load product config from Supabase
+def load_product_config(product_id: str) -> ProductConfig:
+    """Load all nodes for a product and assemble into ProductConfig."""
+    product = supabase.table("products").select("*").eq("id", product_id).single().execute()
+    nodes = supabase.table("config_nodes").select("*").eq("product_id", product_id).execute()
+
+    # Build flat-map in Python (core pure function)
+    node_map = {row["id"]: to_config_node(row) for row in nodes.data}
+
+    return ProductConfig(
+        id=product["id"],
+        root_node_id=product["root_node_id"],
+        nodes=node_map,
+        version=product["version"],
+        created_at=product["created_at"],
+        metadata=product["metadata"],
+    )
+    # Total queries: 2 (product + nodes). Regardless of graph complexity.</code></pre>
+
+<h3 id="ch8-5">8.5 Row Level Security for Multi-Tenant</h3>
+
+<p>When you need customer isolation (customer A cannot see customer B&rsquo;s products), Supabase&rsquo;s Row Level Security adds a <code>WHERE</code> clause to every query automatically:</p>
+
+<pre><code>-- Every query on products automatically gets:
+-- WHERE metadata->>'tenant_id' = auth.jwt()->>'tenant_id'
+-- No code changes needed — the database enforces isolation.</code></pre>
+
+<p>This is critical for an enterprise MIS. You add multi-tenant isolation at the database level, not in application code. Every query, every projection, every event stream is automatically scoped.</p>
+
+<h3 id="ch8-6">8.6 Realtime and Edge Functions: Caveats</h3>
+
+<h4>Supabase Realtime</h4>
+<ul>
+  <li>Processes database changes on a <strong>single thread</strong> to maintain order</li>
+  <li>Checks RLS per subscriber (100 subscribers &times; 1 insert = 100 RLS checks)</li>
+  <li><strong>Use for</strong>: UI notifications (&ldquo;job status changed&rdquo;), live dashboards</li>
+  <li><strong>Do NOT use for</strong>: Projection rebuilds, data consistency, event processing</li>
+</ul>
+
+<h4>Supabase Edge Functions</h4>
+<ul>
+  <li>Lightweight server-side handlers (Deno runtime)</li>
+  <li>Good for: Webhook receivers, simple event processing, authentication</li>
+  <li><strong>Not for</strong>: Heavy computation (batch repricing, bulk imports, PDF generation)</li>
+  <li>Your Flask adapters handle heavy lifting; Edge Functions complement, not replace</li>
+</ul>
+
+<h4>The Right Pattern for Projections</h4>
+<pre><code>-- Use PostgreSQL triggers to maintain projections server-side.
+-- This runs in the database, not in Edge Functions or Realtime.
+
+CREATE OR REPLACE FUNCTION update_job_board_projection()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO proj_job_board (job_id, status, last_event_at, updated_at)
+    VALUES (
+        NEW.stream_id,
+        NEW.payload->>'status',
+        NEW.created_at,
+        now()
+    )
+    ON CONFLICT (job_id)
+    DO UPDATE SET
+        status = COALESCE(NEW.payload->>'status', proj_job_board.status),
+        last_event_at = NEW.created_at,
+        updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_job_board
+    AFTER INSERT ON events
+    FOR EACH ROW
+    WHEN (NEW.event_type IN ('JobCreated', 'StatusChanged', 'StageCompleted'))
+    EXECUTE FUNCTION update_job_board_projection();</code></pre>
+
+<h3 id="ch8-7">8.7 Migration Path</h3>
+
+<p>Supabase is standard PostgreSQL. If you outgrow the managed service:</p>
+
+<ol>
+  <li><strong>pg_dump</strong> your entire database</li>
+  <li><strong>pg_restore</strong> to any Postgres instance (AWS RDS, DigitalOcean, self-hosted)</li>
+  <li>Update connection strings in your adapter layer</li>
+  <li>Core never changes &mdash; it doesn&rsquo;t know Supabase exists</li>
+</ol>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch9">9. Integration Architecture: DAG ES + Tool Hub</h2>
+
+<h3 id="ch9-1">9.1 Layer Mapping</h3>
+
+<div class="diagram"><span class="highlight">How DAG Event Sourcing Maps to Soft Code Layers</span>
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│  <span class="hl-purple">core/</span>  (pure functions, zero I/O, frozen dataclasses)                      │
+│                                                                            │
+│  <span class="hl-teal">product_graph/</span>         ConfigNode, DAG ops, traversal, validation         │
+│  <span class="hl-teal">event_store/</span>           DomainEvent, append, replay, apply_event           │
+│  <span class="hl-teal">pricing_engine/</span>        Bottom-up evaluate, rate context, memoization      │
+│  <span class="hl-teal">job_workflow/</span>           Workflow DAG definition, stage sequencing           │
+│  <span class="hl-green">existing tools</span>         normalizer, imposer, splitter, matcher, quoter     │
+│                                                                            │
+│  All functions: data in → data out. No imports of Flask, supabase, os.     │
+└──────────────────────────────────┬─────────────────────────────────────────┘
+                                   │  contracts.run(ToolInput(...))
+┌──────────────────────────────────▼─────────────────────────────────────────┐
+│  <span class="hl-purple">adapters/</span>                                                                  │
+│                                                                            │
+│  <span class="hl-teal">flask/</span>               UI routes (existing tools, unchanged)                 │
+│  <span class="hl-teal">supabase/</span>            <span class="hl-yellow">NEW persistence adapter</span>                              │
+│    ├── graph_persistence.py     Load/save config_nodes, products           │
+│    ├── event_persistence.py     Append events, load streams                │
+│    ├── rate_loader.py           Batch-load rate tables into RateContext     │
+│    ├── projection_reader.py     Read from projection tables                │
+│    └── connection.py            Supabase client setup                      │
+│                                                                            │
+│  Adapters call core via contracts. Supabase adapter handles all DB I/O.    │
+└──────────────────────────────────┬─────────────────────────────────────────┘
+                                   │  supabase-py client
+┌──────────────────────────────────▼─────────────────────────────────────────┐
+│  <span class="hl-purple">Supabase Postgres</span>                                                         │
+│                                                                            │
+│  config_nodes     One row per node, JSONB attributes                       │
+│  products         Product-level metadata, root_node_id                     │
+│  events           Immutable append-only, JSONB payload                     │
+│  rate_tables      Relational, indexed, versioned                           │
+│  node_types       Type registry with JSON Schema                           │
+│  proj_*           Trigger-maintained read models                           │
+│  customers        RLS-isolated reference data                              │
+└────────────────────────────────────────────────────────────────────────────┘</div>
+
+<h3 id="ch9-2">9.2 Tool Composition via Workflow DAG</h3>
+
+<p>Today, your tools are independent. With a workflow DAG, they compose into production pipelines:</p>
+
+<div class="diagram"><span class="highlight">Example: Trading Card Production Workflow DAG</span>
+
+    ┌──────────────────────┐
+    │ <span class="hl-teal">Normalize RFQ</span>         │   trading_card_sheet_normalizer
+    │ Input: XLSX/CSV      │
+    │ Output: canonical rows│
+    └──────────┬───────────┘
+               │
+       ┌───────┴───────┐
+       ▼               ▼
+┌─────────────┐  ┌──────────────┐
+│ <span class="hl-teal">Match Art</span>    │  │ <span class="hl-teal">Quote Order</span>  │   card_art_rfq_matcher / pricing_engine
+│ to Subjects │  │              │
+└──────┬──────┘  └──────┬───────┘
+       │                │
+       ▼                ▼
+┌─────────────┐  ┌──────────────┐
+│ <span class="hl-teal">Build</span>       │  │ <span class="hl-purple">Await</span>        │
+│ <span class="hl-teal">Imposition</span>  │  │ <span class="hl-purple">Approval</span>     │   (human decision gate)
+└──────┬──────┘  └──────┬───────┘
+       │                │
+       ▼                ▼
+┌─────────────┐  ┌──────────────┐
+│ <span class="hl-teal">Split PDF</span>   │  │ <span class="hl-teal">Generate</span>     │   pdf_splitter / label_generator
+│             │  │ <span class="hl-teal">Labels</span>       │
+└──────┬──────┘  └──────┬───────┘
+       │                │
+       └────────┬───────┘
+                ▼
+          ┌───────────┐
+          │ <span class="hl-green">Production</span>│
+          │ <span class="hl-green">Complete</span>  │
+          └───────────┘</code></div>
+
+<p>Each node in this workflow DAG is a tool invocation. Edges define data flow. The <code>core/job_workflow/</code> tool validates the DAG, determines execution order, and tracks completion. This is the <strong>foundation for agentic behavior</strong> &mdash; an AI agent reads this graph, checks event state, and decides what to run next.</p>
+
+<h3 id="ch9-3">9.3 Contract Evolution</h3>
+
+<p>Existing tool contracts (<code>ToolInput</code> / <code>ToolOutput</code>) gain optional event metadata:</p>
+
+<pre><code># Enhanced ToolOutput — backward compatible
+@dataclass(frozen=True)
+class ToolOutput:
+    success: bool
+    result: dict
+    errors: list[str]
+    warnings: list[str]
+    contracts_version: str
+
+    # NEW — optional, backward-compatible additions:
+    events: tuple[dict, ...] = ()       # Domain events emitted by this run
+    job_id: str | None = None            # If this run is part of a tracked job
+    correlation_id: str | None = None    # For tracing across tool invocations</code></pre>
+
+<p>Existing tools continue working with <code>events=()</code>. New tools or enhanced versions emit events. The adapter layer decides whether to persist them.</p>
+
+<h3 id="ch9-4">9.4 Adapter Extensions</h3>
+
+<p>The new <code>adapters/supabase/</code> directory follows Soft Code conventions:</p>
+
+<pre><code>adapters/supabase/
+├── connection.py               # Supabase client initialization
+├── graph_persistence.py        # Load/save ProductConfig ↔ config_nodes table
+├── event_persistence.py        # Append events, load streams, optimistic concurrency
+├── rate_loader.py              # Batch-load rate tables into RateContext
+├── projection_reader.py        # Read from proj_* tables
+├── RUNTIME_DEPENDENCIES.md     # supabase-py, python-dotenv
+└── tests/
+    └── test_persistence.py     # Integration tests (requires Supabase connection)</code></pre>
+
+<p>Flask adapters remain unchanged. They gain an <em>optional</em> integration point: after calling <code>run_contract()</code>, they can pass events to the Supabase adapter for persistence. But this is additive &mdash; existing tools work without it.</p>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch10">10. Phased Roadmap</h2>
+
+<p>Following the Strangler Fig migration pattern from the article: build incrementally, validate at each stage, never attempt big-bang migration.</p>
+
+<div class="phase-card">
+  <h4>Phase 0: Foundation (Build First)</h4>
+  <p><strong>Goal:</strong> Create the structural primitives. No database yet. Pure functions only.</p>
+  <table>
+    <thead>
+      <tr><th>New Core Tool</th><th>Purpose</th><th>Deliverables</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>core/product_graph/</code></td>
+        <td>ConfigNode DAG &mdash; add, remove, connect, validate, traverse</td>
+        <td>DECISIONS.md, models.py, graph_ops.py, traversal.py, tests</td>
+      </tr>
+      <tr>
+        <td><code>core/event_store/</code></td>
+        <td>Immutable event log &mdash; append, replay, apply, project</td>
+        <td>DECISIONS.md, models.py, event_log.py, tests</td>
+      </tr>
+      <tr>
+        <td><code>core/pricing_engine/</code></td>
+        <td>Bottom-up DAG evaluation with pre-loaded rate context</td>
+        <td>DECISIONS.md, models.py, evaluator.py, tests</td>
+      </tr>
+    </tbody>
+  </table>
+  <p><strong>Key constraint:</strong> Each tool follows the existing 6-step workflow. All pass <code>preflight.py</code>. Zero I/O in core. No database dependency.</p>
+</div>
+
+<div class="phase-card">
+  <h4>Phase 1: Connect (Persist &amp; Compose)</h4>
+  <p><strong>Goal:</strong> Connect foundation to Supabase. Existing tools start emitting events.</p>
+  <ul>
+    <li>Create <code>adapters/supabase/</code> persistence layer</li>
+    <li>Deploy schema to Supabase (tables, indexes, triggers, RLS)</li>
+    <li>Build Flask adapter for product graph visualization/editing</li>
+    <li>Enhance <code>trading_card_sheet_normalizer</code> output to create ConfigNodes</li>
+    <li>Enhance <code>order_quote</code> to use pricing engine&rsquo;s DAG traversal</li>
+    <li>Run in <strong>shadow mode</strong>: new engine parallel to existing, validate accuracy</li>
+  </ul>
+</div>
+
+<div class="phase-card">
+  <h4>Phase 2: Track (Event Sourcing for Production)</h4>
+  <p><strong>Goal:</strong> Full production lifecycle tracking with audit trails.</p>
+  <ul>
+    <li>Define event types for each production stage</li>
+    <li>Build projection tables and triggers (job board, station queues)</li>
+    <li>Create operator-facing dashboards (station queue views)</li>
+    <li>Jobs emit events: <code>JobCreated</code>, <code>NormalizationCompleted</code>, <code>SheetImposed</code>, etc.</li>
+    <li>Build <code>core/job_workflow/</code> tool for workflow DAG definition and sequencing</li>
+    <li>Historical reporting from event streams (waste analysis, throughput, SLA tracking)</li>
+  </ul>
+</div>
+
+<div class="phase-card">
+  <h4>Phase 3: Agentic Orchestration</h4>
+  <p><strong>Goal:</strong> AI agent that navigates workflow DAGs and decides next actions.</p>
+  <ul>
+    <li>CQRS command bus: tool invocations become validated commands</li>
+    <li>Denormalized query projections for agent consumption</li>
+    <li>Agent reads workflow DAG + event state + projections</li>
+    <li>Agent decides: &ldquo;Job X is normalized, art is matched, quote approved &rarr; build imposition next&rdquo;</li>
+    <li>Human-in-the-loop gates: agent proposes, human approves critical decisions</li>
+    <li>Agent learns from event history: which workflows succeed, common failure points</li>
+  </ul>
+</div>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch11">11. Trade-offs and Risks</h2>
+
+<h3>Advantages</h3>
+<table>
+  <thead><tr><th>Benefit</th><th>Impact</th></tr></thead>
+  <tbody>
+    <tr><td>Flexible product schemas</td><td>New product types without code deployment or schema migration</td></tr>
+    <tr><td>Millisecond quoting</td><td>1&ndash;3 queries total, CPU-bound arithmetic instead of I/O-bound lookups</td></tr>
+    <tr><td>Complete audit trails</td><td>Every decision, every state change, every actor recorded permanently</td></tr>
+    <tr><td>Tool composability</td><td>Workflow DAGs define how tools chain together</td></tr>
+    <tr><td>Replay and debugging</td><td>Reproduce any historical state by replaying events to that point</td></tr>
+    <tr><td>Multi-tenant ready</td><td>RLS at database level, not application code</td></tr>
+    <tr><td>Agentic foundation</td><td>Event state + workflow DAGs are perfectly structured for AI agent consumption</td></tr>
+  </tbody>
+</table>
+
+<h3>Costs and Risks</h3>
+<table>
+  <thead><tr><th>Cost</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Event schema evolution</strong> &mdash; once emitted, changing event shapes requires migration</td><td>Version events from day one. Use upcasting (transform old events to new schema on read). Keep payloads backward-compatible.</td></tr>
+    <tr><td><strong>Operational complexity</strong> &mdash; event consumers, projections, eventual consistency</td><td>Start with Postgres triggers (simple, in-database). Add external consumers only when needed.</td></tr>
+    <tr><td><strong>Debugging surface area</strong> &mdash; tracing event streams instead of call stacks</td><td>Correlation IDs on every event. Build an event explorer tool early.</td></tr>
+    <tr><td><strong>Eventual consistency</strong> &mdash; projections may lag 1&ndash;5 seconds behind events</td><td>Acceptable for operational views. Only the event stream must be immediately consistent.</td></tr>
+    <tr><td><strong>Database dependency</strong> &mdash; moving from stateless to stateful</td><td>Supabase is managed. Core remains pure and testable without database. Only adapters touch DB.</td></tr>
+    <tr><td><strong>Specialized talent</strong> &mdash; event sourcing requires different mental model</td><td>This document. Start simple. Build incrementally. Phase 0 requires no event sourcing knowledge.</td></tr>
+    <tr><td><strong>Ad-hoc queries harder</strong> &mdash; event stores are less ergonomic than flat tables for analytics</td><td>Projections are denormalized tables — query them like normal SQL. Event store is for writes + replay.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-blue">
+  <strong>The article&rsquo;s honest assessment</strong>
+  &ldquo;The architecture excels for composable product quoting and tracking but is overkill for flat, uniform products with low quote volume.&rdquo; Your trading card products are composable (layers, finishes, variable configs). Your quote volume is growing. This architecture is appropriate for your domain.
+</div>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch12">12. What Changes, What Stays</h2>
+
+<h3>What Does NOT Change</h3>
+<ul>
+  <li><code>core/</code> stays pure &mdash; no I/O, no frameworks, frozen dataclasses</li>
+  <li>Orchestrators stay dumb &mdash; zero branching, recipe cards</li>
+  <li>Adapters stay thin &mdash; transport and I/O only</li>
+  <li>Existing 12 tools keep working &mdash; DAG and events are additive layers</li>
+  <li>The 6-step workflow stays &mdash; every new tool follows DECISIONS &rarr; shapes &rarr; functions &rarr; orchestrator &rarr; adapter &rarr; verification</li>
+  <li>Preflight checks still run &mdash; add new checks, don&rsquo;t replace</li>
+  <li><code>tools_registry.json</code> structure stays</li>
+</ul>
+
+<h3>What DOES Change</h3>
+<ul>
+  <li><strong>New shared domain models:</strong> <code>ConfigNode</code>, <code>DomainEvent</code>, <code>ProductConfig</code> become cross-tool types</li>
+  <li><strong>New infrastructure core tools:</strong> <code>product_graph</code>, <code>event_store</code>, <code>pricing_engine</code> are tools that other tools depend on</li>
+  <li><strong>New adapter type:</strong> <code>adapters/supabase/</code> for database persistence</li>
+  <li><strong>New composition layer:</strong> <code>core/job_workflow/</code> for tool-to-tool DAGs</li>
+  <li><strong>Registry evolution:</strong> Add <code>depends_on</code>, <code>emits_events</code>, <code>supports_graph</code> to <code>tools_registry.json</code></li>
+  <li><strong>ToolOutput evolution:</strong> Optional <code>events</code>, <code>job_id</code>, <code>correlation_id</code> fields</li>
+</ul>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch13">13. Reference: Complete Data Models</h2>
+
+<h3>Product Graph Domain</h3>
+
+<pre><code># core/product_graph/domain/models.py
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ConfigNode:
+    id: str
+    type: str
+    version: int
+    attributes: dict
+    children: tuple[str, ...]
+    parents: tuple[str, ...]
+    pricing_function_id: str | None = None
+    tracking: "TrackingState | None" = None
+
+@dataclass(frozen=True)
+class TrackingState:
+    status: str
+    assigned_to: str | None = None
+    station: str | None = None
+    timestamps: dict = None
+
+@dataclass(frozen=True)
+class ProductConfig:
+    id: str
+    root_node_id: str
+    nodes: dict  # {str: ConfigNode} — use dict for frozen compatibility
+    version: int
+    created_at: str
+    metadata: dict
+
+@dataclass(frozen=True)
+class NodeTypeDefinition:
+    type_name: str
+    display_name: str
+    attribute_schema: dict
+    allowed_child_types: tuple[str, ...]
+    default_pricing_function: str | None = None</code></pre>
+
+<h3>Event Store Domain</h3>
+
+<pre><code># core/event_store/domain/models.py
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class DomainEvent:
+    event_id: str
+    stream_id: str
+    version: int
+    event_type: str
+    timestamp: str
+    payload: dict
+    metadata: dict
+
+@dataclass(frozen=True)
+class EventStream:
+    stream_id: str
+    events: tuple  # tuple[DomainEvent, ...]
+    current_version: int
+
+@dataclass(frozen=True)
+class Snapshot:
+    stream_id: str
+    version: int
+    state: dict
+    created_at: str
+
+@dataclass(frozen=True)
+class AppendResult:
+    success: bool
+    errors: tuple[str, ...]
+    new_version: int</code></pre>
+
+<h3>Pricing Engine Domain</h3>
+
+<pre><code># core/pricing_engine/domain/models.py
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class RateContext:
+    """Pre-loaded rate data for a pricing run. No DB access during evaluation."""
+    substrate_rates: dict
+    ink_rates: dict
+    finishing_rates: dict
+    labor_rates: dict
+    quantity_breaks: dict
+    markup_rules: dict
+    loaded_at: str
+    rate_table_versions: dict   # {table_name: version} for audit
+
+@dataclass(frozen=True)
+class NodePrice:
+    node_id: str
+    node_type: str
+    base_cost: str              # Decimal as string
+    quantity_adjusted: str
+    markup: str
+    total: str
+    breakdown: dict             # Line-item details
+    children_total: str         # Rolled-up children cost
+
+@dataclass(frozen=True)
+class PricingResult:
+    success: bool
+    errors: tuple[str, ...]
+    total: str
+    breakdown: dict             # {node_id: NodePrice}
+    rate_context_versions: dict # Which rate tables were used</code></pre>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch14">14. Reference: Complete SQL Schema</h2>
+
+<p>The full schema from Section 8.3 is deployment-ready. Key design decisions:</p>
+
+<table>
+  <thead>
+    <tr><th>Decision</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>One row per ConfigNode, not one document per product</td><td>Avoids TOAST compression, enables per-node indexing and RLS</td></tr>
+    <tr><td><code>UNIQUE(stream_id, version)</code> on events</td><td>Optimistic concurrency — concurrent writers get a unique violation, must retry</td></tr>
+    <tr><td>Trigger-based immutability on events</td><td>Database enforces append-only semantics, not application code</td></tr>
+    <tr><td>JSONB <code>attributes</code> on nodes, columns for <code>type</code></td><td>Hybrid: index/query the stable fields, JSONB for the variable parts</td></tr>
+    <tr><td>Projection tables are separate from events</td><td>Disposable and rebuildable; optimized for read patterns</td></tr>
+    <tr><td><code>UUID[]</code> for children/parents</td><td>PostgreSQL native arrays; enables <code>ANY()</code> queries and GIN indexing</td></tr>
+    <tr><td>Rate tables with <code>valid_from</code>/<code>valid_until</code></td><td>Temporal validity — reproduce historical quotes with the rates active at that time</td></tr>
+  </tbody>
+</table>
+
+<!-- ──────────────────────────────────────────────────────────── -->
+<h2 id="ch15">15. Glossary</h2>
+
+<table>
+  <thead>
+    <tr><th>Term</th><th>Definition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>DAG</strong></td><td>Directed Acyclic Graph. Nodes connected by directed edges with no cycles. Products are modeled as DAGs where nodes are components and edges are dependencies.</td></tr>
+    <tr><td><strong>ConfigNode</strong></td><td>A single node in the product configuration graph. Represents a layer, process, assembly, or finishing step.</td></tr>
+    <tr><td><strong>ProductConfig</strong></td><td>A complete product configuration: a flat map of ConfigNodes with a designated root node.</td></tr>
+    <tr><td><strong>Event Sourcing</strong></td><td>Architecture pattern where state changes are recorded as immutable events. Current state is derived by replaying the event stream.</td></tr>
+    <tr><td><strong>DomainEvent</strong></td><td>An immutable record of something that happened. Contains a type, payload, timestamp, and metadata.</td></tr>
+    <tr><td><strong>Event Stream</strong></td><td>An ordered sequence of events for a single aggregate (e.g., all events for job &ldquo;abc-123&rdquo;).</td></tr>
+    <tr><td><strong>Projection</strong></td><td>A denormalized read model derived from events. Optimized for specific query patterns. Disposable and rebuildable.</td></tr>
+    <tr><td><strong>CQRS</strong></td><td>Command Query Responsibility Segregation. Separate write model (commands &rarr; events) from read model (projections).</td></tr>
+    <tr><td><strong>Topological Sort</strong></td><td>Ordering of DAG nodes such that every parent appears after its children. Used for bottom-up pricing evaluation.</td></tr>
+    <tr><td><strong>Memoization</strong></td><td>Caching node evaluation results to prevent duplicate computation of shared DAG nodes (diamond dependencies).</td></tr>
+    <tr><td><strong>TOAST</strong></td><td>PostgreSQL&rsquo;s Oversized-Attribute Storage Technique. Compresses values &gt;2KB into a separate table. Avoid by keeping JSONB values small.</td></tr>
+    <tr><td><strong>RLS</strong></td><td>Row Level Security. PostgreSQL feature that automatically filters rows based on the current user&rsquo;s identity. Foundation for multi-tenant isolation.</td></tr>
+    <tr><td><strong>Strangler Fig</strong></td><td>Migration pattern where new system runs parallel to legacy, gradually taking over functionality. Never big-bang.</td></tr>
+    <tr><td><strong>Soft Code</strong></td><td>Architecture discipline in tool-hub-try5: decisions separated from plumbing, enforced by file structure and automated checks.</td></tr>
+    <tr><td><strong>Optimistic Concurrency</strong></td><td>Conflict detection via version numbers. If two writers try to append version 5 to the same stream, one gets a unique constraint violation and must retry.</td></tr>
+    <tr><td><strong>Rate Context</strong></td><td>Pre-loaded bundle of all rate tables needed for a pricing run. Eliminates database access during evaluation.</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<p style="color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 3rem;">
+  DAG Event Sourcing &times; Tool Hub Deep Dive &middot; March 2026<br>
+  Architecture study for tool-hub-try5 &rarr; Enterprise ERP MIS<br>
+  Storage: Supabase Postgres + JSONB
+</p>
+
+</div><!-- .content -->
+
+</body>
+</html>

@@ -234,6 +234,54 @@
       color: var(--muted);
       flex: 1;
     }
+    .note-card .complexity {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: auto;
+      padding-top: 4px;
+    }
+
+    /* ── Category labels ───────────────────────────────────── */
+    .category {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .category:first-child { margin-top: 0; }
+    .category-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .category-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .category-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 99px;
+      padding: 1px 8px;
+      white-space: nowrap;
+    }
+
+    .source-category {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      margin-bottom: 4px;
+    }
+    .source-category:first-child { margin-top: 0; }
 
     /* ── Source list ────────────────────────────────────────── */
     .source-list { display: flex; flex-direction: column; gap: 8px; }
@@ -299,8 +347,8 @@
       <div class="badges">
         <a href="podcast.xml" class="badge badge-teal">🎙 Podcast RSS</a>
         <span class="badge badge-neutral">5 audio episodes</span>
-        <span class="badge badge-neutral">5 notes</span>
-        <span class="badge badge-neutral">6 source files</span>
+        <span class="badge badge-neutral">6 notes</span>
+        <span class="badge badge-neutral">7 source files</span>
       </div>
     </div>
   </header>
@@ -377,39 +425,72 @@
       <section class="section" id="notes">
         <div class="section-head">
           <h2>Notes</h2>
-          <span class="pill">5 files</span>
+          <span class="pill">6 files</span>
         </div>
-        <p class="section-intro">HTML files open directly in browser. Markdown files render on GitHub.</p>
+        <p class="section-intro">Ordered by complexity. Start at Foundations and work down. HTML files open in browser; Markdown renders on GitHub.</p>
         <div class="note-grid">
 
-          <div class="note-card">
-            <span class="tag">HTML</span>
-            <h3><a href="notes/html/MIS_ARCHITECTURE_REPORT.html">MIS Architecture Report</a></h3>
-            <p class="desc">Domain modeling, event-driven architecture, CQRS patterns, and build order for a card manufacturing MIS system.</p>
-          </div>
-
-          <div class="note-card">
-            <span class="tag">HTML</span>
-            <h3><a href="notes/html/deeper-graph-product-config-architecture%20(1).html">Deeper Graph Product Config Architecture</a></h3>
-            <p class="desc">Graph-based product configuration: composable hierarchies, dark/light reading mode, sidebar TOC.</p>
+          <!-- ── 1. Foundations ── -->
+          <div class="category">
+            <span class="category-num">1</span>
+            <span class="category-label">Foundations — Philosophy &amp; Principles</span>
+            <span class="category-line"></span>
           </div>
 
           <div class="note-card">
             <span class="tag">HTML</span>
             <h3><a href="notes/html/soft-code-explantion-claudemade.html">Soft Code Explanation</a></h3>
-            <p class="desc">Interactive guide to the soft code philosophy: building software foundations that stay changeable over time.</p>
+            <p class="desc">Start here. Interactive guide to the soft code philosophy: why decisions and plumbing must be physically separated, and how file structure enforces it.</p>
+            <div class="complexity">Beginner &middot; Read first</div>
           </div>
 
           <div class="note-card">
             <span class="tag md">Markdown</span>
             <h3><a href="notes/md/COMPOSING_SOFTWARE_THAT_STAYS_SOFT.md">Composing Software That Stays Soft</a></h3>
-            <p class="desc">Practical guide to wiring independent tools together — composition practices, result types, anti-corruption layers.</p>
+            <p class="desc">Practical guide to wiring independent tools together — composition practices, result types, anti-corruption layers, and why separation matters at scale.</p>
+            <div class="complexity">Beginner&ndash;Intermediate</div>
+          </div>
+
+          <!-- ── 2. Architecture ── -->
+          <div class="category">
+            <span class="category-num">2</span>
+            <span class="category-label">Architecture — Domain &amp; Patterns</span>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="note-card">
+            <span class="tag">HTML</span>
+            <h3><a href="notes/html/MIS_ARCHITECTURE_REPORT.html">MIS Architecture Report</a></h3>
+            <p class="desc">Domain modeling, event-driven architecture, CQRS patterns, and build order for a card manufacturing MIS. Establishes the domain vocabulary.</p>
+            <div class="complexity">Intermediate</div>
           </div>
 
           <div class="note-card">
             <span class="tag md">Markdown</span>
-            <h3><a href="notes/md/MIS_ARCHITECTURE_REPORT.md">MIS Architecture Report</a></h3>
-            <p class="desc">Markdown source for the MIS architecture guide. Copy sections or reference in external tools.</p>
+            <h3><a href="notes/md/MIS_ARCHITECTURE_REPORT.md">MIS Architecture Report (Markdown)</a></h3>
+            <p class="desc">Same content as the HTML version. Convenient for copying sections into prompts or referencing in external tools.</p>
+            <div class="complexity">Intermediate &middot; Alternate format</div>
+          </div>
+
+          <div class="note-card">
+            <span class="tag">HTML</span>
+            <h3><a href="notes/html/deeper-graph-product-config-architecture%20(1).html">Deeper Graph Product Config Architecture</a></h3>
+            <p class="desc">Deep technical reference: DAG product model, universal node schema, pricing engine with bottom-up traversal, event sourcing theory, CQRS, and caching.</p>
+            <div class="complexity">Advanced</div>
+          </div>
+
+          <!-- ── 3. Implementation ── -->
+          <div class="category">
+            <span class="category-num">3</span>
+            <span class="category-label">Implementation — Integration &amp; Roadmap</span>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="note-card">
+            <span class="tag">HTML</span>
+            <h3><a href="notes/html/dag-event-sourcing-toolhub-deep-dive.html">DAG Event Sourcing &times; Tool Hub Deep Dive</a></h3>
+            <p class="desc">The capstone study. Maps DAG event sourcing onto tool-hub-try5: Supabase Postgres + JSONB schema, adapter integration, complete data models, SQL, and a 4-phase roadmap to enterprise ERP MIS.</p>
+            <div class="complexity">Advanced &middot; Most recent (Mar 2026)</div>
           </div>
 
         </div>
@@ -419,16 +500,57 @@
       <section class="section" id="sources">
         <div class="section-head">
           <h2>Source Documents</h2>
-          <span class="pill">6 files</span>
+          <span class="pill">7 files</span>
         </div>
-        <p class="section-intro">Original PDFs and Word documents. Download to open locally.</p>
+        <p class="section-intro">Ordered by complexity. PDFs and Word documents — download to open locally.</p>
         <div class="source-list">
+
+          <!-- ── 1. Foundations ── -->
+          <div class="source-category">
+            <span class="category-num">1</span>
+            <span class="category-label">Foundations</span>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="source-item">
+            <span class="source-icon">📝</span>
+            <div class="source-info">
+              <a href="sources/docx/building-software-that-stays-soft%20(2).docx">Building Software That Stays Soft</a>
+              <span class="meta">DOCX · Soft code philosophy — decisions vs. plumbing separation</span>
+            </div>
+            <a href="sources/docx/building-software-that-stays-soft%20(2).docx" class="dl-btn" download>↓ DOCX</a>
+          </div>
+
+          <div class="source-item">
+            <span class="source-icon">📝</span>
+            <div class="source-info">
+              <a href="sources/docx/COMPOSING_SOFTWARE_THAT_STAYS_SOFT%20(2).docx">Composing Software That Stays Soft</a>
+              <span class="meta">DOCX · Tool composition, result types, anti-corruption layers</span>
+            </div>
+            <a href="sources/docx/COMPOSING_SOFTWARE_THAT_STAYS_SOFT%20(2).docx" class="dl-btn" download>↓ DOCX</a>
+          </div>
+
+          <!-- ── 2. Architecture ── -->
+          <div class="source-category">
+            <span class="category-num">2</span>
+            <span class="category-label">Architecture</span>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="source-item">
+            <span class="source-icon">📝</span>
+            <div class="source-info">
+              <a href="sources/docx/MIS_ARCHITECTURE_REPORT.docx">MIS Architecture Report</a>
+              <span class="meta">DOCX · Domain modeling, CQRS patterns, build order</span>
+            </div>
+            <a href="sources/docx/MIS_ARCHITECTURE_REPORT.docx" class="dl-btn" download>↓ DOCX</a>
+          </div>
 
           <div class="source-item">
             <span class="source-icon">📄</span>
             <div class="source-info">
               <a href="sources/pdf/graph-product-config-architecture%20(1)%20(1).pdf">Graph Product Config Architecture</a>
-              <span class="meta">PDF · Original source document</span>
+              <span class="meta">PDF · DAG product model, node schema, pricing engine overview</span>
             </div>
             <a href="sources/pdf/graph-product-config-architecture%20(1)%20(1).pdf" class="dl-btn" download>↓ PDF</a>
           </div>
@@ -437,7 +559,7 @@
             <span class="source-icon">📄</span>
             <div class="source-info">
               <a href="sources/pdf/graph-product-config-architecture-deeper%20(1).pdf">Graph Product Config Architecture (Deeper)</a>
-              <span class="meta">PDF · Extended deep-dive version</span>
+              <span class="meta">PDF · Extended: traversal, caching, event sourcing, CQRS, migration</span>
             </div>
             <a href="sources/pdf/graph-product-config-architecture-deeper%20(1).pdf" class="dl-btn" download>↓ PDF</a>
           </div>
@@ -445,37 +567,26 @@
           <div class="source-item">
             <span class="source-icon">📝</span>
             <div class="source-info">
-              <a href="sources/docx/COMPOSING_SOFTWARE_THAT_STAYS_SOFT%20(2).docx">Composing Software That Stays Soft</a>
-              <span class="meta">DOCX · Word document</span>
-            </div>
-            <a href="sources/docx/COMPOSING_SOFTWARE_THAT_STAYS_SOFT%20(2).docx" class="dl-btn" download>↓ DOCX</a>
-          </div>
-
-          <div class="source-item">
-            <span class="source-icon">📝</span>
-            <div class="source-info">
-              <a href="sources/docx/MIS_ARCHITECTURE_REPORT.docx">MIS Architecture Report</a>
-              <span class="meta">DOCX · Word document</span>
-            </div>
-            <a href="sources/docx/MIS_ARCHITECTURE_REPORT.docx" class="dl-btn" download>↓ DOCX</a>
-          </div>
-
-          <div class="source-item">
-            <span class="source-icon">📝</span>
-            <div class="source-info">
-              <a href="sources/docx/building-software-that-stays-soft%20(2).docx">Building Software That Stays Soft</a>
-              <span class="meta">DOCX · Word document</span>
-            </div>
-            <a href="sources/docx/building-software-that-stays-soft%20(2).docx" class="dl-btn" download>↓ DOCX</a>
-          </div>
-
-          <div class="source-item">
-            <span class="source-icon">📝</span>
-            <div class="source-info">
               <a href="sources/docx/graph-product-config-architecture-deeper%20(1).docx">Graph Product Config Architecture (Deeper)</a>
-              <span class="meta">DOCX · Word document</span>
+              <span class="meta">DOCX · Same as PDF above — editable Word format</span>
             </div>
             <a href="sources/docx/graph-product-config-architecture-deeper%20(1).docx" class="dl-btn" download>↓ DOCX</a>
+          </div>
+
+          <!-- ── 3. Implementation ── -->
+          <div class="source-category">
+            <span class="category-num">3</span>
+            <span class="category-label">Implementation</span>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="source-item">
+            <span class="source-icon">📝</span>
+            <div class="source-info">
+              <a href="sources/docx/dag-event-sourcing-toolhub-deep-dive.docx">DAG Event Sourcing &times; Tool Hub Deep Dive</a>
+              <span class="meta">DOCX · Capstone: Supabase schema, data models, SQL, 4-phase roadmap</span>
+            </div>
+            <a href="sources/docx/dag-event-sourcing-toolhub-deep-dive.docx" class="dl-btn" download>↓ DOCX</a>
           </div>
 
         </div>
@@ -490,7 +601,7 @@
         <a href="podcast.xml">🎙 Podcast RSS</a>
         <a href="https://github.com/leimanchan/MIS-Research">GitHub Repository</a>
       </div>
-      <div>MIS Research Library · Updated February 2026</div>
+      <div>MIS Research Library · Updated March 2026</div>
     </div>
   </footer>
 
