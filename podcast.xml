@@ -8,7 +8,16 @@
     <atom:link href="https://leimanchan.github.io/MIS-Research/podcast.xml" rel="self" type="application/rss+xml" />
     <description>NotebookLM audio exports on software architecture, data modeling, and composable systems — ordered least to most complex.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 28 Feb 2026 14:00:00 -0800</lastBuildDate>
+    <lastBuildDate>Sat, 01 Mar 2026 12:00:00 -0800</lastBuildDate>
+
+    <item>
+      <title>Episode 6: Architecting ERPs with DAGs and Event Sourcing</title>
+      <itunes:episode>6</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <pubDate>Sat, 01 Mar 2026 12:00:00 -0800</pubDate>
+      <guid isPermaLink="false">mis-research-ep6</guid>
+      <enclosure url="https://leimanchan.github.io/MIS-Research/audio/Architecting_ERPs_with_DAGs_and_Event_Sourcing.m4a" length="69260612" type="audio/mp4" />
+    </item>
 
     <item>
       <title>Episode 5: Solving The N+1 Nightmare With Graph Architecture</title>
