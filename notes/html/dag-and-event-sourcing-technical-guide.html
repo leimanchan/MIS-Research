@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAGs &amp; Event Sourcing — Technical Reference</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #111827;
+      --code-border: #2d3748;
+      --hr: #2d3748;
+      --table-head: #1e2235;
+      --table-border: #2d3748;
+      --blockquote-border: #4f8ef7;
+      --blockquote-bg: #1a2240;
+      --green: #86efac;
+      --yellow: #fde68a;
+      --orange: #fdba74;
+      --red: #fca5a5;
+      --teal: #7dd3fc;
+      --sidebar-w: 280px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--hr);
+      overflow-y: auto; padding: 1.5rem 1rem; z-index: 100;
+      scrollbar-width: thin; scrollbar-color: var(--hr) transparent;
+    }
+    .sidebar h2 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 0.8rem; border: none; padding: 0;
+    }
+    .sidebar .part-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent); font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem;
+    }
+    .sidebar ol { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { margin: 0; }
+    .sidebar a {
+      display: block; padding: 0.25rem 0.6rem; font-size: 0.78rem;
+      color: var(--muted); text-decoration: none; border-radius: 4px; line-height: 1.4;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar a:hover { background: var(--surface2); color: var(--accent); }
+    .sidebar .toc-h2 { font-weight: 600; color: var(--text); margin-top: 0.3rem; }
+    .sidebar .toc-h3 { padding-left: 1rem; font-size: 0.72rem; }
+    .content {
+      margin-left: var(--sidebar-w); max-width: 880px; padding: 0 2rem 4rem;
+    }
+    .report-header {
+      padding: 2.5rem 0 1.5rem; border-bottom: 1px solid var(--hr); margin-bottom: 2rem;
+    }
+    .report-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); line-height: 1.3;
+    }
+    .report-header .meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+    .badge {
+      display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge-blue { background: #1e3a5f; color: var(--accent); }
+    .badge-purple { background: #2d1b69; color: var(--accent2); }
+    .badge-teal { background: #0c2d3e; color: var(--teal); }
+    h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); margin: 2.5rem 0 1rem; line-height: 1.3; }
+    h2 { font-size: clamp(1.2rem, 3.5vw, 1.6rem); color: var(--accent2); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--hr); }
+    h3 { font-size: clamp(1rem, 3vw, 1.25rem); color: var(--teal); margin: 2rem 0 0.6rem; }
+    h4 { font-size: 1rem; color: var(--green); margin: 1.5rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin: 0.85rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: #f1f5f9; font-weight: 600; }
+    em { color: var(--yellow); font-style: italic; }
+    code {
+      background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 4px;
+      padding: 0.1em 0.45em; font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.85em; color: var(--teal);
+    }
+    pre {
+      background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 8px;
+      padding: 1.2rem 1rem; overflow-x: auto; margin: 1.2rem 0;
+    }
+    pre code {
+      background: none; border: none; padding: 0; font-size: 0.82em;
+      color: #e2e8f0; line-height: 1.6;
+    }
+    ul, ol { padding-left: 1.5rem; margin: 0.8rem 0; }
+    li { margin: 0.35rem 0; }
+    blockquote {
+      border-left: 3px solid var(--blockquote-border); background: var(--blockquote-bg);
+      margin: 1.2rem 0; padding: 0.8rem 1.2rem; border-radius: 0 6px 6px 0;
+      font-style: italic; color: #cbd5e1;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9rem;
+      display: block; overflow-x: auto;
+    }
+    th {
+      background: var(--table-head); color: var(--accent); padding: 0.6rem 0.8rem;
+      text-align: left; border: 1px solid var(--table-border); white-space: nowrap;
+    }
+    td { padding: 0.55rem 0.8rem; border: 1px solid var(--table-border); vertical-align: top; }
+    tr:nth-child(even) { background: var(--surface); }
+    .callout {
+      border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.92rem;
+    }
+    .callout-blue { background: #1a2744; border-left: 3px solid var(--accent); }
+    .callout-green { background: #1a2e24; border-left: 3px solid var(--green); }
+    .callout-yellow { background: #2b2514; border-left: 3px solid var(--yellow); }
+    .callout-red { background: #2b1a1a; border-left: 3px solid var(--red); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+    .diagram {
+      background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 8px;
+      padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.78em; line-height: 1.5; color: var(--muted); white-space: pre;
+    }
+    .part-divider {
+      margin: 3rem 0 1rem; padding: 1.5rem; background: var(--surface);
+      border: 1px solid var(--hr); border-radius: 10px; text-align: center;
+    }
+    .part-divider h2 { border: none; padding: 0; margin: 0; }
+    .part-divider p { color: var(--muted); font-size: 0.9rem; margin: 0.5rem 0 0; }
+    hr { border: none; border-top: 1px solid var(--hr); margin: 2rem 0; }
+    .complexity {
+      display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px;
+      border-radius: 99px; font-size: 0.7rem; font-weight: 700;
+      background: var(--surface2); color: var(--muted); margin-left: 8px;
+    }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; padding: 0 1rem 4rem; }
+    }
+    @media print {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      body { background: white; color: black; font-size: 11pt; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <h2>Technical Reference</h2>
+
+  <div class="part-label">Part I &mdash; Directed Acyclic Graphs</div>
+  <ol>
+    <li><a class="toc-h2" href="#dag-1">1. Graph Theory Primer</a></li>
+    <li><a class="toc-h2" href="#dag-2">2. What Makes a DAG</a></li>
+    <li><a class="toc-h2" href="#dag-3">3. DAG vs Tree vs General Graph</a></li>
+    <li>
+      <a class="toc-h2" href="#dag-4">4. Core Algorithms</a>
+      <ol>
+        <li><a class="toc-h3" href="#dag-4-1">4.1 Cycle Detection</a></li>
+        <li><a class="toc-h3" href="#dag-4-2">4.2 Topological Sort (DFS)</a></li>
+        <li><a class="toc-h3" href="#dag-4-3">4.3 Topological Sort (Kahn&rsquo;s BFS)</a></li>
+        <li><a class="toc-h3" href="#dag-4-4">4.4 Longest &amp; Shortest Path</a></li>
+        <li><a class="toc-h3" href="#dag-4-5">4.5 Transitive Closure &amp; Reduction</a></li>
+      </ol>
+    </li>
+    <li><a class="toc-h2" href="#dag-5">5. Dynamic Programming on DAGs</a></li>
+    <li><a class="toc-h2" href="#dag-6">6. Diamond Dependencies</a></li>
+    <li><a class="toc-h2" href="#dag-7">7. Serialization Formats</a></li>
+    <li><a class="toc-h2" href="#dag-8">8. Complete Python Implementation</a></li>
+  </ol>
+
+  <div class="part-label">Part II &mdash; Event Sourcing</div>
+  <ol>
+    <li><a class="toc-h2" href="#es-1">9. The Core Concept</a></li>
+    <li><a class="toc-h2" href="#es-2">10. Event Store Internals</a></li>
+    <li><a class="toc-h2" href="#es-3">11. Aggregates &amp; Boundaries</a></li>
+    <li><a class="toc-h2" href="#es-4">12. Snapshots</a></li>
+    <li><a class="toc-h2" href="#es-5">13. Schema Evolution &amp; Upcasting</a></li>
+    <li><a class="toc-h2" href="#es-6">14. Projections In Depth</a></li>
+    <li><a class="toc-h2" href="#es-7">15. CQRS: The Full Pattern</a></li>
+    <li><a class="toc-h2" href="#es-8">16. Sagas &amp; Process Managers</a></li>
+    <li><a class="toc-h2" href="#es-9">17. Idempotency</a></li>
+    <li><a class="toc-h2" href="#es-10">18. Testing Event-Sourced Systems</a></li>
+    <li><a class="toc-h2" href="#es-11">19. Anti-Patterns &amp; Pitfalls</a></li>
+    <li><a class="toc-h2" href="#es-12">20. Complete Python Implementation</a></li>
+  </ol>
+</nav>
+
+<div class="content">
+
+<header class="report-header">
+  <h1>DAGs &amp; Event Sourcing<br>Technical Reference</h1>
+  <p class="meta">March 2026 &middot; Pure theory, algorithms, patterns, anti-patterns, and working Python code</p>
+  <div class="badges">
+    <span class="badge badge-blue">Graph Algorithms</span>
+    <span class="badge badge-purple">Event Sourcing Patterns</span>
+    <span class="badge badge-teal">Working Python Code</span>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  PART I — DIRECTED ACYCLIC GRAPHS                              -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div class="part-divider">
+  <h2>Part I: Directed Acyclic Graphs</h2>
+  <p>Graph theory, algorithms, complexity analysis, and Python implementations</p>
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-1">1. Graph Theory Primer</h2>
+
+<p>A <strong>graph</strong> G = (V, E) consists of a set of <strong>vertices</strong> (nodes) V and a set of <strong>edges</strong> E connecting pairs of vertices. Graphs are the mathematical structure behind networks, dependencies, hierarchies, and workflows.</p>
+
+<h3>Key Vocabulary</h3>
+
+<table>
+  <thead><tr><th>Term</th><th>Definition</th><th>Notation</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vertex (node)</strong></td><td>A point in the graph</td><td>v &isin; V</td></tr>
+    <tr><td><strong>Edge</strong></td><td>A connection between two vertices</td><td>(u, v) &isin; E</td></tr>
+    <tr><td><strong>Directed edge</strong></td><td>Edge with a direction: u &rarr; v (u is parent, v is child)</td><td></td></tr>
+    <tr><td><strong>Undirected edge</strong></td><td>Edge with no direction: u &mdash; v</td><td></td></tr>
+    <tr><td><strong>In-degree</strong></td><td>Number of edges pointing <em>into</em> a vertex</td><td>deg<sup>&minus;</sup>(v)</td></tr>
+    <tr><td><strong>Out-degree</strong></td><td>Number of edges pointing <em>out of</em> a vertex</td><td>deg<sup>+</sup>(v)</td></tr>
+    <tr><td><strong>Path</strong></td><td>Sequence of vertices where each consecutive pair is connected by an edge</td><td></td></tr>
+    <tr><td><strong>Cycle</strong></td><td>A path that starts and ends at the same vertex</td><td></td></tr>
+    <tr><td><strong>Adjacency list</strong></td><td>For each vertex, a list of its neighbors. The standard representation.</td><td></td></tr>
+    <tr><td><strong>Root</strong></td><td>A vertex with in-degree 0 (no parents)</td><td></td></tr>
+    <tr><td><strong>Leaf</strong></td><td>A vertex with out-degree 0 (no children)</td><td></td></tr>
+  </tbody>
+</table>
+
+<h3>Representation in Code</h3>
+
+<pre><code># Adjacency list — the standard graph representation
+# Key = vertex, Value = list of vertices it points to
+graph = {
+    "A": ["B", "C"],      # A → B, A → C
+    "B": ["D"],            # B → D
+    "C": ["D"],            # C → D
+    "D": [],               # D has no outgoing edges (leaf)
+}
+
+# |V| = 4 vertices,  |E| = 4 edges
+# In-degree:  A=0, B=1, C=1, D=2
+# Out-degree: A=2, B=1, C=1, D=0</code></pre>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-2">2. What Makes a DAG</h2>
+
+<p>A DAG is a graph that satisfies two constraints:</p>
+
+<ol>
+  <li><strong>Directed</strong> &mdash; Every edge has a direction (u &rarr; v)</li>
+  <li><strong>Acyclic</strong> &mdash; There is no path from any vertex back to itself</li>
+</ol>
+
+<div class="diagram">  <strong>This IS a DAG:</strong>                   <strong>This is NOT a DAG (has cycle):</strong>
+
+    A → B → D                          A → B → D
+    A → C → D                          A → C → D
+                                            ↑   ↓
+  No path from any vertex                   F ← E
+  back to itself.
+                                       D → E → F → C → D  (cycle!)</div>
+
+<p>The <strong>acyclic constraint is what makes DAGs useful</strong>. Because there are no cycles, you can always find an ordering where every vertex appears before all vertices it points to. This ordering &mdash; <em>topological sort</em> &mdash; is the foundation for dependency resolution, build systems, pricing engines, and workflow scheduling.</p>
+
+<div class="callout callout-blue">
+  <strong>Formal definition</strong>
+  A directed graph G = (V, E) is acyclic if and only if it admits a topological ordering: a bijection f: V &rarr; {1, 2, ..., |V|} such that for every edge (u, v) &isin; E, f(u) &lt; f(v).
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-3">3. DAG vs Tree vs General Graph</h2>
+
+<table>
+  <thead><tr><th>Property</th><th>Tree</th><th>DAG</th><th>General Directed Graph</th></tr></thead>
+  <tbody>
+    <tr><td>Directed</td><td>Yes (parent &rarr; child)</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Acyclic</td><td>Yes</td><td>Yes</td><td>No (may have cycles)</td></tr>
+    <tr><td>Max parents per node</td><td><strong>Exactly 1</strong> (except root: 0)</td><td><strong>Any number</strong></td><td>Any number</td></tr>
+    <tr><td>Shared nodes</td><td>No &mdash; each node has unique path from root</td><td><strong>Yes</strong> &mdash; multiple paths to same node</td><td>Yes</td></tr>
+    <tr><td>Topological order exists</td><td>Yes (BFS = level order)</td><td>Yes</td><td>Only if no cycles</td></tr>
+    <tr><td>Use case</td><td>File systems, DOM, org charts</td><td><strong>Dependencies, pricing, workflows</strong></td><td>Social networks, web links</td></tr>
+    <tr><td>Duplication needed for sharing</td><td>Yes (must clone subtree)</td><td><strong>No</strong> (share via multiple parents)</td><td>No</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-green">
+  <strong>Why this matters for product configuration</strong>
+  A lamination process applies to both the Front and Back layers. In a tree, you&rsquo;d duplicate the lamination node (duplicate cost, duplicate updates). In a DAG, Front and Back both point to the same Lamination node. One source of truth, correct cost rollup.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-4">4. Core Algorithms</h2>
+
+<h3 id="dag-4-1">4.1 Cycle Detection (Three-Color DFS) <span class="complexity">O(V + E)</span></h3>
+
+<p>Before any DAG operation, you must verify the graph is actually acyclic. The standard algorithm uses a three-color DFS marking:</p>
+
+<ul>
+  <li><strong>WHITE</strong> &mdash; Unvisited</li>
+  <li><strong>GRAY</strong> &mdash; Currently being explored (on the recursion stack)</li>
+  <li><strong>BLACK</strong> &mdash; Fully explored (all descendants visited)</li>
+</ul>
+
+<p>If you encounter a <strong>GRAY</strong> node while exploring, you&rsquo;ve found a back edge &mdash; a cycle.</p>
+
+<pre><code>def has_cycle(graph: dict[str, list[str]]) -> bool:
+    """Detect cycles using three-color DFS. O(V + E)."""
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {v: WHITE for v in graph}
+
+    def dfs(v: str) -> bool:
+        color[v] = GRAY                     # Mark: currently exploring
+        for neighbor in graph.get(v, []):
+            if color[neighbor] == GRAY:      # Back edge → cycle!
+                return True
+            if color[neighbor] == WHITE:
+                if dfs(neighbor):
+                    return True
+        color[v] = BLACK                     # Mark: fully explored
+        return False
+
+    return any(dfs(v) for v in graph if color[v] == WHITE)
+
+
+# To find the actual cycle (not just detect):
+def find_cycle(graph: dict[str, list[str]]) -> list[str] | None:
+    """Return the cycle path, or None if acyclic."""
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {v: WHITE for v in graph}
+    parent = {}
+
+    def dfs(v: str) -> str | None:
+        color[v] = GRAY
+        for neighbor in graph.get(v, []):
+            if color[neighbor] == GRAY:
+                # Reconstruct cycle
+                cycle = [neighbor, v]
+                node = v
+                while node != neighbor:
+                    node = parent.get(node)
+                    if node is None:
+                        break
+                    cycle.append(node)
+                cycle.reverse()
+                return cycle
+            if color[neighbor] == WHITE:
+                parent[neighbor] = v
+                result = dfs(neighbor)
+                if result:
+                    return result
+        color[v] = BLACK
+        return None
+
+    for v in graph:
+        if color[v] == WHITE:
+            result = dfs(v)
+            if result:
+                return result
+    return None</code></pre>
+
+<h3 id="dag-4-2">4.2 Topological Sort &mdash; DFS-Based <span class="complexity">O(V + E)</span></h3>
+
+<p>Post-order DFS produces a reverse topological order. Reverse it to get the final ordering.</p>
+
+<pre><code>def topological_sort_dfs(graph: dict[str, list[str]]) -> list[str]:
+    """DFS-based topological sort. Returns vertices in dependency order.
+
+    For every edge u → v, u appears BEFORE v in the result.
+    Raises ValueError if graph has a cycle.
+    """
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {v: WHITE for v in graph}
+    result = []
+
+    def dfs(v: str):
+        color[v] = GRAY
+        for neighbor in graph.get(v, []):
+            if color[neighbor] == GRAY:
+                raise ValueError(f"Cycle detected involving {v} → {neighbor}")
+            if color[neighbor] == WHITE:
+                dfs(neighbor)
+        color[v] = BLACK
+        result.append(v)      # Post-order: append AFTER visiting all children
+
+    for v in graph:
+        if color[v] == WHITE:
+            dfs(v)
+
+    result.reverse()           # Reverse post-order = topological order
+    return result
+
+
+# Example:
+# graph = {"A": ["B", "C"], "B": ["D"], "C": ["D"], "D": []}
+# topological_sort_dfs(graph) → ["A", "B", "C", "D"] or ["A", "C", "B", "D"]
+# Both are valid — topological orderings are not unique.</code></pre>
+
+<h3 id="dag-4-3">4.3 Topological Sort &mdash; Kahn&rsquo;s Algorithm (BFS) <span class="complexity">O(V + E)</span></h3>
+
+<p>Kahn&rsquo;s algorithm uses in-degree counting and a queue. Bonus: it detects cycles for free (if the output has fewer vertices than the graph, there&rsquo;s a cycle).</p>
+
+<pre><code>from collections import deque
+
+def topological_sort_kahn(graph: dict[str, list[str]]) -> list[str]:
+    """BFS-based topological sort (Kahn's algorithm).
+
+    Returns vertices in dependency order.
+    Raises ValueError if graph has a cycle.
+    """
+    # 1. Compute in-degree for every vertex
+    in_degree = {v: 0 for v in graph}
+    for v in graph:
+        for neighbor in graph[v]:
+            in_degree[neighbor] = in_degree.get(neighbor, 0) + 1
+
+    # 2. Enqueue all vertices with in-degree 0 (no dependencies)
+    queue = deque(v for v in graph if in_degree[v] == 0)
+    result = []
+
+    # 3. Process: dequeue, add to result, decrement neighbors' in-degree
+    while queue:
+        v = queue.popleft()
+        result.append(v)
+        for neighbor in graph[v]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)  # All dependencies satisfied
+
+    # 4. Cycle detection: if result is shorter than graph, cycle exists
+    if len(result) != len(graph):
+        raise ValueError("Cycle detected — not a DAG")
+
+    return result</code></pre>
+
+<div class="callout callout-yellow">
+  <strong>DFS vs Kahn&rsquo;s: When to use which</strong>
+  Both are O(V + E). <strong>DFS</strong> is simpler to implement and gives you cycle detection with path reconstruction. <strong>Kahn&rsquo;s</strong> is iterative (no recursion stack, so no stack overflow on deep graphs) and naturally produces a level-by-level ordering useful for parallelism &mdash; all vertices in the queue at the same time are independent and can be processed concurrently.
+</div>
+
+<h3 id="dag-4-4">4.4 Longest &amp; Shortest Path in a DAG <span class="complexity">O(V + E)</span></h3>
+
+<p>Unlike general graphs, DAGs allow linear-time shortest and longest path computation by processing vertices in topological order:</p>
+
+<pre><code>def longest_path(graph: dict[str, list[tuple[str, int]]], start: str) -> dict[str, int]:
+    """Find longest path from start to all reachable vertices.
+
+    graph: adjacency list with weights — {"A": [("B", 3), ("C", 2)], ...}
+    Returns: {vertex: longest_distance} from start.
+
+    Used in critical path scheduling (PERT/CPM).
+    """
+    order = topological_sort_dfs({v: [n for n, _ in neighbors]
+                                  for v, neighbors in graph.items()})
+    dist = {v: float("-inf") for v in graph}
+    dist[start] = 0
+
+    for v in order:
+        if dist[v] == float("-inf"):
+            continue                          # Not reachable from start
+        for neighbor, weight in graph.get(v, []):
+            if dist[v] + weight > dist[neighbor]:
+                dist[neighbor] = dist[v] + weight
+
+    return {v: d for v, d in dist.items() if d != float("-inf")}
+
+
+def shortest_path(graph: dict[str, list[tuple[str, int]]], start: str) -> dict[str, int]:
+    """Same structure, just flip the comparison."""
+    order = topological_sort_dfs({v: [n for n, _ in neighbors]
+                                  for v, neighbors in graph.items()})
+    dist = {v: float("inf") for v in graph}
+    dist[start] = 0
+
+    for v in order:
+        if dist[v] == float("inf"):
+            continue
+        for neighbor, weight in graph.get(v, []):
+            if dist[v] + weight < dist[neighbor]:
+                dist[neighbor] = dist[v] + weight
+
+    return {v: d for v, d in dist.items() if d != float("inf")}</code></pre>
+
+<div class="callout callout-blue">
+  <strong>Critical Path in Production</strong>
+  In a workflow DAG where edges are task durations, the <strong>longest path</strong> from start to finish is the <strong>critical path</strong> &mdash; the minimum time to complete all tasks. Any delay on this path delays the entire project. This is how PERT/CPM scheduling works, and it&rsquo;s directly applicable to production job workflows.
+</div>
+
+<h3 id="dag-4-5">4.5 Transitive Closure &amp; Reduction <span class="complexity">O(V &middot; E)</span></h3>
+
+<p><strong>Transitive closure:</strong> Add an edge u &rarr; v for every pair where v is reachable from u. Answers &ldquo;can I get from A to B?&rdquo; in O(1).</p>
+
+<p><strong>Transitive reduction:</strong> Remove redundant edges. If A &rarr; B and A &rarr; C &rarr; B, then A &rarr; B is redundant (you can still reach B through C). The reduction has the fewest edges while preserving all reachability.</p>
+
+<pre><code>def transitive_closure(graph: dict[str, list[str]]) -> dict[str, set[str]]:
+    """Compute all pairs reachability. O(V * (V + E))."""
+    closure = {v: set() for v in graph}
+    for v in graph:
+        # BFS/DFS from each vertex
+        stack = [v]
+        visited = set()
+        while stack:
+            node = stack.pop()
+            for neighbor in graph.get(node, []):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    closure[v].add(neighbor)
+                    stack.append(neighbor)
+    return closure
+
+
+def transitive_reduction(graph: dict[str, list[str]]) -> dict[str, list[str]]:
+    """Remove redundant edges while preserving reachability. O(V * E)."""
+    closure = transitive_closure(graph)
+    reduced = {v: [] for v in graph}
+
+    for v in graph:
+        for neighbor in graph[v]:
+            # Keep edge v → neighbor only if no OTHER path exists
+            redundant = False
+            for other in graph[v]:
+                if other != neighbor and neighbor in closure.get(other, set()):
+                    redundant = True
+                    break
+            if not redundant:
+                reduced[v].append(neighbor)
+
+    return reduced</code></pre>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-5">5. Dynamic Programming on DAGs</h2>
+
+<p>DAGs are the natural substrate for dynamic programming. Because there are no cycles, you can process vertices in topological order and guarantee that all dependencies are resolved before you compute a vertex&rsquo;s value.</p>
+
+<pre><code># General pattern: DP on a DAG
+def dag_dp(graph, values, combine_fn):
+    """
+    Compute a value for each vertex bottom-up.
+    - values: base value for each leaf node
+    - combine_fn(node_value, child_values) → combined value
+    """
+    order = topological_sort_dfs(graph)
+    order.reverse()    # Bottom-up: leaves first, root last
+    result = {}
+
+    for v in order:
+        children = graph.get(v, [])
+        if not children:
+            result[v] = values[v]                          # Leaf: use base value
+        else:
+            child_vals = [result[c] for c in children]
+            result[v] = combine_fn(values[v], child_vals)  # Combine
+
+    return result
+
+# Example: pricing rollup
+# combine_fn = lambda self_cost, child_costs: self_cost + sum(child_costs)</code></pre>
+
+<p>This is exactly how the pricing engine works: bottom-up traversal where each node&rsquo;s total cost = its own cost + sum of children&rsquo;s costs.</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-6">6. The Diamond Dependency Problem</h2>
+
+<p>When multiple paths converge on the same node, that node could be computed multiple times:</p>
+
+<div class="diagram">        A
+       / \
+      B   C       Both B and C depend on D.
+       \ /        Without memoization, D is computed twice.
+        D         With memoization, D is computed once and cached.</div>
+
+<p>In a tree, this can&rsquo;t happen (each node has one parent). In a DAG, it&rsquo;s common and expected.</p>
+
+<h3>Solution: Memoization</h3>
+
+<pre><code>def evaluate_with_memo(graph, node, eval_fn, memo=None):
+    """Evaluate a DAG node with memoization for shared nodes."""
+    if memo is None:
+        memo = {}
+    if node in memo:
+        return memo[node]              # Already computed — return cached
+
+    children = graph.get(node, [])
+    child_results = [evaluate_with_memo(graph, c, eval_fn, memo) for c in children]
+    result = eval_fn(node, child_results)
+
+    memo[node] = result                # Cache for other paths
+    return result</code></pre>
+
+<div class="callout callout-green">
+  <strong>Performance impact</strong>
+  Without memoization, a DAG with n shared nodes and k paths per node evaluates O(k<sup>n</sup>) nodes (exponential). With memoization, exactly |V| nodes are evaluated &mdash; each once. This is the difference between a pricing engine that takes seconds and one that takes milliseconds.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-7">7. Serialization Formats</h2>
+
+<table>
+  <thead><tr><th>Format</th><th>Structure</th><th>Pros</th><th>Cons</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Flat map</strong></td><td><code>{id: {children: [...], data: ...}}</code></td><td>O(1) lookup, DAG-native, no duplication</td><td>Must follow references to traverse</td></tr>
+    <tr><td><strong>Adjacency list</strong></td><td><code>{vertex: [neighbors]}</code></td><td>Standard, compact</td><td>Node data stored separately</td></tr>
+    <tr><td><strong>Edge list</strong></td><td><code>[(from, to), ...]</code></td><td>Simplest, good for bulk loading</td><td>O(E) to find neighbors</td></tr>
+    <tr><td><strong>Nested JSON</strong></td><td><code>{data: ..., children: [{...}]}</code></td><td>Human-readable tree</td><td>Duplicates shared nodes, tree-only</td></tr>
+  </tbody>
+</table>
+
+<p>For database storage, <strong>flat map with one row per node</strong> is the right choice (see the integration deep dive for PostgreSQL schema).</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="dag-8">8. Complete Python Implementation</h2>
+
+<pre><code>"""Complete DAG library — pure functions, no I/O, no dependencies."""
+from dataclasses import dataclass
+from collections import deque
+from typing import Any, Callable
+
+
+@dataclass(frozen=True)
+class Node:
+    id: str
+    data: dict
+    children: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class DAG:
+    nodes: dict  # {str: Node}
+    root: str
+
+
+# ── Construction ──────────────────────────────────────────
+
+def add_node(dag: DAG, node: Node) -> DAG:
+    """Add a node. Returns new DAG (immutable)."""
+    new_nodes = dict(dag.nodes)
+    new_nodes[node.id] = node
+    return DAG(nodes=new_nodes, root=dag.root)
+
+
+def connect(dag: DAG, parent_id: str, child_id: str) -> DAG:
+    """Add edge parent → child. Returns new DAG."""
+    parent = dag.nodes[parent_id]
+    if child_id in parent.children:
+        return dag  # Already connected
+    new_parent = Node(
+        id=parent.id,
+        data=parent.data,
+        children=parent.children + (child_id,),
+    )
+    new_nodes = dict(dag.nodes)
+    new_nodes[parent_id] = new_parent
+    new_dag = DAG(nodes=new_nodes, root=dag.root)
+    # Validate: must still be acyclic
+    cycle = find_cycle_in_dag(new_dag)
+    if cycle:
+        raise ValueError(f"Adding edge {parent_id} → {child_id} creates cycle: {cycle}")
+    return new_dag
+
+
+# ── Validation ────────────────────────────────────────────
+
+def find_cycle_in_dag(dag: DAG) -> list[str] | None:
+    """Return cycle path or None if valid DAG."""
+    adj = {nid: list(n.children) for nid, n in dag.nodes.items()}
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {v: WHITE for v in adj}
+    parent = {}
+
+    def dfs(v):
+        color[v] = GRAY
+        for nb in adj.get(v, []):
+            if color.get(nb, WHITE) == GRAY:
+                cycle = [nb, v]
+                node = v
+                while node != nb:
+                    node = parent.get(node)
+                    if node is None: break
+                    cycle.append(node)
+                cycle.reverse()
+                return cycle
+            if color.get(nb, WHITE) == WHITE:
+                parent[nb] = v
+                result = dfs(nb)
+                if result: return result
+        color[v] = BLACK
+        return None
+
+    for v in adj:
+        if color[v] == WHITE:
+            r = dfs(v)
+            if r: return r
+    return None
+
+
+def validate(dag: DAG) -> list[str]:
+    """Return list of errors (empty = valid)."""
+    errors = []
+    if dag.root not in dag.nodes:
+        errors.append(f"Root '{dag.root}' not found in nodes")
+    for nid, node in dag.nodes.items():
+        for cid in node.children:
+            if cid not in dag.nodes:
+                errors.append(f"Node '{nid}' references missing child '{cid}'")
+    cycle = find_cycle_in_dag(dag)
+    if cycle:
+        errors.append(f"Cycle detected: {' → '.join(cycle)}")
+    return errors
+
+
+# ── Traversal ─────────────────────────────────────────────
+
+def topological_sort(dag: DAG) -> list[str]:
+    """Return node IDs in topological order (parents before children)."""
+    adj = {nid: list(n.children) for nid, n in dag.nodes.items()}
+    in_deg = {v: 0 for v in adj}
+    for v in adj:
+        for nb in adj[v]:
+            in_deg[nb] = in_deg.get(nb, 0) + 1
+    queue = deque(v for v in adj if in_deg[v] == 0)
+    order = []
+    while queue:
+        v = queue.popleft()
+        order.append(v)
+        for nb in adj[v]:
+            in_deg[nb] -= 1
+            if in_deg[nb] == 0:
+                queue.append(nb)
+    if len(order) != len(adj):
+        raise ValueError("Cycle detected")
+    return order
+
+
+def reverse_topological_sort(dag: DAG) -> list[str]:
+    """Return node IDs bottom-up (leaves first, root last)."""
+    return list(reversed(topological_sort(dag)))
+
+
+def evaluate_bottom_up(dag: DAG, eval_fn: Callable) -> dict[str, Any]:
+    """Bottom-up evaluation with memoization.
+
+    eval_fn(node: Node, child_results: list[Any]) -> Any
+    """
+    order = reverse_topological_sort(dag)
+    memo = {}
+    for nid in order:
+        node = dag.nodes[nid]
+        child_results = [memo[cid] for cid in node.children]
+        memo[nid] = eval_fn(node, child_results)
+    return memo
+
+
+def ancestors(dag: DAG, node_id: str) -> set[str]:
+    """All nodes that can reach node_id by following children."""
+    # Build reverse adjacency
+    reverse = {nid: [] for nid in dag.nodes}
+    for nid, node in dag.nodes.items():
+        for cid in node.children:
+            reverse[cid].append(nid)
+    visited = set()
+    stack = [node_id]
+    while stack:
+        v = stack.pop()
+        for parent in reverse.get(v, []):
+            if parent not in visited:
+                visited.add(parent)
+                stack.append(parent)
+    return visited
+
+
+def descendants(dag: DAG, node_id: str) -> set[str]:
+    """All nodes reachable from node_id by following children."""
+    visited = set()
+    stack = list(dag.nodes[node_id].children)
+    while stack:
+        v = stack.pop()
+        if v not in visited:
+            visited.add(v)
+            stack.extend(dag.nodes[v].children)
+    return visited</code></pre>
+
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  PART II — EVENT SOURCING                                      -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div class="part-divider">
+  <h2>Part II: Event Sourcing</h2>
+  <p>Patterns, internals, evolution strategies, testing, anti-patterns, and Python implementations</p>
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-1">9. The Core Concept</h2>
+
+<p>Event sourcing stores state as a <strong>sequence of immutable events</strong> rather than a mutable current-state record. The current state is <em>derived</em> by replaying the event sequence.</p>
+
+<div class="diagram">  <strong>Traditional (CRUD):</strong>                <strong>Event Sourced:</strong>
+
+  ┌──────────────────┐               ┌──────────────────┐
+  │ jobs              │               │ events            │
+  ├──────────────────┤               ├──────────────────┤
+  │ id: 123           │               │ v1: JobCreated    │
+  │ status: printing  │  ← mutable    │ v2: QuoteApproved │  ← append-only
+  │ price: 1234.50    │               │ v3: MovedToPress  │
+  │ station: press-1  │               │ v4: PrintStarted  │
+  └──────────────────┘               └──────────────────┘
+                                             │
+  Previous states destroyed.           Current state = fold(events)
+  Cannot answer "when did status              │
+  change?" or "who approved?"          ┌──────▼──────────┐
+                                       │ Derived state:   │
+                                       │ status: printing │
+                                       │ price: 1234.50  │
+                                       └─────────────────┘</div>
+
+<h3>The Fundamental Equation</h3>
+
+<pre><code>current_state = fold(apply_event, initial_state, events)
+
+# Or equivalently in Python:
+from functools import reduce
+state = reduce(apply_event, events, InitialState())</code></pre>
+
+<p>Where <code>apply_event(state, event) &rarr; new_state</code> is a <strong>pure function</strong>. This is the single most important thing to understand: the state transition function must be pure, deterministic, and side-effect-free.</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-2">10. Event Store Internals</h2>
+
+<h3>Streams</h3>
+<p>Events are grouped into <strong>streams</strong>. A stream is an ordered sequence of events for a single aggregate (entity). Stream IDs are typically formatted as <code>type:id</code> &mdash; e.g., <code>job:abc-123</code>, <code>product:def-456</code>.</p>
+
+<h3>Versioning and Optimistic Concurrency</h3>
+<p>Each event in a stream has a monotonically increasing <strong>version number</strong>. When appending, you specify the expected version. If another writer has appended first, you get a concurrency conflict:</p>
+
+<pre><code># Optimistic concurrency control:
+# 1. Read stream → current version is 5
+# 2. Compute new events
+# 3. Append with expected_version=5
+# 4. If someone else appended first (version is now 6):
+#    → CONFLICT — retry from step 1
+
+def append_events(stream_id, events, expected_version):
+    """Append events to a stream with optimistic concurrency."""
+    # In SQL: INSERT INTO events (stream_id, version, ...) VALUES (...)
+    # The UNIQUE(stream_id, version) constraint enforces this.
+    # If expected_version + 1 is already taken → unique violation → retry.
+    pass</code></pre>
+
+<h3>Global Position vs Stream Version</h3>
+<table>
+  <thead><tr><th>Concept</th><th>Scope</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Stream version</strong></td><td>Per-stream (e.g., job:abc = v1, v2, v3)</td><td>Optimistic concurrency, aggregate replay</td></tr>
+    <tr><td><strong>Global position</strong></td><td>Across all streams (monotonic)</td><td>Projection catch-up, &ldquo;process all events since position X&rdquo;</td></tr>
+  </tbody>
+</table>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-3">11. Aggregates and Boundaries</h2>
+
+<p>An <strong>aggregate</strong> is a consistency boundary. All events in one stream belong to one aggregate. The aggregate is the unit of transactional consistency.</p>
+
+<h3>Rules for Aggregate Design</h3>
+<ol>
+  <li><strong>One stream per aggregate instance</strong> &mdash; stream <code>job:abc-123</code> contains all events for that one job</li>
+  <li><strong>Commands target one aggregate</strong> &mdash; a command either succeeds and produces events for one stream, or fails entirely</li>
+  <li><strong>Cross-aggregate operations use sagas/process managers</strong> (see Section 16)</li>
+  <li><strong>Keep aggregates small</strong> &mdash; fewer events per stream = faster replay = less contention</li>
+</ol>
+
+<div class="callout callout-red">
+  <strong>Common mistake: giant aggregates</strong>
+  Putting all of a customer&rsquo;s data (orders, quotes, payments) into one aggregate creates a stream with thousands of events. Replay is slow, and concurrent operations on different orders conflict. Instead: one aggregate per order, with a customer projection that denormalizes across order aggregates.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-4">12. Snapshots</h2>
+
+<p>When streams get long (hundreds of events), replaying from the beginning becomes slow. <strong>Snapshots</strong> cache the aggregate state at a point in time:</p>
+
+<pre><code># Without snapshots:
+state = reduce(apply_event, all_500_events, InitialState())
+
+# With snapshots:
+snapshot = load_snapshot(stream_id)           # State at version 480
+remaining = load_events(stream_id, after=480) # Events 481-500
+state = reduce(apply_event, remaining, snapshot.state)
+# Only 20 events to replay instead of 500</code></pre>
+
+<h3>Snapshot Strategies</h3>
+<table>
+  <thead><tr><th>Strategy</th><th>When to Snapshot</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Every N events</strong></td><td>After every 100 events</td><td>Simple but arbitrary. May snapshot in the middle of a workflow.</td></tr>
+    <tr><td><strong>Business boundaries</strong></td><td>After QuoteApproved, after JobCompleted</td><td>Semantically meaningful. Recommended.</td></tr>
+    <tr><td><strong>Time-based</strong></td><td>Nightly, end of shift</td><td>Good for operational systems. Snapshot state matches a real point in time.</td></tr>
+    <tr><td><strong>On demand</strong></td><td>When replay exceeds a threshold</td><td>Adaptive but adds read-time latency on the first slow replay.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-yellow">
+  <strong>Snapshots are optimizations, not sources of truth</strong>
+  If a snapshot is corrupted, delete it and replay from events. The event stream is always the source of truth. Snapshots are disposable caches.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-5">13. Schema Evolution and Upcasting</h2>
+
+<p>Events are immutable. Once written, they never change. But your code evolves &mdash; event shapes need to change over time. This is the hardest operational problem in event sourcing.</p>
+
+<h3>Three Strategies</h3>
+
+<h4>1. Upcasting (recommended)</h4>
+<p>Transform old event formats to the current format <em>at read time</em>. The stored event never changes.</p>
+
+<pre><code># Event v1 (original):
+{"event_type": "QuoteGenerated", "price": 1234}
+
+# Event v2 (new: price split into subtotal + tax):
+{"event_type": "QuoteGenerated", "subtotal": 1100, "tax": 134}
+
+# Upcaster: transform v1 → v2 on read
+def upcast_quote_generated(event: dict) -> dict:
+    if "price" in event["payload"] and "subtotal" not in event["payload"]:
+        # v1 → v2: assume 10% tax rate for historical events
+        price = event["payload"]["price"]
+        event = {**event, "payload": {
+            **event["payload"],
+            "subtotal": round(price / 1.1, 2),
+            "tax": round(price - price / 1.1, 2),
+        }}
+        del event["payload"]["price"]
+    return event
+
+# Register upcasters by event type
+UPCASTERS = {
+    "QuoteGenerated": [upcast_quote_generated],
+}
+
+def load_events_with_upcasting(stream_id):
+    raw_events = load_raw_events(stream_id)
+    return [apply_upcasters(e) for e in raw_events]
+
+def apply_upcasters(event):
+    for upcaster in UPCASTERS.get(event["event_type"], []):
+        event = upcaster(event)
+    return event</code></pre>
+
+<h4>2. Weak Schema (flexible payloads)</h4>
+<p>Use permissive JSONB payloads. New fields are added; old fields are never removed. Consumers ignore unknown fields. Simple but can accumulate cruft over time.</p>
+
+<h4>3. Stream Migration (nuclear option)</h4>
+<p>Replay the entire stream through upcasters and write to a new stream. The old stream is archived. Use only when upcasting is too complex.</p>
+
+<div class="callout callout-blue">
+  <strong>Golden rules for event evolution</strong>
+  <ol style="margin-top: 0.5rem;">
+    <li>Never remove fields from events &mdash; add new fields alongside old ones</li>
+    <li>Never rename event types &mdash; add a new type and upcast the old one</li>
+    <li>Always version your events from day one (even just <code>schema_version: 1</code>)</li>
+    <li>Test upcasters against real historical data, not just synthetic examples</li>
+  </ol>
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-6">14. Projections In Depth</h2>
+
+<p>A <strong>projection</strong> is a denormalized read model built by processing events. Each projection is optimized for a specific query pattern.</p>
+
+<h3>Synchronous vs Asynchronous Projections</h3>
+<table>
+  <thead><tr><th>Type</th><th>When Updated</th><th>Consistency</th><th>Use Case</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Synchronous</strong></td><td>In the same transaction as the event write</td><td>Strongly consistent</td><td>Critical reads that must reflect latest state</td></tr>
+    <tr><td><strong>Asynchronous</strong></td><td>After event write, via background processor or trigger</td><td>Eventually consistent (1&ndash;5s lag)</td><td>Dashboards, reports, search indexes</td></tr>
+  </tbody>
+</table>
+
+<h3>Projection Lifecycle</h3>
+<pre><code>class Projection:
+    """Base pattern for all projections."""
+
+    def __init__(self):
+        self.position = 0     # Last processed global position
+
+    def handle(self, event: dict):
+        """Route event to the correct handler."""
+        handler = getattr(self, f"on_{event['event_type']}", None)
+        if handler:
+            handler(event)
+        self.position = event["global_position"]
+
+    def rebuild(self, all_events: list[dict]):
+        """Delete current state and replay all events from scratch."""
+        self.reset()          # Truncate the projection table
+        self.position = 0
+        for event in all_events:
+            self.handle(event)
+
+    def catch_up(self, new_events: list[dict]):
+        """Process only events since last known position."""
+        for event in new_events:
+            if event["global_position"] > self.position:
+                self.handle(event)
+
+
+class JobBoardProjection(Projection):
+    """Denormalized view of all jobs with current status."""
+
+    def on_JobCreated(self, event):
+        # INSERT INTO proj_job_board (job_id, status, customer) VALUES (...)
+        pass
+
+    def on_QuoteApproved(self, event):
+        # UPDATE proj_job_board SET status = 'approved' WHERE job_id = ...
+        pass
+
+    def on_StageCompleted(self, event):
+        # UPDATE proj_job_board SET status = ..., current_station = ... WHERE ...
+        pass</code></pre>
+
+<div class="callout callout-green">
+  <strong>Projections are disposable</strong>
+  This is the superpower. If a projection&rsquo;s schema changes, or it gets corrupted, or you need a new view of the data: delete the projection table, create the new schema, and replay all events. The event stream is the source of truth. Projections are derived, disposable caches.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-7">15. CQRS: The Full Pattern</h2>
+
+<p><strong>Command Query Responsibility Segregation</strong> &mdash; separate the write model (commands &rarr; events) from the read model (projections).</p>
+
+<div class="diagram">  <strong>CQRS Flow:</strong>
+
+  ┌────────────┐    validate     ┌────────────────┐    append    ┌─────────────┐
+  │  Command   │───────────────→│ Command Handler │────────────→│ Event Store │
+  │ (intent)   │                │ (pure function) │             │ (append-only)│
+  └────────────┘                └────────────────┘             └──────┬──────┘
+                                                                      │
+                      ┌───────────────────────────────────────────────┘
+                      │ events propagate (trigger / async)
+                      ▼
+              ┌───────────────┐
+              │  Projections  │   proj_job_board, proj_station_queue, ...
+              │  (read models)│
+              └───────┬───────┘
+                      │ SELECT *
+                      ▼
+              ┌───────────────┐
+              │   Query API   │   Dashboards, agent queries, reports
+              └───────────────┘</div>
+
+<h3>Command Handler Pattern</h3>
+<pre><code>def handle_command(command: dict, stream_events: list[dict]) -> list[dict]:
+    """Pure function: given current state + command, return new events.
+
+    1. Rebuild current state from events
+    2. Validate command against current state
+    3. If valid, produce new events
+    4. If invalid, return rejection event or raise
+    """
+    state = rebuild_state(stream_events)
+
+    # Validation (pure — no I/O)
+    errors = validate_command(state, command)
+    if errors:
+        return [{"event_type": "CommandRejected",
+                 "payload": {"errors": errors, "command": command["type"]}}]
+
+    # Decision logic (pure — no I/O)
+    match command["type"]:
+        case "ApproveQuote":
+            return [{"event_type": "QuoteApproved",
+                     "payload": {"approved_by": command["approver"],
+                                 "price": state.quoted_price}}]
+        case "MoveToStation":
+            return [{"event_type": "MovedToStation",
+                     "payload": {"station": command["station"],
+                                 "previous": state.current_station}}]
+        case _:
+            return [{"event_type": "CommandRejected",
+                     "payload": {"errors": [f"Unknown command: {command['type']}"]}}]</code></pre>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-8">16. Sagas and Process Managers</h2>
+
+<p>When an operation spans <strong>multiple aggregates</strong> (e.g., &ldquo;when a quote is approved, start production AND generate an invoice&rdquo;), you need coordination across streams. Two patterns:</p>
+
+<h3>Choreography (decentralized)</h3>
+<p>Each aggregate reacts to events from other aggregates. No central coordinator.</p>
+<pre><code># QuoteApproved event is published
+# → Production aggregate listens, creates ProductionStarted event
+# → Billing aggregate listens, creates InvoiceGenerated event
+# No coordinator — each reacts independently</code></pre>
+
+<h3>Orchestration (centralized Process Manager)</h3>
+<p>A process manager maintains state and issues commands to aggregates:</p>
+<pre><code>class OrderFulfillmentProcess:
+    """Coordinates the multi-step order fulfillment workflow."""
+
+    def on_QuoteApproved(self, event):
+        return [
+            Command("StartProduction", job_id=event.job_id),
+            Command("GenerateInvoice", job_id=event.job_id),
+        ]
+
+    def on_ProductionCompleted(self, event):
+        if self.invoice_paid:
+            return [Command("ShipOrder", job_id=event.job_id)]
+        # else: wait for payment
+
+    def on_InvoicePaid(self, event):
+        if self.production_complete:
+            return [Command("ShipOrder", job_id=event.job_id)]
+        # else: wait for production</code></pre>
+
+<div class="callout callout-yellow">
+  <strong>Saga vs Process Manager</strong>
+  A <strong>saga</strong> is a pure sequence of compensating transactions (if step 3 fails, undo step 2, then undo step 1). A <strong>process manager</strong> is a stateful coordinator with decision logic. In practice, most people use the term &ldquo;saga&rdquo; loosely to mean either.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-9">17. Idempotency</h2>
+
+<p>Event delivery is typically <strong>at-least-once</strong>. A projection or handler may receive the same event twice (network retry, consumer restart). Handlers must be <strong>idempotent</strong> &mdash; processing the same event twice produces the same result.</p>
+
+<h3>Strategies</h3>
+<table>
+  <thead><tr><th>Strategy</th><th>How</th><th>Use Case</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Natural idempotency</strong></td><td><code>SET status = 'approved'</code> is naturally idempotent &mdash; setting it twice does nothing</td><td>Most projection updates</td></tr>
+    <tr><td><strong>Deduplication table</strong></td><td>Store processed event IDs. Skip if already seen.</td><td>Side effects (emails, webhooks)</td></tr>
+    <tr><td><strong>Version checking</strong></td><td><code>UPDATE ... SET x = y WHERE version = expected_version</code></td><td>Aggregate state updates</td></tr>
+    <tr><td><strong>Upsert</strong></td><td><code>INSERT ... ON CONFLICT DO UPDATE</code></td><td>Projection table maintenance</td></tr>
+  </tbody>
+</table>
+
+<pre><code># Deduplication example:
+processed_events = set()
+
+def handle_idempotent(event):
+    if event["event_id"] in processed_events:
+        return  # Already processed — skip
+    do_work(event)
+    processed_events.add(event["event_id"])</code></pre>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-10">18. Testing Event-Sourced Systems</h2>
+
+<p>Event sourcing has a natural testing pattern: <strong>Given / When / Then</strong></p>
+
+<pre><code>def test_approve_quote():
+    """Given a created job with a quote, when we approve, then QuoteApproved is emitted."""
+
+    # GIVEN: existing events (the history)
+    given_events = [
+        {"event_type": "JobCreated", "payload": {"job_id": "j1", "customer": "Acme"}},
+        {"event_type": "QuoteGenerated", "payload": {"job_id": "j1", "price": 1234.50}},
+    ]
+
+    # WHEN: a command is issued
+    command = {"type": "ApproveQuote", "job_id": "j1", "approver": "john"}
+
+    # THEN: new events are produced
+    new_events = handle_command(command, given_events)
+    assert len(new_events) == 1
+    assert new_events[0]["event_type"] == "QuoteApproved"
+    assert new_events[0]["payload"]["approved_by"] == "john"
+
+
+def test_cannot_approve_without_quote():
+    """Given a job with no quote, approval should be rejected."""
+
+    given_events = [
+        {"event_type": "JobCreated", "payload": {"job_id": "j1", "customer": "Acme"}},
+    ]
+
+    command = {"type": "ApproveQuote", "job_id": "j1", "approver": "john"}
+
+    new_events = handle_command(command, given_events)
+    assert new_events[0]["event_type"] == "CommandRejected"
+    assert "no quote" in new_events[0]["payload"]["errors"][0].lower()
+
+
+def test_projection_rebuild():
+    """Projections must produce identical state whether built incrementally or from scratch."""
+    events = [
+        {"event_type": "JobCreated", "payload": {"job_id": "j1"}, "global_position": 1},
+        {"event_type": "QuoteApproved", "payload": {"job_id": "j1"}, "global_position": 2},
+    ]
+
+    # Incremental
+    proj_a = JobBoardProjection()
+    for e in events:
+        proj_a.handle(e)
+
+    # Full rebuild
+    proj_b = JobBoardProjection()
+    proj_b.rebuild(events)
+
+    assert proj_a.get_state() == proj_b.get_state()</code></pre>
+
+<div class="callout callout-green">
+  <strong>Why this is powerful</strong>
+  Notice: <strong>zero I/O in these tests</strong>. No database setup. No mocking. You feed events to pure functions and assert on the output events. This is exactly the Soft Code testing philosophy &mdash; pure function tests with no I/O dependency.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-11">19. Anti-Patterns and Pitfalls</h2>
+
+<table>
+  <thead><tr><th>Anti-Pattern</th><th>Why It&rsquo;s Wrong</th><th>Correct Approach</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Leaking internal events as public API</strong></td>
+      <td>Internal state-change events (like <code>FieldUpdated</code>) tightly couple consumers to your aggregate internals. Any refactoring breaks downstream.</td>
+      <td>Publish separate <strong>integration events</strong> (coarse-grained, stable contract) for external consumers. Keep internal events private to the aggregate.</td>
+    </tr>
+    <tr>
+      <td><strong>CRUD events</strong> (<code>JobUpdated</code>)</td>
+      <td>Events like <code>JobUpdated(fields: {status: "printing"})</code> contain no domain meaning. Why did it change? Who decided? What happened?</td>
+      <td>Use domain events: <code>QuoteApproved</code>, <code>MovedToStation</code>, <code>PrintStarted</code>. Each captures a meaningful business occurrence.</td>
+    </tr>
+    <tr>
+      <td><strong>Giant aggregates</strong></td>
+      <td>Putting too much in one aggregate creates long event streams (slow replay) and high contention (concurrent commands conflict).</td>
+      <td>Keep aggregates focused on one consistency boundary. Use process managers for cross-aggregate coordination.</td>
+    </tr>
+    <tr>
+      <td><strong>Querying the event store directly</strong></td>
+      <td>Scanning event streams for queries is O(n) per stream and requires replaying to reconstruct state.</td>
+      <td>Use <strong>projections</strong> for all read queries. The event store is for writes and replay only.</td>
+    </tr>
+    <tr>
+      <td><strong>Mutating events</strong></td>
+      <td>Changing historical events destroys the audit trail and breaks any consumer that already processed the original.</td>
+      <td>Events are <strong>immutable</strong>. Use <strong>compensating events</strong> to correct mistakes (e.g., <code>QuoteRevised</code> to override a previous <code>QuoteGenerated</code>).</td>
+    </tr>
+    <tr>
+      <td><strong>No event versioning</strong></td>
+      <td>Without schema versions, you can&rsquo;t upcast old events when the format changes. You&rsquo;re stuck.</td>
+      <td>Add <code>schema_version</code> to every event from day one. Build upcasters before you need them.</td>
+    </tr>
+    <tr>
+      <td><strong>Synchronous projections for everything</strong></td>
+      <td>Updating all projections in the same transaction as the event write adds latency and can fail the write if a projection has a bug.</td>
+      <td>Default to <strong>async projections</strong>. Only use synchronous for the rare case where the read must be immediately consistent with the write.</td>
+    </tr>
+    <tr>
+      <td><strong>Event sourcing everything</strong></td>
+      <td>Not all data benefits from event sourcing. Reference data (customers, rate tables) changes rarely and has no meaningful event history.</td>
+      <td>Event-source aggregates with rich lifecycles (jobs, orders). Use plain CRUD for reference data.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="es-12">20. Complete Python Implementation</h2>
+
+<pre><code>"""Complete event sourcing library — pure functions, no I/O, no dependencies."""
+from dataclasses import dataclass, field
+from typing import Callable
+from functools import reduce
+import uuid
+from datetime import datetime, timezone
+
+
+# ── Domain Events ─────────────────────────────────────────
+
+@dataclass(frozen=True)
+class DomainEvent:
+    event_id: str
+    stream_id: str
+    version: int
+    event_type: str
+    timestamp: str
+    payload: dict
+    metadata: dict = field(default_factory=dict)
+    schema_version: int = 1
+
+    @staticmethod
+    def create(stream_id: str, version: int, event_type: str,
+               payload: dict, metadata: dict = None) -> "DomainEvent":
+        return DomainEvent(
+            event_id=str(uuid.uuid4()),
+            stream_id=stream_id,
+            version=version,
+            event_type=event_type,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            payload=payload,
+            metadata=metadata or {},
+        )
+
+
+# ── In-Memory Event Store ─────────────────────────────────
+
+class InMemoryEventStore:
+    """Minimal event store for testing and development."""
+
+    def __init__(self):
+        self._streams: dict[str, list[DomainEvent]] = {}
+        self._global_log: list[DomainEvent] = []
+
+    def append(self, stream_id: str, events: list[DomainEvent],
+               expected_version: int) -> int:
+        """Append events with optimistic concurrency."""
+        stream = self._streams.get(stream_id, [])
+        current_version = len(stream)
+
+        if current_version != expected_version:
+            raise ConcurrencyError(
+                f"Expected version {expected_version}, "
+                f"but stream is at {current_version}"
+            )
+
+        for i, event in enumerate(events):
+            versioned = DomainEvent(
+                event_id=event.event_id,
+                stream_id=stream_id,
+                version=current_version + i + 1,
+                event_type=event.event_type,
+                timestamp=event.timestamp,
+                payload=event.payload,
+                metadata=event.metadata,
+                schema_version=event.schema_version,
+            )
+            stream.append(versioned)
+            self._global_log.append(versioned)
+
+        self._streams[stream_id] = stream
+        return current_version + len(events)
+
+    def load_stream(self, stream_id: str,
+                    after_version: int = 0) -> list[DomainEvent]:
+        """Load events from a stream, optionally after a version."""
+        stream = self._streams.get(stream_id, [])
+        return [e for e in stream if e.version > after_version]
+
+    def load_all(self, after_position: int = 0) -> list[DomainEvent]:
+        """Load all events across all streams (for projections)."""
+        return self._global_log[after_position:]
+
+
+class ConcurrencyError(Exception):
+    pass
+
+
+# ── Aggregate Base ────────────────────────────────────────
+
+class Aggregate:
+    """Base class for event-sourced aggregates."""
+
+    def __init__(self):
+        self._version = 0
+        self._pending_events: list[DomainEvent] = []
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def pending_events(self) -> list[DomainEvent]:
+        return list(self._pending_events)
+
+    def load_from_history(self, events: list[DomainEvent]):
+        """Replay events to rebuild state."""
+        for event in events:
+            self._apply(event)
+            self._version = event.version
+
+    def _raise_event(self, event_type: str, payload: dict):
+        """Record a new event (to be persisted later)."""
+        event = DomainEvent.create(
+            stream_id="",  # Set by repository
+            version=self._version + len(self._pending_events) + 1,
+            event_type=event_type,
+            payload=payload,
+        )
+        self._pending_events.append(event)
+        self._apply(event)
+
+    def _apply(self, event: DomainEvent):
+        """Route event to handler. Override in subclasses."""
+        handler = getattr(self, f"_on_{event.event_type}", None)
+        if handler:
+            handler(event.payload)
+
+    def clear_pending(self):
+        self._version += len(self._pending_events)
+        self._pending_events.clear()
+
+
+# ── Example: Job Aggregate ────────────────────────────────
+
+class Job(Aggregate):
+    """A production job — event-sourced aggregate."""
+
+    def __init__(self):
+        super().__init__()
+        self.job_id: str = ""
+        self.customer: str = ""
+        self.status: str = "empty"
+        self.quoted_price: float | None = None
+        self.current_station: str | None = None
+
+    # ── Commands (produce events) ──
+
+    def create(self, job_id: str, customer: str):
+        if self.status != "empty":
+            raise ValueError("Job already created")
+        self._raise_event("JobCreated", {
+            "job_id": job_id, "customer": customer,
+        })
+
+    def generate_quote(self, price: float):
+        if self.status != "created":
+            raise ValueError(f"Cannot quote in status '{self.status}'")
+        self._raise_event("QuoteGenerated", {
+            "job_id": self.job_id, "price": price,
+        })
+
+    def approve_quote(self, approver: str):
+        if self.status != "quoted":
+            raise ValueError(f"Cannot approve in status '{self.status}'")
+        self._raise_event("QuoteApproved", {
+            "job_id": self.job_id, "approved_by": approver,
+            "price": self.quoted_price,
+        })
+
+    def move_to_station(self, station: str, operator: str):
+        if self.status not in ("approved", "in_production"):
+            raise ValueError(f"Cannot move in status '{self.status}'")
+        self._raise_event("MovedToStation", {
+            "job_id": self.job_id, "station": station,
+            "operator": operator, "previous_station": self.current_station,
+        })
+
+    # ── Event handlers (apply state changes) ──
+
+    def _on_JobCreated(self, payload):
+        self.job_id = payload["job_id"]
+        self.customer = payload["customer"]
+        self.status = "created"
+
+    def _on_QuoteGenerated(self, payload):
+        self.quoted_price = payload["price"]
+        self.status = "quoted"
+
+    def _on_QuoteApproved(self, payload):
+        self.status = "approved"
+
+    def _on_MovedToStation(self, payload):
+        self.current_station = payload["station"]
+        self.status = "in_production"
+
+
+# ── Repository ────────────────────────────────────────────
+
+class JobRepository:
+    """Load and save Job aggregates via the event store."""
+
+    def __init__(self, store: InMemoryEventStore):
+        self._store = store
+
+    def load(self, job_id: str) -> Job:
+        stream_id = f"job:{job_id}"
+        events = self._store.load_stream(stream_id)
+        job = Job()
+        job.load_from_history(events)
+        return job
+
+    def save(self, job: Job):
+        stream_id = f"job:{job.job_id}"
+        events = job.pending_events
+        self._store.append(stream_id, events, job.version)
+        job.clear_pending()
+
+
+# ── Snapshot Support ──────────────────────────────────────
+
+@dataclass(frozen=True)
+class Snapshot:
+    stream_id: str
+    version: int
+    state: dict
+    created_at: str
+
+class SnapshotStore:
+    def __init__(self):
+        self._snapshots: dict[str, Snapshot] = {}
+
+    def save(self, aggregate: Aggregate, stream_id: str):
+        self._snapshots[stream_id] = Snapshot(
+            stream_id=stream_id,
+            version=aggregate.version,
+            state=aggregate.__dict__.copy(),
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    def load(self, stream_id: str) -> Snapshot | None:
+        return self._snapshots.get(stream_id)
+
+
+# ── Usage Example ─────────────────────────────────────────
+
+if __name__ == "__main__":
+    store = InMemoryEventStore()
+    repo = JobRepository(store)
+
+    # Create a job
+    job = Job()
+    job.create("j-001", "Acme Cards")
+    job.generate_quote(1234.50)
+    repo.save(job)
+
+    # Later: load and approve
+    job = repo.load("j-001")
+    print(f"Status: {job.status}, Price: {job.quoted_price}")
+    # → Status: quoted, Price: 1234.50
+
+    job.approve_quote("john.smith")
+    job.move_to_station("heidelberg-xl-106", "maria.garcia")
+    repo.save(job)
+
+    # Replay: load again from events
+    job2 = repo.load("j-001")
+    print(f"Status: {job2.status}, Station: {job2.current_station}")
+    # → Status: in_production, Station: heidelberg-xl-106
+
+    # Full event history
+    for event in store.load_stream("job:j-001"):
+        print(f"  v{event.version}: {event.event_type}")</code></pre>
+
+<hr>
+
+<p style="color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 3rem;">
+  DAGs &amp; Event Sourcing &mdash; Technical Reference &middot; March 2026<br>
+  Pure theory, algorithms, patterns, and working Python code
+</p>
+
+</div><!-- .content -->
+
+</body>
+</html>
