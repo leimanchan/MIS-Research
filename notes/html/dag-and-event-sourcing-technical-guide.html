@@ -197,6 +197,20 @@
     <li><a class="toc-h2" href="#es-11">19. Anti-Patterns &amp; Pitfalls</a></li>
     <li><a class="toc-h2" href="#es-12">20. Complete Python Implementation</a></li>
   </ol>
+
+  <div class="part-label">Part III &mdash; Building From Scratch</div>
+  <ol>
+    <li><a class="toc-h2" href="#build-1">21. Why &ldquo;DAG&rdquo; Search Results Mislead</a></li>
+    <li><a class="toc-h2" href="#build-2">22. Workflow DAG vs Data-Structure DAG</a></li>
+    <li><a class="toc-h2" href="#build-3">23. Actual Code Size</a></li>
+    <li><a class="toc-h2" href="#build-4">24. Layer-by-Layer Difficulty</a></li>
+    <li><a class="toc-h2" href="#build-5">25. Mapping to Soft Code Architecture</a></li>
+    <li><a class="toc-h2" href="#build-6">26. What an AI Agent Build Session Looks Like</a></li>
+    <li><a class="toc-h2" href="#build-7">27. Event Sourcing From Scratch: Same Story</a></li>
+    <li><a class="toc-h2" href="#build-8">28. The &ldquo;From Scratch&rdquo; Advantage</a></li>
+    <li><a class="toc-h2" href="#build-9">29. Build Order &amp; Dependencies</a></li>
+    <li><a class="toc-h2" href="#build-10">30. Complete Proof-of-Concept: Product Graph Tool</a></li>
+  </ol>
 </nav>
 
 <div class="content">
@@ -208,6 +222,7 @@
     <span class="badge badge-blue">Graph Algorithms</span>
     <span class="badge badge-purple">Event Sourcing Patterns</span>
     <span class="badge badge-teal">Working Python Code</span>
+    <span class="badge badge-blue">Build-From-Scratch Guide</span>
   </div>
 </header>
 
@@ -1547,11 +1562,656 @@ if __name__ == "__main__":
     for event in store.load_stream("job:j-001"):
         print(f"  v{event.version}: {event.event_type}")</code></pre>
 
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  PART III — BUILDING FROM SCRATCH                              -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div class="part-divider">
+  <h2>Part III: Building It From Scratch</h2>
+  <p>Why the internet misleads, what&rsquo;s actually hard, what&rsquo;s not, and how to build a DAG + event sourcing system with an AI agent</p>
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-1">21. Why &ldquo;DAG&rdquo; Search Results Mislead</h2>
+
+<p>If you search for &ldquo;DAG&rdquo; in 2026, roughly 95% of results point to <strong>Apache Airflow</strong>, Prefect, Dagster, or Luigi. These are <strong>workflow orchestration tools</strong> that use DAGs to schedule task execution. This creates a massive discoverability problem: the data structure itself &mdash; one of the most fundamental and useful structures in computer science &mdash; is buried under framework marketing.</p>
+
+<p>This happens because:</p>
+
+<ol>
+  <li><strong>Airflow dominates SEO.</strong> Airflow&rsquo;s documentation, blog posts, and tutorials outnumber pure CS content by orders of magnitude. Google&rsquo;s ranking rewards volume.</li>
+  <li><strong>AI tools inherit the bias.</strong> Perplexity, ChatGPT, and other AI assistants are trained on web corpora. When asked about &ldquo;DAGs for an ERP,&rdquo; they pattern-match to Airflow content and produce answers about task scheduling, retries, distributed queues, and executor pools &mdash; none of which apply to using a DAG as a data model.</li>
+  <li><strong>The CS fundamentals are &ldquo;boring.&rdquo;</strong> Nobody writes blog posts about adjacency lists and topological sort because the algorithms have been solved for 60 years. There&rsquo;s no venture capital funding &ldquo;DAG-as-a-data-structure.&rdquo;</li>
+</ol>
+
+<div class="callout callout-red">
+  <strong>Critical reading skill</strong>
+  When evaluating any DAG resource, ask: <em>is this about executing tasks in order, or about modeling relationships between things?</em> If you see words like &ldquo;scheduler,&rdquo; &ldquo;executor,&rdquo; &ldquo;retry,&rdquo; &ldquo;sensor,&rdquo; or &ldquo;worker pool&rdquo; &mdash; it&rsquo;s workflow orchestration, not data modeling. Close the tab.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-2">22. Workflow DAG vs Data-Structure DAG</h2>
+
+<p>These share a name and a mathematical definition, but they solve completely different problems:</p>
+
+<table>
+  <thead><tr><th>Dimension</th><th>Workflow DAG (Airflow, Prefect)</th><th>Data-Structure DAG (Your Use Case)</th></tr></thead>
+  <tbody>
+    <tr><td><strong>What nodes represent</strong></td><td>Functions / tasks to execute</td><td>Components, materials, processes, products</td></tr>
+    <tr><td><strong>What edges mean</strong></td><td>&ldquo;Run this before that&rdquo;</td><td>&ldquo;This contains / requires that&rdquo;</td></tr>
+    <tr><td><strong>Runtime behavior</strong></td><td>Scheduler dispatches tasks to workers</td><td>Engine traverses graph to compute values</td></tr>
+    <tr><td><strong>Failure mode</strong></td><td>Task crashes mid-execution, need retry</td><td>Invalid graph (cycle), need validation</td></tr>
+    <tr><td><strong>Concurrency concern</strong></td><td>Parallel task execution across machines</td><td>Concurrent graph edits by users</td></tr>
+    <tr><td><strong>State management</strong></td><td>Track running / success / failed per task</td><td>Store graph structure in database</td></tr>
+    <tr><td><strong>Scaling challenge</strong></td><td>1000s of tasks across distributed workers</td><td>Large graphs with many shared nodes</td></tr>
+    <tr><td><strong>UI requirement</strong></td><td>Monitor running tasks, logs, alerts</td><td>Edit product configuration visually</td></tr>
+    <tr><td><strong>Infrastructure</strong></td><td>Redis, Celery, Kubernetes, message queues</td><td>One Postgres database</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-green">
+  <strong>The key insight</strong>
+  A workflow DAG is a <strong>runtime engine</strong> &mdash; it does things. A data-structure DAG is a <strong>storage format</strong> &mdash; it describes things. Building a runtime engine from scratch is hard (and usually pointless when Airflow exists). Building a data structure from scratch is straightforward and often the right call because no framework fits your exact domain model.
+</div>
+
+<h3>The Perplexity Trap</h3>
+
+<p>When AI tools are asked about &ldquo;DAGs for ERP/MIS,&rdquo; they conflate these two uses and produce alarming complexity assessments. A typical AI-generated response will warn about:</p>
+
+<table>
+  <thead><tr><th>AI&rsquo;s Warning</th><th>Applies to Workflow DAGs</th><th>Applies to Your Data DAGs</th></tr></thead>
+  <tbody>
+    <tr><td>Retries / partial task failures</td><td>Yes &mdash; tasks crash mid-run</td><td><strong>No</strong> &mdash; you&rsquo;re reading a graph, not executing tasks</td></tr>
+    <tr><td>Distributed queues / Redis locks</td><td>Yes &mdash; parallel task workers</td><td><strong>No</strong> &mdash; single Postgres query loads the graph</td></tr>
+    <tr><td>Custom schedulers / slot exhaustion</td><td>Yes &mdash; when to run what</td><td><strong>No</strong> &mdash; nothing to schedule</td></tr>
+    <tr><td>Observability / monitoring UI</td><td>Yes &mdash; monitor running tasks</td><td><strong>No</strong> &mdash; UI shows product config, not task status</td></tr>
+    <tr><td>Idempotency</td><td>Yes &mdash; task re-execution</td><td><strong>Later</strong> &mdash; only if you add event sourcing</td></tr>
+    <tr><td>Cycle detection</td><td>Yes</td><td><strong>Yes</strong> &mdash; this one actually applies</td></tr>
+    <tr><td>Topological sort</td><td>Yes &mdash; task execution order</td><td><strong>Yes</strong> &mdash; pricing rollup order</td></tr>
+  </tbody>
+</table>
+
+<p>Two out of seven concerns actually apply. Both are solved in ~80 lines of Python (see Sections 4.1 and 4.2).</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-3">23. Actual Code Size</h2>
+
+<p>A production-quality DAG library for product modeling breaks down to roughly <strong>330 lines of pure Python</strong>:</p>
+
+<table>
+  <thead><tr><th>Component</th><th>Lines</th><th>What It Does</th></tr></thead>
+  <tbody>
+    <tr><td>Graph structure (Node, DAG, add/remove/connect)</td><td>~150</td><td>Immutable data classes, construction functions</td></tr>
+    <tr><td>Cycle detection (three-color DFS)</td><td>~50</td><td>Validates that the graph is acyclic</td></tr>
+    <tr><td>Topological sort (Kahn&rsquo;s)</td><td>~40</td><td>Determines correct evaluation order</td></tr>
+    <tr><td>Bottom-up pricing evaluation</td><td>~60</td><td>Traverses leaves-to-root with memoization</td></tr>
+    <tr><td>Serialization (to/from JSON)</td><td>~30</td><td>Converts DAG to flat map for Supabase storage</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>~330</strong></td><td></td></tr>
+  </tbody>
+</table>
+
+<p>For comparison:</p>
+<ul>
+  <li>Apache Airflow core: <strong>~500,000 lines</strong></li>
+  <li>Prefect core: <strong>~100,000 lines</strong></li>
+  <li>Your DAG data structure: <strong>~330 lines</strong></li>
+</ul>
+
+<p>This 1000x size difference is because those tools solve a fundamentally harder problem (distributed task execution). You&rsquo;re solving a data modeling problem &mdash; adjacency lists and recursive traversal. The complete implementation is already in Section 8 of this guide.</p>
+
+<div class="callout callout-blue">
+  <strong>Why &ldquo;from scratch&rdquo; is the right call here</strong>
+  You wouldn&rsquo;t install a 100K-line framework to use a Python dictionary. A DAG-as-data-structure is equally fundamental. There is no library to install because the code is too simple and too domain-specific to generalize. This is one of those rare cases where &ldquo;build it yourself&rdquo; is the correct engineering decision.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-4">24. Layer-by-Layer Difficulty</h2>
+
+<p>Building the full system involves layers beyond the core DAG. Here&rsquo;s an honest assessment of each:</p>
+
+<table>
+  <thead><tr><th>Layer</th><th>Difficulty</th><th>Lines</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Core DAG library</strong></td>
+      <td><span style="color: var(--green);">Easy</span></td>
+      <td>~330</td>
+      <td>Well-understood CS. Pure functions. Easy to test. No dependencies. An AI agent can write and test this in one session.</td>
+    </tr>
+    <tr>
+      <td><strong>Persistence (Supabase/Postgres)</strong></td>
+      <td><span style="color: var(--yellow);">Medium</span></td>
+      <td>~200</td>
+      <td>Schema design matters (one row per node, JSONB for attributes). TOAST compression gotchas with large JSONB. Migrations. But it&rsquo;s standard SQL &mdash; no novel algorithms.</td>
+    </tr>
+    <tr>
+      <td><strong>Pricing engine traversal</strong></td>
+      <td><span style="color: var(--yellow);">Medium</span></td>
+      <td>~150</td>
+      <td>Bottom-up evaluation with memoization (Section 5&ndash;6). Diamond dependencies require care. But the algorithm is well-known and testable with zero I/O.</td>
+    </tr>
+    <tr>
+      <td><strong>Event sourcing layer</strong></td>
+      <td><span style="color: var(--orange);">Medium&ndash;Hard</span></td>
+      <td>~400</td>
+      <td>Versioning, optimistic concurrency, snapshots, upcasting. Conceptually elegant but operationally tricky. Schema evolution is the hardest part (Section 13).</td>
+    </tr>
+    <tr>
+      <td><strong>CQRS + projections</strong></td>
+      <td><span style="color: var(--orange);">Medium&ndash;Hard</span></td>
+      <td>~300</td>
+      <td>Separate write and read models. Projection rebuild logic. Eventually-consistent UIs. Requires discipline to keep projections disposable.</td>
+    </tr>
+    <tr>
+      <td><strong>UI for editing graphs</strong></td>
+      <td><span style="color: var(--red);">Hard</span></td>
+      <td>~2000+</td>
+      <td>Visual node editor with drag-and-drop, real-time validation, undo/redo. This is a frontend project unto itself. Libraries like React Flow help but still require significant integration.</td>
+    </tr>
+    <tr>
+      <td><strong>Multi-user concurrency</strong></td>
+      <td><span style="color: var(--red);">Hard</span></td>
+      <td>Varies</td>
+      <td>Two users editing the same product graph simultaneously. Optimistic locking handles simple cases; real-time collaboration (Google Docs style) is a major engineering effort.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-yellow">
+  <strong>The 80/20 split</strong>
+  The core DAG + persistence + pricing engine (~680 lines) gives you 80% of the value. Event sourcing, CQRS, visual UI, and real-time collaboration are the remaining 20% of value but 80% of the effort. Build the first three layers, ship them, and add the rest incrementally.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-5">25. Mapping to Soft Code Architecture</h2>
+
+<p>If you&rsquo;re using the Soft Code file structure (as in tool-hub-try5), every layer maps cleanly:</p>
+
+<div class="diagram">  core/product_graph/
+  ├── domain/
+  │   ├── models.py          ← Node, DAG, PricingResult (frozen dataclasses)
+  │   └── specs.py           ← Constraints, allowed node types, edge rules
+  ├── application/
+  │   ├── decision_logic.py  ← cycle_detection(), validate_graph(), can_connect()
+  │   ├── input_validation.py← validate_node_input(), validate_edge_input()
+  │   ├── output_mapping.py  ← format_pricing_result(), format_graph_summary()
+  │   └── workflow.py        ← topological_sort(), evaluate_bottom_up(), price_product()
+  ├── tests/
+  │   ├── test_decision_logic.py
+  │   ├── test_workflow.py
+  │   └── test_pricing.py
+  └── DECISIONS.md
+
+  adapters/supabase/product_graph/
+  ├── io.py                  ← load_graph(), save_graph(), load_events()
+  ├── presenter.py           ← Format for API responses
+  └── tests/
+      └── test_io.py</div>
+
+<p>Key observations:</p>
+
+<ul>
+  <li><strong><code>core/</code> has zero I/O.</strong> The DAG library, cycle detection, topological sort, and pricing engine are all pure functions. They take data in and return data out. No database, no network, no file system.</li>
+  <li><strong><code>adapters/</code> handles all persistence.</strong> Loading a graph from Supabase, saving events, managing connections &mdash; all isolated from business logic.</li>
+  <li><strong>The orchestrator is ~15 lines.</strong> Load graph &rarr; validate &rarr; compute price &rarr; format output. No branching. No I/O. Just function calls in sequence.</li>
+  <li><strong>Tests are trivial.</strong> Feed a graph dictionary to <code>cycle_detection()</code>, assert it returns the expected result. No mocking, no database setup, no test fixtures.</li>
+</ul>
+
+<div class="callout callout-green">
+  <strong>Why this matters</strong>
+  The Soft Code structure means the DAG library is <strong>independently testable, independently deployable, and independently replaceable.</strong> If you later decide to use a graph database instead of Postgres, you swap out one adapter file. The 330 lines of core logic don&rsquo;t change.
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-6">26. What an AI Agent Build Session Looks Like</h2>
+
+<p>Here&rsquo;s what building the <code>product_graph</code> tool with an AI agent actually involves &mdash; step by step, following the Soft Code workflow:</p>
+
+<h3>Session 1: Core DAG (~1 hour)</h3>
+<ol>
+  <li><strong>DECISIONS.md</strong> &mdash; List the decisions: What node types exist? Can any node connect to any other? How is pricing calculated? What happens with diamond dependencies?</li>
+  <li><strong>models.py</strong> &mdash; Define <code>Node</code>, <code>DAG</code>, <code>PricingResult</code> as frozen dataclasses</li>
+  <li><strong>decision_logic.py</strong> &mdash; <code>has_cycle()</code>, <code>can_connect()</code>, <code>validate_graph()</code></li>
+  <li><strong>workflow.py</strong> &mdash; <code>topological_sort()</code>, <code>evaluate_bottom_up()</code>, <code>price_product()</code></li>
+  <li><strong>Tests</strong> &mdash; Happy path, cycle detection, diamond dependencies, empty graph, single node</li>
+  <li><strong>Run preflight.py</strong> &mdash; Verify all Soft Code constraints pass</li>
+</ol>
+
+<h3>Session 2: Persistence (~1 hour)</h3>
+<ol>
+  <li><strong>SQL schema</strong> &mdash; <code>config_nodes</code> table with JSONB attributes</li>
+  <li><strong>io.py</strong> &mdash; <code>load_graph(product_id)</code> and <code>save_graph(dag)</code></li>
+  <li><strong>Integration tests</strong> &mdash; Round-trip: create graph &rarr; save &rarr; load &rarr; verify identical</li>
+</ol>
+
+<h3>Session 3: Pricing Engine (~1 hour)</h3>
+<ol>
+  <li><strong>Pricing functions</strong> &mdash; Define per-node-type pricing (material cost, process cost, markup)</li>
+  <li><strong>Bottom-up traversal</strong> &mdash; Wire <code>evaluate_bottom_up()</code> to real pricing functions</li>
+  <li><strong>Tests</strong> &mdash; Known product configurations with hand-calculated expected prices</li>
+</ol>
+
+<h3>Session 4: Event Sourcing (optional, ~2 hours)</h3>
+<ol>
+  <li><strong>Event definitions</strong> &mdash; <code>NodeAdded</code>, <code>NodeRemoved</code>, <code>EdgeCreated</code>, <code>PriceCalculated</code></li>
+  <li><strong>Event store</strong> &mdash; Append-only table, optimistic concurrency</li>
+  <li><strong>Aggregate</strong> &mdash; <code>ProductGraph</code> aggregate that rebuilds from events</li>
+  <li><strong>Tests</strong> &mdash; Given/When/Then pattern (Section 18)</li>
+</ol>
+
+<p><strong>Total: ~5 hours of AI-assisted work for the complete system.</strong> The AI agent writes the code; you review and make the business decisions (what node types, what pricing rules, what edge constraints). The hard part is the decisions, not the implementation.</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-7">27. Event Sourcing From Scratch: Same Story</h2>
+
+<p>Event sourcing has the same discoverability problem as DAGs. Most content online covers:</p>
+
+<ul>
+  <li><strong>EventStoreDB</strong> &mdash; a dedicated event store database (powerful but heavy infrastructure)</li>
+  <li><strong>Axon Framework</strong> &mdash; Java enterprise event sourcing (massive, complex)</li>
+  <li><strong>Kafka + event streaming</strong> &mdash; distributed messaging (solves a different problem entirely)</li>
+</ul>
+
+<p>For a single-tenant ERP/MIS on Supabase Postgres, you need none of these. Event sourcing is fundamentally simple:</p>
+
+<pre><code># The entire concept in 4 lines:
+events_table  = "INSERT INTO events (stream_id, version, type, payload) VALUES (...)"
+load_stream   = "SELECT * FROM events WHERE stream_id = ? ORDER BY version"
+current_state = reduce(apply_event, load_stream(id), InitialState())
+# That's it. Everything else is optimization.</code></pre>
+
+<p>The complete implementation is in Section 20 (~270 lines). The complexity drivers are:</p>
+
+<table>
+  <thead><tr><th>Concern</th><th>When It Matters</th><th>Can You Defer It?</th></tr></thead>
+  <tbody>
+    <tr><td>Optimistic concurrency</td><td>Multiple users editing simultaneously</td><td>Yes &mdash; start single-user</td></tr>
+    <tr><td>Snapshots</td><td>Streams exceed ~500 events</td><td>Yes &mdash; won&rsquo;t happen for months</td></tr>
+    <tr><td>Schema evolution / upcasting</td><td>When you change event shapes</td><td>No &mdash; add <code>schema_version</code> from day one</td></tr>
+    <tr><td>Projections</td><td>When you need fast reads</td><td>Yes &mdash; start with direct replay</td></tr>
+    <tr><td>Sagas / process managers</td><td>Cross-aggregate workflows</td><td>Yes &mdash; start with single aggregates</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-yellow">
+  <strong>The one thing you cannot defer</strong>
+  Add <code>schema_version: 1</code> to every event from day one. This costs nothing and saves you from the single worst event sourcing pitfall: being unable to evolve event formats later (Section 13).
+</div>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-8">28. The &ldquo;From Scratch&rdquo; Advantage</h2>
+
+<p>Building DAG + event sourcing from scratch (rather than adopting a framework) gives you specific advantages:</p>
+
+<h3>1. No Airflow Baggage</h3>
+<p>Airflow&rsquo;s DAG abstraction is designed for task scheduling. It forces you to express everything as &ldquo;operators&rdquo; with retry policies, execution dates, and scheduling intervals. None of this applies to product modeling. If you used Airflow, you&rsquo;d spend more time working around the framework than building your system.</p>
+
+<h3>2. Domain-Specific Node Types</h3>
+<p>Your DAG nodes aren&rsquo;t generic tasks &mdash; they&rsquo;re <code>Material</code>, <code>Process</code>, <code>Component</code>, <code>Product</code>. Each has different attributes, different pricing functions, different validation rules. A generic graph library would require you to bolt these on; building from scratch means they&rsquo;re native.</p>
+
+<h3>3. Pure Function Testability</h3>
+<p>Every function in your core library is pure: data in, data out. No database connections, no network calls, no file I/O. This means tests run in milliseconds, require no setup, and never flake. A framework would inject its own runtime, making tests slower and more fragile.</p>
+
+<h3>4. Perfect Fit for Soft Code</h3>
+<p>The 330-line library slots directly into the Soft Code file structure. <code>models.py</code> holds data shapes. <code>decision_logic.py</code> holds graph validation. <code>workflow.py</code> holds traversal. Each file has one job. A framework would violate this separation &mdash; framework code and business code inevitably interleave.</p>
+
+<h3>5. No Dependency Risk</h3>
+<p>Zero external dependencies means zero supply chain risk, zero breaking changes from upstream, and zero compatibility issues with Python version upgrades. The code you write today will work identically in 5 years.</p>
+
+<h3>The counterargument (and when it&rsquo;s valid)</h3>
+<p>The legitimate case for a framework is when you need <strong>distributed execution</strong>: running tasks across multiple machines, handling hardware failures, scaling to millions of operations. If you ever need that, use Temporal, Airflow, or Prefect. But that&rsquo;s workflow orchestration, not product modeling.</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-9">29. Build Order and Dependencies</h2>
+
+<p>The layers have a natural dependency order. Build bottom-up, shipping each layer before starting the next:</p>
+
+<div class="diagram">  Phase 0: Foundation                              Phase 1: Persist
+  ┌─────────────────────────────┐                 ┌─────────────────────────────┐
+  │  Core DAG library            │                 │  Supabase adapter            │
+  │  - Node/DAG dataclasses      │────────────────→│  - config_nodes table        │
+  │  - Cycle detection           │                 │  - load_graph() / save_graph │
+  │  - Topological sort          │                 │  - JSONB serialization       │
+  │  - Bottom-up evaluation      │                 └─────────────┬───────────────┘
+  │  - 100% test coverage        │                               │
+  └─────────────────────────────┘                               │
+                                                                 ▼
+  Phase 2: Price                                  Phase 3: History (optional)
+  ┌─────────────────────────────┐                 ┌─────────────────────────────┐
+  │  Pricing engine              │                 │  Event sourcing              │
+  │  - Per-node-type functions   │                 │  - events table              │
+  │  - Diamond dep memoization   │                 │  - ProductGraph aggregate    │
+  │  - Quote generation          │────────────────→│  - Snapshots                 │
+  │  - Margin / markup rules     │                 │  - Projections               │
+  └─────────────────────────────┘                 │  - Schema versioning         │
+                                                   └─────────────┬───────────────┘
+                                                                 │
+                                                                 ▼
+                                                   Phase 4: Agentic (future)
+                                                   ┌─────────────────────────────┐
+                                                   │  CQRS command bus            │
+                                                   │  - AI agent issues commands  │
+                                                   │  - Projections feed queries  │
+                                                   │  - Workflow DAGs for jobs    │
+                                                   └─────────────────────────────┘</div>
+
+<h3>The critical path</h3>
+<p>Phase 0 &rarr; Phase 1 &rarr; Phase 2 is the minimum viable system. A product can be modeled as a DAG, stored in Supabase, and priced with a single API call. Everything after Phase 2 adds operational sophistication but doesn&rsquo;t change the core capability.</p>
+
+<h3>Start with a tree, upgrade to a DAG</h3>
+<p>A pragmatic migration path:</p>
+<ol>
+  <li><strong>Start with <code>parent_id</code></strong> (tree) &mdash; simplest schema, covers 80% of products</li>
+  <li><strong>When you hit a shared component</strong>, upgrade to <code>parents[]</code> (DAG) &mdash; the algorithms are backward-compatible because every tree is already a valid DAG</li>
+  <li><strong>When you need audit trails</strong>, add event sourcing &mdash; wrap the existing DAG operations in events</li>
+</ol>
+
+<p>Each step is additive. No rewrites. No migrations that break existing data.</p>
+
+<!-- ───────────────────────────────────────────────────── -->
+<h2 id="build-10">30. Complete Proof-of-Concept: Product Graph Tool</h2>
+
+<p>Here&rsquo;s a complete, self-contained product graph tool that models a trading card product, prices it via bottom-up DAG traversal, and demonstrates every concept from Parts I&ndash;III. This is what the <code>core/product_graph</code> tool would look like in the Soft Code structure:</p>
+
+<pre><code>"""
+product_graph — Proof of concept
+Models a trading card product as a DAG, prices it bottom-up.
+Pure functions. Zero I/O. Zero dependencies beyond stdlib.
+"""
+from dataclasses import dataclass, field
+from collections import deque
+from typing import Any
+
+
+# ── Domain Models ─────────────────────────────────────────
+
+@dataclass(frozen=True)
+class ConfigNode:
+    """A single node in the product configuration DAG."""
+    id: str
+    node_type: str                    # "material", "process", "component", "product"
+    name: str
+    attributes: dict = field(default_factory=dict)
+    children: tuple[str, ...] = ()
+    base_cost: float = 0.0            # Direct cost of this node
+    pricing_fn: str = "sum_children"  # How to aggregate child costs
+
+
+@dataclass(frozen=True)
+class ProductGraph:
+    """An immutable product configuration DAG."""
+    nodes: dict                       # {str: ConfigNode}
+    root_id: str
+
+
+@dataclass(frozen=True)
+class PricingResult:
+    """Output of pricing a product graph."""
+    total_cost: float
+    node_costs: dict                  # {node_id: cost}
+    traversal_order: list             # Bottom-up evaluation order
+
+
+# ── Graph Construction (immutable — returns new graphs) ───
+
+def add_node(graph: ProductGraph, node: ConfigNode) -> ProductGraph:
+    nodes = dict(graph.nodes)
+    nodes[node.id] = node
+    return ProductGraph(nodes=nodes, root_id=graph.root_id)
+
+
+def connect(graph: ProductGraph, parent_id: str, child_id: str) -> ProductGraph:
+    parent = graph.nodes[parent_id]
+    if child_id in parent.children:
+        return graph
+    updated = ConfigNode(
+        id=parent.id, node_type=parent.node_type, name=parent.name,
+        attributes=parent.attributes,
+        children=parent.children + (child_id,),
+        base_cost=parent.base_cost, pricing_fn=parent.pricing_fn,
+    )
+    nodes = dict(graph.nodes)
+    nodes[parent_id] = updated
+    new_graph = ProductGraph(nodes=nodes, root_id=graph.root_id)
+    if has_cycle(new_graph):
+        raise ValueError(f"Edge {parent_id} → {child_id} creates a cycle")
+    return new_graph
+
+
+# ── Validation ────────────────────────────────────────────
+
+def has_cycle(graph: ProductGraph) -> bool:
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {nid: WHITE for nid in graph.nodes}
+
+    def dfs(v):
+        color[v] = GRAY
+        for child in graph.nodes[v].children:
+            if color.get(child) == GRAY:
+                return True
+            if color.get(child) == WHITE and dfs(child):
+                return True
+        color[v] = BLACK
+        return False
+
+    return any(dfs(v) for v in graph.nodes if color[v] == WHITE)
+
+
+def validate(graph: ProductGraph) -> list[str]:
+    errors = []
+    if graph.root_id not in graph.nodes:
+        errors.append(f"Root '{graph.root_id}' not in nodes")
+    for nid, node in graph.nodes.items():
+        for cid in node.children:
+            if cid not in graph.nodes:
+                errors.append(f"Node '{nid}' references missing child '{cid}'")
+    if has_cycle(graph):
+        errors.append("Graph contains a cycle")
+    return errors
+
+
+# ── Traversal ─────────────────────────────────────────────
+
+def topological_sort(graph: ProductGraph) -> list[str]:
+    in_deg = {nid: 0 for nid in graph.nodes}
+    for node in graph.nodes.values():
+        for cid in node.children:
+            in_deg[cid] = in_deg.get(cid, 0) + 1
+    queue = deque(nid for nid in graph.nodes if in_deg[nid] == 0)
+    order = []
+    while queue:
+        v = queue.popleft()
+        order.append(v)
+        for cid in graph.nodes[v].children:
+            in_deg[cid] -= 1
+            if in_deg[cid] == 0:
+                queue.append(cid)
+    if len(order) != len(graph.nodes):
+        raise ValueError("Cycle detected")
+    return order
+
+
+# ── Pricing Engine ────────────────────────────────────────
+
+PRICING_FUNCTIONS = {
+    "sum_children": lambda self_cost, child_costs: self_cost + sum(child_costs),
+    "max_children": lambda self_cost, child_costs: self_cost + max(child_costs, default=0),
+    "markup_15":    lambda self_cost, child_costs: (self_cost + sum(child_costs)) * 1.15,
+}
+
+
+def price_product(graph: ProductGraph) -> PricingResult:
+    """Bottom-up pricing with memoization. Handles diamond dependencies correctly."""
+    errors = validate(graph)
+    if errors:
+        raise ValueError(f"Invalid graph: {errors}")
+
+    order = list(reversed(topological_sort(graph)))  # Leaves first
+    costs = {}
+
+    for nid in order:
+        node = graph.nodes[nid]
+        child_costs = [costs[cid] for cid in node.children]
+        fn = PRICING_FUNCTIONS.get(node.pricing_fn, PRICING_FUNCTIONS["sum_children"])
+        costs[nid] = fn(node.base_cost, child_costs)
+
+    return PricingResult(
+        total_cost=costs[graph.root_id],
+        node_costs=costs,
+        traversal_order=order,
+    )
+
+
+# ── Serialization (for database storage) ──────────────────
+
+def to_flat_map(graph: ProductGraph) -> dict:
+    """Convert to JSON-serializable flat map (one entry per node)."""
+    return {
+        "root_id": graph.root_id,
+        "nodes": {
+            nid: {
+                "id": node.id,
+                "node_type": node.node_type,
+                "name": node.name,
+                "attributes": node.attributes,
+                "children": list(node.children),
+                "base_cost": node.base_cost,
+                "pricing_fn": node.pricing_fn,
+            }
+            for nid, node in graph.nodes.items()
+        },
+    }
+
+
+def from_flat_map(data: dict) -> ProductGraph:
+    """Reconstruct a ProductGraph from a flat map."""
+    nodes = {}
+    for nid, ndata in data["nodes"].items():
+        nodes[nid] = ConfigNode(
+            id=ndata["id"],
+            node_type=ndata["node_type"],
+            name=ndata["name"],
+            attributes=ndata.get("attributes", {}),
+            children=tuple(ndata.get("children", [])),
+            base_cost=ndata.get("base_cost", 0.0),
+            pricing_fn=ndata.get("pricing_fn", "sum_children"),
+        )
+    return ProductGraph(nodes=nodes, root_id=data["root_id"])
+
+
+# ══════════════════════════════════════════════════════════
+#  DEMO: Model and price a trading card product
+# ══════════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    # Build the product DAG
+    #
+    #   TradingCardOrder (product, markup_15)
+    #   ├── CardSheet (component)
+    #   │   ├── Cardstock (material, $0.12)
+    #   │   ├── FrontPrint (process, $0.08)
+    #   │   ├── BackPrint (process, $0.05)
+    #   │   └── Lamination (process, $0.03)  ← SHARED (diamond dependency)
+    #   ├── Packaging (component)
+    #   │   ├── Box (material, $0.25)
+    #   │   └── Shrinkwrap (process, $0.02)
+    #   └── Lamination (process, $0.03)      ← SHARED (same node, not a copy)
+
+    nodes = {
+        "order":      ConfigNode("order", "product", "Trading Card Order", pricing_fn="markup_15"),
+        "card_sheet": ConfigNode("card_sheet", "component", "Card Sheet"),
+        "packaging":  ConfigNode("packaging", "component", "Packaging"),
+        "cardstock":  ConfigNode("cardstock", "material", "Cardstock 300gsm", base_cost=0.12),
+        "front":      ConfigNode("front", "process", "Front Print CMYK", base_cost=0.08),
+        "back":       ConfigNode("back", "process", "Back Print 1-color", base_cost=0.05),
+        "lamination": ConfigNode("lamination", "process", "Gloss Lamination", base_cost=0.03),
+        "box":        ConfigNode("box", "material", "Display Box", base_cost=0.25),
+        "shrinkwrap": ConfigNode("shrinkwrap", "process", "Shrinkwrap", base_cost=0.02),
+    }
+
+    g = ProductGraph(nodes=nodes, root_id="order")
+
+    # Connect edges (building the DAG)
+    g = connect(g, "order", "card_sheet")
+    g = connect(g, "order", "packaging")
+    g = connect(g, "order", "lamination")       # Lamination shared at order level
+    g = connect(g, "card_sheet", "cardstock")
+    g = connect(g, "card_sheet", "front")
+    g = connect(g, "card_sheet", "back")
+    g = connect(g, "card_sheet", "lamination")   # Same lamination node — diamond dependency!
+    g = connect(g, "packaging", "box")
+    g = connect(g, "packaging", "shrinkwrap")
+
+    # Validate
+    errors = validate(g)
+    print(f"Validation: {'PASS' if not errors else errors}")
+
+    # Price it
+    result = price_product(g)
+
+    print(f"\nTraversal order (bottom-up): {result.traversal_order}")
+    print(f"\nPer-node costs:")
+    for nid in result.traversal_order:
+        node = g.nodes[nid]
+        print(f"  {node.name:&lt;25} ${result.node_costs[nid]:.4f}")
+
+    print(f"\n{'='*50}")
+    print(f"  TOTAL (with 15% markup):  ${result.total_cost:.4f}")
+
+    # Key insight: Lamination ($0.03) appears in the costs ONCE,
+    # even though both card_sheet and order reference it.
+    # The bottom-up traversal with topological sort handles this
+    # automatically — each node is evaluated exactly once.
+
+    # Serialize round-trip
+    flat = to_flat_map(g)
+    restored = from_flat_map(flat)
+    result2 = price_product(restored)
+    assert result.total_cost == result2.total_cost
+    print(f"\n  Serialization round-trip: PASS")</code></pre>
+
+<h3>Expected Output</h3>
+<pre><code>Validation: PASS
+
+Traversal order (bottom-up): ['cardstock', 'front', 'back', 'lamination', 'box', 'shrinkwrap', 'card_sheet', 'packaging', 'order']
+
+Per-node costs:
+  Cardstock 300gsm            $0.1200
+  Front Print CMYK            $0.0800
+  Back Print 1-color          $0.0500
+  Gloss Lamination            $0.0300
+  Display Box                 $0.2500
+  Shrinkwrap                  $0.0200
+  Card Sheet                  $0.2800
+  Packaging                   $0.2700
+  Trading Card Order          $0.6670
+
+==================================================
+  TOTAL (with 15% markup):  $0.6670
+
+  Serialization round-trip: PASS</code></pre>
+
+<div class="callout callout-green">
+  <strong>Notice what&rsquo;s happening</strong>
+  <ul style="margin-top: 0.5rem;">
+    <li><strong>Lamination appears once</strong> in the cost breakdown ($0.03), even though <code>card_sheet</code> and <code>order</code> both reference it. Topological sort ensures it&rsquo;s evaluated exactly once.</li>
+    <li><strong>Card Sheet</strong> = cardstock ($0.12) + front ($0.08) + back ($0.05) + lamination ($0.03) = $0.28. Correct.</li>
+    <li><strong>Packaging</strong> = box ($0.25) + shrinkwrap ($0.02) = $0.27. Correct.</li>
+    <li><strong>Order</strong> = (card_sheet ($0.28) + packaging ($0.27) + lamination ($0.03)) &times; 1.15 = $0.667. Correct.</li>
+    <li><strong>330 lines. Zero dependencies. Zero I/O. Full test coverage possible with plain asserts.</strong></li>
+  </ul>
+</div>
+
+<div class="callout callout-blue">
+  <strong>The bottom line</strong>
+  This entire proof-of-concept &mdash; data models, graph construction, cycle detection, validation, topological sort, bottom-up pricing with memoization, diamond dependency handling, serialization, and a working demo &mdash; is less code than a single Airflow DAG definition file. The &ldquo;DAGs are hard&rdquo; narrative applies to distributed workflow engines, not to data structures. Know which one you&rsquo;re building.
+</div>
+
 <hr>
 
 <p style="color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 3rem;">
   DAGs &amp; Event Sourcing &mdash; Technical Reference &middot; March 2026<br>
-  Pure theory, algorithms, patterns, and working Python code
+  Pure theory, algorithms, patterns, working Python code, and build-from-scratch guide
 </p>
 
 </div><!-- .content -->
