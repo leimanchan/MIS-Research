@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAGs &amp; Event Sourcing — Video &amp; Resource Study Guide</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #111827;
+      --code-border: #2d3748;
+      --hr: #2d3748;
+      --table-head: #1e2235;
+      --table-border: #2d3748;
+      --blockquote-border: #4f8ef7;
+      --blockquote-bg: #1a2240;
+      --green: #86efac;
+      --yellow: #fde68a;
+      --orange: #fdba74;
+      --red: #fca5a5;
+      --teal: #7dd3fc;
+      --sidebar-w: 280px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--hr);
+      overflow-y: auto; padding: 1.5rem 1rem; z-index: 100;
+      scrollbar-width: thin; scrollbar-color: var(--hr) transparent;
+    }
+    .sidebar h2 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 0.8rem; border: none; padding: 0;
+    }
+    .sidebar .tier-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent); font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem;
+    }
+    .sidebar ol { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { margin: 0; }
+    .sidebar a {
+      display: block; padding: 0.25rem 0.6rem; font-size: 0.78rem;
+      color: var(--muted); text-decoration: none; border-radius: 4px; line-height: 1.4;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar a:hover { background: var(--surface2); color: var(--accent); }
+    .sidebar .toc-h2 { font-weight: 600; color: var(--text); margin-top: 0.3rem; }
+    .content {
+      margin-left: var(--sidebar-w); max-width: 880px; padding: 0 2rem 4rem;
+    }
+    .report-header {
+      padding: 2.5rem 0 1.5rem; border-bottom: 1px solid var(--hr); margin-bottom: 2rem;
+    }
+    .report-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); line-height: 1.3;
+    }
+    .report-header .meta { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+    .badge {
+      display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge-blue { background: #1e3a5f; color: var(--accent); }
+    .badge-purple { background: #2d1b69; color: var(--accent2); }
+    .badge-teal { background: #0c2d3e; color: var(--teal); }
+    .badge-red { background: #2b1a1a; color: var(--red); }
+    h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: var(--accent); margin: 2.5rem 0 1rem; line-height: 1.3; }
+    h2 { font-size: clamp(1.2rem, 3.5vw, 1.6rem); color: var(--accent2); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--hr); }
+    h3 { font-size: clamp(1rem, 3vw, 1.25rem); color: var(--teal); margin: 2rem 0 0.6rem; }
+    h4 { font-size: 1rem; color: var(--green); margin: 1.5rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin: 0.85rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: #f1f5f9; font-weight: 600; }
+    em { color: var(--yellow); font-style: italic; }
+    code {
+      background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 4px;
+      padding: 0.1em 0.45em; font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.85em; color: var(--teal);
+    }
+    ul, ol { padding-left: 1.5rem; margin: 0.8rem 0; }
+    li { margin: 0.35rem 0; }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9rem;
+      display: block; overflow-x: auto;
+    }
+    th {
+      background: var(--table-head); color: var(--accent); padding: 0.6rem 0.8rem;
+      text-align: left; border: 1px solid var(--table-border); white-space: nowrap;
+    }
+    td { padding: 0.55rem 0.8rem; border: 1px solid var(--table-border); vertical-align: top; }
+    tr:nth-child(even) { background: var(--surface); }
+    .callout {
+      border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; font-size: 0.92rem;
+    }
+    .callout-blue { background: #1a2744; border-left: 3px solid var(--accent); }
+    .callout-green { background: #1a2e24; border-left: 3px solid var(--green); }
+    .callout-yellow { background: #2b2514; border-left: 3px solid var(--yellow); }
+    .callout-red { background: #2b1a1a; border-left: 3px solid var(--red); }
+    .callout strong { display: block; margin-bottom: 0.3rem; }
+    hr { border: none; border-top: 1px solid var(--hr); margin: 2rem 0; }
+
+    /* ── Video Cards ─────────────────────────────────────── */
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem;
+      margin: 1.2rem 0;
+      transition: border-color 0.15s;
+    }
+    .video-card:hover { border-color: var(--accent); }
+    .video-card .v-num {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.3rem;
+    }
+    .video-card h3 {
+      margin: 0 0 0.4rem; font-size: 1.1rem; color: var(--text);
+    }
+    .video-card h3 a { color: var(--text); }
+    .video-card h3 a:hover { color: var(--accent); text-decoration: none; }
+    .video-card .v-meta {
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 0.6rem;
+    }
+    .video-card .v-meta span { margin-right: 1rem; }
+    .video-card .v-why {
+      font-size: 0.9rem; line-height: 1.6;
+    }
+    .video-card .v-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 0.6rem; padding: 4px 12px;
+      border: 1px solid var(--hr); border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600; color: var(--accent);
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .video-card .v-link:hover {
+      background: var(--surface2); border-color: var(--accent); text-decoration: none;
+    }
+
+    /* ── Resource list ────────────────────────────────────── */
+    .resource-item {
+      background: var(--surface);
+      border: 1px solid var(--hr);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin: 0.6rem 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .resource-item .r-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .resource-item .r-info { flex: 1; min-width: 0; }
+    .resource-item .r-info a {
+      font-size: 0.9rem; font-weight: 600; color: var(--text);
+      display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .resource-item .r-info a:hover { color: var(--accent); text-decoration: none; }
+    .resource-item .r-info .r-meta { font-size: 0.75rem; color: var(--muted); }
+
+    .tier-divider {
+      margin: 3rem 0 1rem; padding: 1.5rem; background: var(--surface);
+      border: 1px solid var(--hr); border-radius: 10px; text-align: center;
+    }
+    .tier-divider h2 { border: none; padding: 0; margin: 0; }
+    .tier-divider p { color: var(--muted); font-size: 0.9rem; margin: 0.5rem 0 0; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; padding: 0 1rem 4rem; }
+    }
+    @media print {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      body { background: white; color: black; font-size: 11pt; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <h2>Study Guide</h2>
+
+  <div class="tier-label">Tier 1 &mdash; Watch First</div>
+  <ol>
+    <li><a class="toc-h2" href="#t1">The Essentials (5 videos)</a></li>
+  </ol>
+
+  <div class="tier-label">Tier 2 &mdash; Practical</div>
+  <ol>
+    <li><a class="toc-h2" href="#t2">Implementation &amp; Patterns (5 videos)</a></li>
+  </ol>
+
+  <div class="tier-label">Tier 3 &mdash; Graph Algorithms</div>
+  <ol>
+    <li><a class="toc-h2" href="#t3">DAG Deep Dive (5 videos)</a></li>
+  </ol>
+
+  <div class="tier-label">Tier 4 &mdash; DDD &amp; Architecture</div>
+  <ol>
+    <li><a class="toc-h2" href="#t4">Domain Design &amp; CQRS (4 resources)</a></li>
+  </ol>
+
+  <div class="tier-label">Tier 5 &mdash; Advanced</div>
+  <ol>
+    <li><a class="toc-h2" href="#t5">Decider Pattern &amp; Product Modeling</a></li>
+  </ol>
+
+  <div class="tier-label">Resources</div>
+  <ol>
+    <li><a class="toc-h2" href="#channels">Channels to Subscribe</a></li>
+    <li><a class="toc-h2" href="#written">Written Resources</a></li>
+    <li><a class="toc-h2" href="#order">Recommended Watch Order</a></li>
+  </ol>
+</nav>
+
+<div class="content">
+
+<header class="report-header">
+  <h1>DAGs &amp; Event Sourcing<br>Video &amp; Resource Study Guide</h1>
+  <p class="meta">March 2026 &middot; Curated videos, conference talks, channels, and written resources for deep study</p>
+  <div class="badges">
+    <span class="badge badge-blue">20+ Videos</span>
+    <span class="badge badge-purple">Conference Talks</span>
+    <span class="badge badge-teal">Graph Algorithms</span>
+    <span class="badge badge-red">Anti-Pattern Warnings</span>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="tier-divider">
+  <h2 id="t1">Tier 1: Watch First &mdash; The Essentials</h2>
+  <p>These 5 videos give you 80% of what you need. Watch in order.</p>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#1 &middot; Event Sourcing Origin Story</div>
+  <h3><a href="https://www.youtube.com/watch?v=JHGkaShoyNs">Greg Young &mdash; CQRS and Event Sourcing</a></h3>
+  <div class="v-meta">
+    <span>Code on the Beach 2014</span>
+    <span>~90 min</span>
+  </div>
+  <div class="v-why">
+    <p>The canonical talk. Greg Young coined CQRS. Traces the concept back to double-entry accounting ledgers &mdash; events are older than computers. Many companies require new hires to watch this. Includes the iconic slide of a ledger entry being erased (you can&rsquo;t &mdash; that&rsquo;s why events are immutable).</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=JHGkaShoyNs">&#9654; Watch on YouTube</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#2 &middot; Event-Driven Taxonomy</div>
+  <h3><a href="https://www.youtube.com/watch?v=STKCRSUsyP0">Martin Fowler &mdash; The Many Meanings of Event-Driven Architecture</a></h3>
+  <div class="v-meta">
+    <span>GOTO 2017</span>
+    <span>~50 min</span>
+  </div>
+  <div class="v-why">
+    <p>Fowler breaks down four distinct patterns that people conflate under &ldquo;event-driven&rdquo;: <strong>Event Notification</strong>, <strong>Event-Carried State Transfer</strong>, <strong>Event Sourcing</strong>, and <strong>CQRS</strong>. Essential for knowing which pattern solves which problem. Without this vocabulary, you&rsquo;ll conflate things that should be kept separate.</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=STKCRSUsyP0">&#9654; Watch on YouTube</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#3 &middot; Your Repo&rsquo;s Architecture, Explained</div>
+  <h3><a href="https://www.youtube.com/watch?v=yTkzNHF6rMs">Gary Bernhardt &mdash; Boundaries</a></h3>
+  <div class="v-meta">
+    <span>RubyConf 2012</span>
+    <span>~33 min</span>
+  </div>
+  <div class="v-why">
+    <p>THE foundational talk on <strong>functional core / imperative shell</strong>. Pure functions inside, I/O at the edges. This is literally what your <code>core/</code> vs <code>adapters/</code> separation implements. Bernhardt explains why this structure makes testing trivial, concurrency safe, and code changeable. This talk will feel like someone describing your repo&rsquo;s architecture before it existed.</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=yTkzNHF6rMs">&#9654; Watch on YouTube</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#4 &middot; Event Sourcing Deep Dive</div>
+  <h3><a href="https://www.youtube.com/watch?v=8JKjvY4etTY">Greg Young &mdash; Event Sourcing</a></h3>
+  <div class="v-meta">
+    <span>GOTO 2014</span>
+    <span>~54 min</span>
+  </div>
+  <div class="v-why">
+    <p>More technical depth than talk #1. Covers trade-offs, misconceptions, read models, object databases, accidental complexity, service buses, and the relationship between event sourcing and DDD. Watch after #1 to go deeper on the mechanics.</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=8JKjvY4etTY">&#9654; Watch on YouTube</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#5 &middot; Graph Algorithms Masterclass</div>
+  <h3><a href="https://www.youtube.com/watch?v=09_LlHjoEiY">William Fiset &mdash; Graph Theory Algorithms</a></h3>
+  <div class="v-meta">
+    <span>freeCodeCamp (Google engineer)</span>
+    <span>~7 hrs total (watch DAG sections: ~2 hrs)</span>
+  </div>
+  <div class="v-why">
+    <p>Visual walkthrough of every graph algorithm. The <strong>topological sort</strong>, <strong>DAG shortest/longest path</strong>, and <strong>cycle detection</strong> sections are exactly what you need for your product graph. Skip to those chapters. Includes working Java source code and slides.</p>
+    <p><strong>Source code:</strong> <a href="https://github.com/williamfiset/Algorithms">github.com/williamfiset/Algorithms</a></p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=09_LlHjoEiY">&#9654; Watch on YouTube</a>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="tier-divider">
+  <h2 id="t2">Tier 2: Practical Implementation</h2>
+  <p>How to actually build it &mdash; anti-patterns, live coding, migration paths</p>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#6 &middot; Learn From Mistakes</div>
+  <h3>Oskar Dudycz &mdash; Let&rsquo;s Build the Worst Event Sourcing System!</h3>
+  <div class="v-meta">
+    <span>NDC London 2024</span>
+    <span>~58 min</span>
+    <span>Search: <em>&ldquo;Let's Build the Worst Event Sourcing System Oskar Dudycz NDC London 2024&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>Teaches every anti-pattern by <strong>building the worst possible system</strong>. You learn what NOT to do &mdash; often more valuable than best practices. Demonstrates that event sourcing is &ldquo;not complex, it&rsquo;s different.&rdquo;</p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#7 &middot; Build an Event Store on PostgreSQL</div>
+  <h3>Oskar Dudycz &mdash; Let&rsquo;s Build Event Store in One Hour!</h3>
+  <div class="v-meta">
+    <span>NDC Oslo 2022</span>
+    <span>~60 min</span>
+    <span>Search: <em>&ldquo;Let's build event store in one hour Oskar Dudycz NDC Oslo&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>Live-codes an event store from scratch using <strong>PostgreSQL</strong>. Shows the table design, append operations, and projection mechanics. Directly relevant to your Supabase approach.</p>
+    <p><strong>Code:</strong> <a href="https://github.com/oskardudycz/EventStoreInOneHour">github.com/oskardudycz/EventStoreInOneHour</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#8 &middot; Migration Path</div>
+  <h3>Oskar Dudycz &mdash; From CRUD to Event Sourcing</h3>
+  <div class="v-meta">
+    <span>Devoxx</span>
+    <span>Search: <em>&ldquo;Event-driven revolution CRUD to Event Sourcing Oskar Dudycz Devoxx&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>Shows the practical migration path from a classical CRUD monolith to CQRS and event sourcing. Key insight: you do <strong>NOT</strong> need multiple databases or event sourcing from day one. Start with CQRS on a single database and add event sourcing later.</p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#9 &middot; Types as Business Rules</div>
+  <h3>Scott Wlaschin &mdash; Domain Modeling Made Functional</h3>
+  <div class="v-meta">
+    <span>NDC / KanDDDinsky 2019</span>
+    <span>~52 min</span>
+    <span>YouTube ID: <code>2JB1_e5wZmU</code></span>
+  </div>
+  <div class="v-why">
+    <p>&ldquo;Make illegal states unrepresentable&rdquo; &mdash; use the type system to encode business rules so incorrect code cannot compile. Maps directly to your <code>models.py</code> and <code>specs.py</code>. No F# knowledge needed.</p>
+    <p><strong>All talks:</strong> <a href="https://fsharpforfunandprofit.com/ddd/">fsharpforfunandprofit.com/ddd</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#10 &middot; 10-Year Retrospective</div>
+  <h3><a href="https://www.youtube.com/watch?v=LDW0QWie21s">Greg Young &mdash; A Decade of DDD, CQRS, Event Sourcing</a></h3>
+  <div class="v-meta">
+    <span>Virtual DDD</span>
+  </div>
+  <div class="v-why">
+    <p>Retrospective from the person who coined CQRS &mdash; what worked, what didn&rsquo;t, how thinking evolved over 10 years. Essential for avoiding mistakes the community has already learned from.</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/watch?v=LDW0QWie21s">&#9654; Watch on YouTube</a>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="tier-divider">
+  <h2 id="t3">Tier 3: DAG Algorithms &mdash; Graph Theory Deep Dive</h2>
+  <p>The computer science fundamentals behind your product graph</p>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#11 &middot; Clear Hand-Drawn Explanations</div>
+  <h3><a href="https://www.youtube.com/channel/UCZCFT11CWBi3MHNlGf019nw">Abdul Bari &mdash; Graph Traversals, Topological Sort</a></h3>
+  <div class="v-meta">
+    <span>Abdul Bari (YouTube Channel)</span>
+    <span>15&ndash;40 min per video</span>
+  </div>
+  <div class="v-why">
+    <p>Search his channel for: <em>&ldquo;Topological Sort&rdquo;</em>, <em>&ldquo;Graph Traversals BFS DFS&rdquo;</em>. Exceptionally clear hand-drawn diagrams, slower-paced, deeper explanations. 500K+ students. Universally recommended on Reddit and LeetCode for graph algorithm fundamentals.</p>
+  </div>
+  <a class="v-link" href="https://www.youtube.com/channel/UCZCFT11CWBi3MHNlGf019nw">&#9654; Visit Channel</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#12 &middot; Formal Proof</div>
+  <h3>MIT 6.006 Lecture 14 &mdash; DFS, Topological Sort</h3>
+  <div class="v-meta">
+    <span>MIT OpenCourseWare &middot; Erik Demaine</span>
+    <span>~50 min</span>
+    <span>Search: <em>&ldquo;MIT 6.006 Lecture 14 Depth First Search Topological Sort&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>The gold standard academic treatment. <strong>Proves</strong> that a DAG has no back edges in DFS and that reverse finishing order gives a valid topological ordering. If you want to understand <em>why</em> the algorithm is correct, not just <em>how</em> it works, this is the lecture. Also covers edge classification: tree edges, back edges, forward edges, cross edges.</p>
+    <p><strong>OCW:</strong> <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/resources/lecture-14-depth-first-search-dfs-topological-sort/">ocw.mit.edu &mdash; Lecture 14</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#13 &middot; DAGs in the Real World</div>
+  <h3>MIT Missing Semester &mdash; Version Control (Git)</h3>
+  <div class="v-meta">
+    <span>MIT CSAIL</span>
+    <span>~80 min</span>
+    <span>YouTube ID: <code>2sjqTHE0zok</code></span>
+  </div>
+  <div class="v-why">
+    <p>Explains Git bottom-up as a <strong>DAG data structure</strong>. Commits are nodes, parent pointers are edges. Branches are just references into the DAG. Merging creates nodes with two parents. The best real-world DAG example &mdash; a system you already use daily.</p>
+    <p><strong>Course:</strong> <a href="https://missing.csail.mit.edu/2020/version-control/">missing.csail.mit.edu &mdash; Version Control</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#14 &middot; DAG Interview Problems</div>
+  <h3>NeetCode &mdash; Course Schedule I &amp; II</h3>
+  <div class="v-meta">
+    <span>NeetCode (YouTube)</span>
+    <span>~10&ndash;15 min each</span>
+    <span>Search: <em>&ldquo;NeetCode Course Schedule&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>LeetCode 207 and 210 &mdash; the classic DAG problems. &ldquo;Is this graph a DAG?&rdquo; (cycle detection) and &ldquo;give me a topological ordering.&rdquo; Clean Python walkthroughs. These are two sides of the same coin: if you can detect cycles, you can topologically sort, and vice versa.</p>
+    <p><strong>Course:</strong> <a href="https://neetcode.io/courses/advanced-algorithms/17">neetcode.io &mdash; Topological Sort</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#15 &middot; Comprehensive Graph Series</div>
+  <h3>Striver (take U forward) &mdash; Graph Series</h3>
+  <div class="v-meta">
+    <span>take U forward (YouTube)</span>
+    <span>43 videos, 15&ndash;30 min each</span>
+  </div>
+  <div class="v-why">
+    <p>Key videos: <em>&ldquo;Topological Sort using DFS&rdquo;</em>, <em>&ldquo;Kahn&rsquo;s Algorithm&rdquo;</em>, <em>&ldquo;Shortest Path in DAG.&rdquo;</em> The shortest path video demonstrates using topological sort to find shortest paths in O(V+E) &mdash; the practical application most tutorials skip. Code in Python, Java, C++.</p>
+    <p><strong>Website:</strong> <a href="https://takeuforward.org/graph/striver-graph-series-top-graph-interview-questions">takeuforward.org &mdash; Graph Series</a></p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="tier-divider">
+  <h2 id="t4">Tier 4: Domain-Driven Design &amp; Architecture</h2>
+  <p>How to model your ERP domain and structure your aggregates</p>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#16 &middot; The Best Ongoing Channel</div>
+  <h3><a href="https://codeopinion.com/category/event-sourcing/">Derek Comartin &mdash; CodeOpinion (entire channel)</a></h3>
+  <div class="v-meta">
+    <span>CodeOpinion (YouTube)</span>
+    <span>Short, practical videos</span>
+  </div>
+  <div class="v-why">
+    <p>The single best ongoing YouTube channel for event sourcing + CQRS. Key videos to watch:</p>
+    <ul>
+      <li><strong>&ldquo;CRUD-Sourcing is Why Your Event Streams Are Bloated&rdquo;</strong> &mdash; the #1 anti-pattern. If you model events as <code>NameChanged</code> instead of <code>CustomerRelocated</code>, your streams become meaningless noise.</li>
+      <li><strong>&ldquo;Event Sourcing Do&rsquo;s and Don&rsquo;ts&rdquo;</strong> &mdash; practical guardrails</li>
+      <li><strong>&ldquo;Projections in Event Sourcing: Build ANY Model You Want!&rdquo;</strong> &mdash; the read-model mechanism that makes ES practical for business systems</li>
+      <li><strong>&ldquo;Event Sourcing vs Event Driven Architecture&rdquo;</strong> &mdash; they are NOT the same thing</li>
+      <li><strong>&ldquo;Greg Young Answers Your Event Sourcing Questions&rdquo;</strong> &mdash; clears up common confusion</li>
+    </ul>
+  </div>
+  <a class="v-link" href="https://codeopinion.com/category/event-sourcing/">&#9654; Browse All Videos</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#17 &middot; Aggregate Design for Distributed Systems</div>
+  <h3><a href="https://www.infoq.com/presentations/reactive-ddd-distributed-systems/">Vaughn Vernon &mdash; Reactive DDD: Modeling Uncertainty</a></h3>
+  <div class="v-meta">
+    <span>Avanscoperta, Milan 2018 &middot; InfoQ</span>
+  </div>
+  <div class="v-why">
+    <p>Key insight: &ldquo;Query less; Event more.&rdquo; Shows how to handle distributed system uncertainty using DDD + reactive patterns. Extends aggregate design into distributed contexts. Also read Vernon&rsquo;s <a href="https://www.dddcommunity.org/library/vernon_2011/">&ldquo;Effective Aggregate Design&rdquo; 3-part PDF series</a> &mdash; the definitive guide.</p>
+  </div>
+  <a class="v-link" href="https://www.infoq.com/presentations/reactive-ddd-distributed-systems/">&#9654; Watch on InfoQ</a>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#18 &middot; DDD Vocabulary Refined</div>
+  <h3>Eric Evans &mdash; Language in Context (DDD Europe 2019 Keynote)</h3>
+  <div class="v-meta">
+    <span>DDD Europe 2019</span>
+    <span>Search: <em>&ldquo;Eric Evans Language in Context DDD Europe 2019&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>The DDD originator explains bounded context types (bubble context, quaint context, patch-on-patch) and refines the vocabulary of DDD itself. Essential for your ERP domain modeling &mdash; knowing <em>where</em> to draw the boundaries between your tools.</p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#19 &middot; Martin Fowler on Event Sourcing</div>
+  <h3>Martin Fowler &mdash; Event Sourcing (YOW! 2016)</h3>
+  <div class="v-meta">
+    <span>YOW! Conferences</span>
+    <span>~28 min</span>
+    <span>Search: <em>&ldquo;Event Sourcing Martin Fowler YOW 2016&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>Concise presentation from the Chief Scientist at Thoughtworks. Connects event sourcing to broader enterprise patterns from a higher architectural perspective. Good for zooming out after the deep dives.</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="tier-divider">
+  <h2 id="t5">Tier 5: Advanced &mdash; Decider Pattern &amp; Product Modeling</h2>
+  <p>Functional event sourcing and graph-based product configuration</p>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#20 &middot; Your decision_logic.py, Formalized</div>
+  <h3>Jeremie Chassaing &mdash; Deciders: Composition for Aggregates</h3>
+  <div class="v-meta">
+    <span>DDD Europe 2021</span>
+    <span>Search: <em>&ldquo;Jeremie Chassaing Deciders DDD Europe 2021&rdquo;</em></span>
+  </div>
+  <div class="v-why">
+    <p>Three pure functions: <code>decide(command, state) &rarr; events</code>, <code>evolve(state, event) &rarr; state</code>, and <code>initialState</code>. This IS your <code>decision_logic.py</code> pattern formalized. Both functions are pure &mdash; same inputs always produce same outputs.</p>
+    <p><strong>Blog:</strong> <a href="https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider">thinkbeforecoding.com &mdash; Functional Event Sourcing Decider</a></p>
+  </div>
+</div>
+
+<div class="video-card">
+  <div class="v-num">#21 &middot; Bill of Materials as a Graph</div>
+  <h3>Neo4j &mdash; Graph Data Modeling &amp; Bill of Materials</h3>
+  <div class="v-meta">
+    <span>Neo4j GraphAcademy (free course)</span>
+  </div>
+  <div class="v-why">
+    <p>How to model products, BOM hierarchies, and shared components as graphs. Nodes = entities (products, parts, customers), edges = relationships (CONTAINS, DEPENDS_ON). The US Army, Caterpillar, and Lockheed Martin use graph databases for BOM management. Your DAG product model is this pattern on Postgres.</p>
+    <p><strong>Free course:</strong> <a href="https://graphacademy.neo4j.com/courses/modeling-fundamentals/">graphacademy.neo4j.com &mdash; Modeling Fundamentals</a></p>
+    <p><strong>BOM example:</strong> <a href="https://neo4j.com/blog/government/top-10-use-cases-bill-of-materials/">neo4j.com &mdash; Top 10 BOM Use Cases</a></p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<hr>
+
+<h2 id="channels">Channels to Subscribe To</h2>
+
+<table>
+  <thead><tr><th>Channel</th><th>What You Get</th><th>Best For</th></tr></thead>
+  <tbody>
+    <tr><td><strong><a href="https://codeopinion.com/category/event-sourcing/">CodeOpinion</a></strong> (Derek Comartin)</td><td>Ongoing event sourcing, CQRS, architecture</td><td>Short, practical, real-code videos</td></tr>
+    <tr><td><strong>GOTO Conferences</strong></td><td>Classic Greg Young, Martin Fowler talks</td><td>Foundational theory</td></tr>
+    <tr><td><strong>NDC Conferences</strong></td><td>Oskar Dudycz&rsquo;s practical talks</td><td>Live-coding, anti-patterns</td></tr>
+    <tr><td><strong><a href="https://www.youtube.com/channel/UCD8yeTczadqdARzQUp29PJw">William Fiset</a></strong></td><td>Graph algorithms with visual walkthroughs</td><td>Algorithm understanding</td></tr>
+    <tr><td><strong><a href="https://www.youtube.com/channel/UCJskGeByzRRSvmOyZOz61ig">Striver (take U forward)</a></strong></td><td>Comprehensive graph algorithm series</td><td>Problem-solving, interview prep</td></tr>
+    <tr><td><strong><a href="https://www.youtube.com/channel/UCZCFT11CWBi3MHNlGf019nw">Abdul Bari</a></strong></td><td>Clear, hand-drawn CS explanations</td><td>Fundamentals, slow-paced depth</td></tr>
+    <tr><td><strong>Kurrent (Event Store)</strong></td><td>EventStoreDB training and webinars</td><td>Event store internals</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2 id="written">Written Resources Worth Bookmarking</h2>
+
+<div class="resource-item">
+  <span class="r-icon">📄</span>
+  <div class="r-info">
+    <a href="https://www.dddcommunity.org/library/vernon_2011/">Vaughn Vernon &mdash; Effective Aggregate Design (3-part PDF)</a>
+    <span class="r-meta">The definitive guide: design small, reference by identity, use eventual consistency</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📝</span>
+  <div class="r-info">
+    <a href="https://event-driven.io/en/">Oskar Dudycz &mdash; event-driven.io (blog)</a>
+    <span class="r-meta">Extensive library of practical event sourcing articles</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">💻</span>
+  <div class="r-info">
+    <a href="https://github.com/eugene-khyst/postgresql-event-sourcing">PostgreSQL Event Sourcing Reference Implementation</a>
+    <span class="r-meta">Full reference using PostgreSQL as event store &middot; LISTEN/NOTIFY for projections</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">💻</span>
+  <div class="r-info">
+    <a href="https://martendb.io/events/">Marten &mdash; PostgreSQL as Event Store (.NET)</a>
+    <span class="r-meta">Mature library turning PostgreSQL into a full event store with projection support</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">💻</span>
+  <div class="r-info">
+    <a href="https://event-driven-io.github.io/emmett/getting-started.html">Emmett &mdash; PostgreSQL Event Store for Node.js</a>
+    <span class="r-meta">Dudycz&rsquo;s newer project &middot; Same approach in TypeScript</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📝</span>
+  <div class="r-info">
+    <a href="https://fsharpforfunandprofit.com/ddd/">Scott Wlaschin &mdash; DDD Talk Hub</a>
+    <span class="r-meta">Slides, videos, and code for all DDD-related talks</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📝</span>
+  <div class="r-info">
+    <a href="https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider">Chassaing &mdash; Functional Event Sourcing Decider</a>
+    <span class="r-meta">The canonical Decider pattern reference &middot; decide / evolve / initialState</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📄</span>
+  <div class="r-info">
+    <a href="https://neo4j.com/blog/graph-database/graph-database-vs-relational-database/">Neo4j &mdash; Graph Database vs Relational Database</a>
+    <span class="r-meta">Decision framework for when to use graphs vs relational</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">💻</span>
+  <div class="r-info">
+    <a href="https://github.com/williamfiset/Algorithms">William Fiset &mdash; Algorithms (GitHub)</a>
+    <span class="r-meta">Source code and slides for the freeCodeCamp graph theory course</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📄</span>
+  <div class="r-info">
+    <a href="https://missing.csail.mit.edu/2020/version-control/">MIT Missing Semester &mdash; Version Control</a>
+    <span class="r-meta">Git explained as a DAG data structure &middot; Course page with notes</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">💻</span>
+  <div class="r-info">
+    <a href="https://github.com/oskardudycz/EventSourcing.NetCore">Dudycz &mdash; EventSourcing.NetCore (GitHub)</a>
+    <span class="r-meta">Running code examples and tutorials for event sourcing</span>
+  </div>
+</div>
+
+<div class="resource-item">
+  <span class="r-icon">📝</span>
+  <div class="r-info">
+    <a href="https://softwaremill.com/implementing-event-sourcing-using-a-relational-database/">SoftwareMill &mdash; Event Sourcing on Relational Databases</a>
+    <span class="r-meta">Trade-offs of PostgreSQL vs specialized event stores</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<h2 id="order">Recommended Watch Order</h2>
+
+<div class="callout callout-blue">
+  <strong>The Optimal Study Path</strong>
+  <ol style="margin-top: 0.5rem;">
+    <li><strong>Greg Young &mdash; CQRS and Event Sourcing</strong> (#1) &mdash; The foundational &ldquo;why&rdquo;</li>
+    <li><strong>Martin Fowler &mdash; Many Meanings of Event-Driven</strong> (#2) &mdash; The taxonomy</li>
+    <li><strong>Gary Bernhardt &mdash; Boundaries</strong> (#3) &mdash; Your repo&rsquo;s architecture explained</li>
+    <li><strong>William Fiset &mdash; Graph Algorithms</strong> (#5) &mdash; DAG sections only (~2 hrs)</li>
+    <li><strong>Greg Young &mdash; Event Sourcing</strong> (#4) &mdash; The deep dive</li>
+    <li><strong>CodeOpinion &mdash; CRUD-Sourcing</strong> (#16) &mdash; The #1 anti-pattern to avoid</li>
+    <li><strong>Oskar Dudycz &mdash; Worst Event Sourcing System</strong> (#6) &mdash; Learn from mistakes</li>
+    <li><strong>Oskar Dudycz &mdash; Build Event Store in One Hour</strong> (#7) &mdash; PostgreSQL internals</li>
+    <li><strong>Scott Wlaschin &mdash; Domain Modeling Made Functional</strong> (#9) &mdash; Types as business rules</li>
+    <li><strong>Oskar Dudycz &mdash; From CRUD to Event Sourcing</strong> (#8) &mdash; The migration path</li>
+    <li><strong>Greg Young &mdash; A Decade of DDD, CQRS</strong> (#10) &mdash; The retrospective</li>
+    <li><strong>Chassaing &mdash; Deciders</strong> (#20) &mdash; The pattern behind your decision_logic.py</li>
+  </ol>
+</div>
+
+<div class="callout callout-green">
+  <strong>Time estimate</strong>
+  <p>Videos #1&ndash;#5 = ~5 hours. That covers the essential theory. Videos #6&ndash;#12 = ~8 more hours for practical depth. Total study time: ~13 hours to go from zero to expert-level understanding of both DAGs and event sourcing as they apply to your ERP/MIS system.</p>
+</div>
+
+<hr>
+
+<p style="color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 3rem;">
+  DAGs &amp; Event Sourcing &mdash; Video &amp; Resource Study Guide &middot; March 2026<br>
+  Curated conference talks, algorithm tutorials, channels, and written resources
+</p>
+
+</div><!-- .content -->
+
+</body>
+</html>
