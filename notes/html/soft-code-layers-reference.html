@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S.O.F.T. C.O.D.E. — The 8 Layers of Soft Code Architecture</title>
+  <style>
+    :root {
+      --core-bg: #f0f4ff;
+      --shell-bg: #fff8f0;
+      --wall-color: #e74c3c;
+      --heading-color: #2c3e50;
+      --accent-blue: #3498db;
+      --accent-orange: #e67e22;
+      --mono-bg: #f6f8fa;
+      --border: #ddd;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      background: #fafafa;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--heading-color);
+      margin-bottom: 0.25rem;
+    }
+
+    h1 .acronym { color: var(--accent-blue); }
+    h1 .acronym-shell { color: var(--accent-orange); }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      color: var(--heading-color);
+      margin: 2rem 0 1rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      color: var(--heading-color);
+      margin: 1.5rem 0 0.5rem;
+    }
+
+    /* Two-half summary */
+    .halves {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .half {
+      border-radius: 8px;
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .half--core {
+      background: var(--core-bg);
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .half--shell {
+      background: var(--shell-bg);
+      border-left: 4px solid var(--accent-orange);
+    }
+
+    .half h3 { margin-top: 0; }
+
+    .half p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    /* Layer tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: var(--heading-color);
+      color: #fff;
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .core-row { background: var(--core-bg); }
+    .shell-row { background: var(--shell-bg); }
+
+    td:first-child {
+      font-weight: 700;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .letter-core { color: var(--accent-blue); }
+    .letter-shell { color: var(--accent-orange); }
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--mono-bg);
+      padding: 0.15rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.88em;
+    }
+
+    /* Flow diagram */
+    .flow-diagram {
+      background: var(--mono-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .flow-wall {
+      color: var(--wall-color);
+      font-weight: 700;
+    }
+
+    .flow-core { color: var(--accent-blue); }
+    .flow-shell { color: var(--accent-orange); }
+
+    /* Decision tree */
+    .decision-tree {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .decision-tree ol {
+      padding-left: 1.5rem;
+    }
+
+    .decision-tree li {
+      margin-bottom: 0.4rem;
+    }
+
+    .decision-tree .layer-tag {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 3px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-left: 0.25rem;
+    }
+
+    .tag-core {
+      background: var(--core-bg);
+      color: var(--accent-blue);
+      border: 1px solid var(--accent-blue);
+    }
+
+    .tag-shell {
+      background: var(--shell-bg);
+      color: var(--accent-orange);
+      border: 1px solid var(--accent-orange);
+    }
+
+    /* Build order */
+    .build-table td:nth-child(2) {
+      font-weight: 600;
+    }
+
+    /* Prompt block */
+    .prompt-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .prompt-block .comment { color: #6a9955; }
+    .prompt-block .highlight { color: #569cd6; font-weight: 700; }
+    .prompt-block .wall-line { color: #e74c3c; font-weight: 700; }
+
+    /* Contract insight */
+    .insight-box {
+      background: #fff;
+      border: 2px solid var(--accent-blue);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .insight-box h3 {
+      color: var(--accent-blue);
+      margin-top: 0;
+    }
+
+    .insight-box ul {
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .insight-box li {
+      margin-bottom: 0.3rem;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 2px solid var(--border);
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    @media (max-width: 640px) {
+      .halves { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1><span class="acronym">S.O.F.T.</span> <span class="acronym-shell">C.O.D.E.</span></h1>
+  <p class="subtitle">The 8 Layers of Soft Code Architecture &mdash; A Reference for Agents and Humans</p>
+
+  <!-- Two halves overview -->
+  <div class="halves">
+    <div class="half half--core">
+      <h3>SOFT = Core</h3>
+      <p>Pure Python. No I/O. No frameworks. All business logic lives here. Every function either validates, decides, or sequences &mdash; never touches the outside world.</p>
+    </div>
+    <div class="half half--shell">
+      <h3>CODE = Shell</h3>
+      <p>Transport, I/O, governance. HTTP routes, file operations, presenter mapping, and mechanical enforcement. Thin wrappers that call Core through the Contract wall.</p>
+    </div>
+  </div>
+
+  <!-- SOFT layers -->
+  <h2>SOFT &mdash; Core Layers (pure, no side effects)</h2>
+  <table>
+    <thead>
+      <tr><th></th><th>Layer</th><th>Files</th><th>Guiding Question</th><th>Hard Rule</th></tr>
+    </thead>
+    <tbody>
+      <tr class="core-row">
+        <td><span class="letter-core">S</span></td>
+        <td>Shapes</td>
+        <td><code>domain/models.py</code>, <code>domain/specs.py</code>, <code>schema_checklist.md</code></td>
+        <td>What does the data look like?</td>
+        <td>Frozen dataclasses only. No methods with side effects. All constants, thresholds, and vocabulary here.</td>
+      </tr>
+      <tr class="core-row">
+        <td><span class="letter-core">O</span></td>
+        <td>Operations</td>
+        <td><code>application/decision_logic.py</code>, <code>input_validation.py</code>, <code>output_mapping.py</code></td>
+        <td>What decisions does the tool make?</td>
+        <td>Pure functions: data in &rarr; data out. No <code>open()</code>, no <code>os</code>, no <code>requests</code>. Every <code>if</code> lives here.</td>
+      </tr>
+      <tr class="core-row">
+        <td><span class="letter-core">F</span></td>
+        <td>Flow</td>
+        <td><code>application/orchestrator.py</code> (+ optional <code>workflow.py</code>)</td>
+        <td>What order do operations run in?</td>
+        <td><strong>Zero branching.</strong> No <code>if</code>/<code>for</code>/<code>while</code>/<code>try</code>/<code>with</code>/<code>match</code>. &le;60 lines. A recipe card, not a chef.</td>
+      </tr>
+      <tr class="core-row">
+        <td><span class="letter-core">T</span></td>
+        <td>Terms</td>
+        <td><code>contracts.py</code></td>
+        <td>How do other systems call this tool?</td>
+        <td><code>ToolInput</code>, <code>ToolOutput</code>, <code>run()</code>. Versioned. The only import adapters may touch.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- CODE layers -->
+  <h2>CODE &mdash; Shell Layers (I/O, transport, governance)</h2>
+  <table>
+    <thead>
+      <tr><th></th><th>Layer</th><th>Files</th><th>Guiding Question</th><th>Hard Rule</th></tr>
+    </thead>
+    <tbody>
+      <tr class="shell-row">
+        <td><span class="letter-shell">C</span></td>
+        <td>Channel</td>
+        <td><code>adapters/flask/&lt;tool&gt;/app.py</code></td>
+        <td>How does the request arrive?</td>
+        <td>HTTP routes only. Calls core exclusively via <code>contracts.run()</code>. No business logic.</td>
+      </tr>
+      <tr class="shell-row">
+        <td><span class="letter-shell">O</span></td>
+        <td>Outward</td>
+        <td><code>adapters/flask/&lt;tool&gt;/presenter.py</code></td>
+        <td>How is the result shaped for the user?</td>
+        <td>Maps HTTP params &rarr; contract payload, and contract result &rarr; template context. No domain rules.</td>
+      </tr>
+      <tr class="shell-row">
+        <td><span class="letter-shell">D</span></td>
+        <td>Disk</td>
+        <td><code>adapters/flask/&lt;tool&gt;/io.py</code></td>
+        <td>Where do side effects happen?</td>
+        <td>File reads, file writes, downloads, in-memory caching. The <strong>only</strong> place side effects live.</td>
+      </tr>
+      <tr class="shell-row">
+        <td><span class="letter-shell">E</span></td>
+        <td>Enforce</td>
+        <td><code>scripts/preflight.py</code>, <code>tools_registry.json</code>, <code>DECISIONS.md</code></td>
+        <td>How do we know it&rsquo;s correct?</td>
+        <td>Mechanical validation. No discretion. Preflight passes or it doesn&rsquo;t ship.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Data flow diagram -->
+  <h2>Data Flow Diagram</h2>
+  <div class="flow-diagram">  USER REQUEST
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;  Channel  &boxv;</span>  app.py &mdash; receives HTTP, extracts files/params
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;  Outward  &boxv;</span>  presenter.py &mdash; builds contract payload from HTTP
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;   Terms   &boxv;</span>  contracts.py &mdash; ToolInput &rarr; run() &rarr; ToolOutput
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-wall">&boxh;&boxh;&boxh;&boxh; THE WALL &boxh;&boxh;&boxh;&boxh;&boxh;</span>  nothing below does I/O
+       &darr;
+  <span class="flow-core">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-core">&boxv;   Flow    &boxv;</span>  orchestrator.py &mdash; calls operations in sequence
+  <span class="flow-core">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-core">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-core">&boxv; Operat&rsquo;s &boxv;</span>  decision_logic / input_validation / output_mapping
+  <span class="flow-core">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-core">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-core">&boxv;  Shapes  &boxv;</span>  models.py (dataclasses) + specs.py (constants)
+  <span class="flow-core">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-wall">&boxh;&boxh;&boxh;&boxh; THE WALL &boxh;&boxh;&boxh;&boxh;&boxh;</span>  back through to the shell
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;  Outward &boxv;</span>  presenter.py &mdash; formats result for template
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;   Disk   &boxv;</span>  io.py &mdash; writes files, stores sessions
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  <span class="flow-shell">&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxur;</span>
+  <span class="flow-shell">&boxv;  Channel &boxv;</span>  app.py &mdash; returns HTTP response
+  <span class="flow-shell">&boxdl;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxul;</span>
+       &darr;
+  USER RESPONSE</div>
+
+  <!-- Decision tree -->
+  <h2>The &ldquo;Which Layer?&rdquo; Decision Tree</h2>
+  <div class="decision-tree">
+    <p>When you&rsquo;re about to write code, ask:</p>
+    <ol>
+      <li>Is it a dataclass or a constant? <span class="layer-tag tag-core">S &mdash; Shapes</span></li>
+      <li>Does it contain <code>if</code>/<code>for</code>/<code>while</code> business logic? <span class="layer-tag tag-core">O &mdash; Operations</span></li>
+      <li>Does it sequence function calls with no branching? <span class="layer-tag tag-core">F &mdash; Flow</span></li>
+      <li>Is it <code>ToolInput</code>/<code>ToolOutput</code>/<code>run()</code>? <span class="layer-tag tag-core">T &mdash; Terms</span></li>
+      <li>Does it handle HTTP requests/responses? <span class="layer-tag tag-shell">C &mdash; Channel</span></li>
+      <li>Does it convert between HTTP and domain? <span class="layer-tag tag-shell">O &mdash; Outward</span></li>
+      <li>Does it touch the filesystem or network? <span class="layer-tag tag-shell">D &mdash; Disk</span></li>
+      <li>Does it validate architecture rules? <span class="layer-tag tag-shell">E &mdash; Enforce</span></li>
+    </ol>
+  </div>
+
+  <!-- Contract insight -->
+  <div class="insight-box">
+    <h3>Why the Contract (Terms) Is the Load-Bearing Seam</h3>
+    <ul>
+      <li><strong>Adapters never import from <code>application/</code></strong> &mdash; they only see <code>contracts.run()</code></li>
+      <li><strong>Core never knows about Flask</strong> &mdash; it only receives a <code>dict</code> payload and returns a <code>dict</code> result</li>
+      <li><strong>Tool composition</strong> = one tool&rsquo;s contract calling another tool&rsquo;s contract. No shared internal state, no coupling</li>
+      <li><strong>Swappability</strong> = swap Flask for FastAPI, CLI, or a test harness &mdash; core doesn&rsquo;t change at all</li>
+      <li><strong>Speed</strong> = the agent builds the entire SOFT half (shapes &rarr; operations &rarr; flow &rarr; terms) without ever thinking about HTTP, templates, or files. Pure logic with zero context-switching.</li>
+    </ul>
+  </div>
+
+  <!-- Build order -->
+  <h2>Build Order Maps to the Acronym</h2>
+  <table class="build-table">
+    <thead>
+      <tr><th>Step</th><th>Layer</th><th>What You Produce</th></tr>
+    </thead>
+    <tbody>
+      <tr class="shell-row"><td>1. Decision list</td><td><span class="letter-shell">E</span> &mdash; Enforce</td><td><code>DECISIONS.md</code></td></tr>
+      <tr class="core-row"><td>2. Data shapes</td><td><span class="letter-core">S</span> &mdash; Shapes</td><td><code>models.py</code>, <code>specs.py</code>, <code>contracts.py</code>, examples</td></tr>
+      <tr class="core-row"><td>3. Decision functions</td><td><span class="letter-core">O</span> &mdash; Operations</td><td><code>decision_logic.py</code>, <code>input_validation.py</code>, <code>output_mapping.py</code> + tests</td></tr>
+      <tr class="core-row"><td>4. Orchestrator</td><td><span class="letter-core">F</span> &mdash; Flow</td><td><code>orchestrator.py</code></td></tr>
+      <tr class="shell-row"><td>5. Adapters</td><td><span class="letter-shell">C</span> + <span class="letter-shell">O</span> + <span class="letter-shell">D</span></td><td><code>app.py</code>, <code>presenter.py</code>, <code>io.py</code></td></tr>
+      <tr class="shell-row"><td>6. Verification</td><td><span class="letter-shell">E</span> &mdash; Enforce</td><td>preflight passes, registry updated</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Prompt-ready block -->
+  <h2>Prompt-Ready Reminder</h2>
+  <p>Paste this into <code>CLAUDE.md</code> or a system prompt to keep the agent on-track:</p>
+  <div class="prompt-block"><span class="comment">SOFT CODE LAYERS &mdash; put code in the right layer:</span>
+  <span class="highlight">S</span> &mdash; Shapes:     domain/models.py, specs.py (dataclasses, constants)
+  <span class="highlight">O</span> &mdash; Operations: application/decision_logic.py, input_validation.py,
+                   output_mapping.py (pure functions, all branching here)
+  <span class="highlight">F</span> &mdash; Flow:       application/orchestrator.py (zero branching, &le;60 lines)
+  <span class="highlight">T</span> &mdash; Terms:      contracts.py (ToolInput/ToolOutput/run &mdash; the API wall)
+  <span class="wall-line">  &mdash;&mdash;&mdash; THE WALL: nothing above does I/O &mdash;&mdash;&mdash;</span>
+  <span class="highlight">C</span> &mdash; Channel:    adapters/app.py (HTTP routes, calls contracts.run only)
+  <span class="highlight">O</span> &mdash; Outward:    adapters/presenter.py (HTTP &harr; domain mapping)
+  <span class="highlight">D</span> &mdash; Disk:       adapters/io.py (all side effects here and only here)
+  <span class="highlight">E</span> &mdash; Enforce:    scripts/preflight.py (mechanical rule checking)</div>
+
+  <div class="footer">
+    <p>Generated March 2026 &mdash; Based on deep research of the tool-hub-try5 Soft Code architecture.</p>
+    <p>Source repository: tool-hub-try5 | Architecture docs: AGENTS.md, WORKFLOW.md, BUILDING_SOFTWARE_THAT_STAYS_SOFT.md</p>
+  </div>
+
+</body>
+</html>
